@@ -2,9 +2,9 @@
 #SBATCH -p debug
 #SBATCH -N 1
 #SBATCH -C haswell
-#SBATCH -t 00:20:00
-#SBATCH -o e3smf_1_%j.txt
-#SBATCH -e e3smf_1_%j.err
+#SBATCH -t 00:05:00
+#SBATCH -o e3sm_f_1_%j.txt
+#SBATCH -e e3sm_f_1_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m844
 
@@ -14,11 +14,8 @@ let NP=NN*32
 
 RUNS=(1) # Number of runs
 
-INDIR=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/realdata/
-OUTDIR=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/origin/
-CNKDIR=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/chunked/
-ZLIBDIR=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/zlib/
-SZDIR=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/sz/
+INDIR=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/realdata/
+OUTDIR_ROOT=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/
 
 SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/FC5AV1C-H01B_ne30_ne30_512p
 H0=${SRCDIR}/FC5AV1C-H01B_ne30_512.cam.h0.0001-01-01-00000.nc
@@ -34,24 +31,25 @@ CONFIG=datasets/f_case_48602x72_512p.nc
 #H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 #CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-ZIPDRIVERS=(0 1 2)
+ZIPDRIVERS=(none) # zlib sz)
 INITMETHODS=(0) # 1)
 COMMUNITS=(proc) # chunk)
 NREC=1
 FILES=(0) # 1)
 CASE=F
 # CASE=G
-TL=5
+TL=3
 
-echo "mkdir -p ${OUTDIR}"
-mkdir -p ${OUTDIR}
-echo "mkdir -p ${CNKDIR}"
-mkdir -p ${CNKDIR}
-echo "mkdir -p ${ZLIBDIR}"
-mkdir -p ${ZLIBDIR}
-echo "mkdir -p ${SZDIR}"
-mkdir -p ${SZDIR}
+echo "mkdir -p ${OUTDIR_ROOT}/origin"
+mkdir -p ${OUTDIR_ROOT}/origin
+for ZIPDRIVER in ${ZIPDRIVERS[@]}
+do
+    echo "mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}"
+    mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}
+done
 
+echo "mkdir -p ${INDIR}"
+mkdir -p ${INDIR}
 echo "rm -f ${INDIR}/*"
 rm -f ${INDIR}/*
 # ln -s ${H0} ${INDIR}/g_case_hist_varn.nc
@@ -82,6 +80,8 @@ do
         echo "#%$: case: ${CASE}"
         echo "#%$: number_of_nodes: ${NN}"
         echo "#%$: number_of_proc: ${NP}"
+        
+        OUTDIR=${OUTDIR_ROOT}/origin
 
         echo "rm -f ${OUTDIR}/*"
         rm -f ${OUTDIR}/*
@@ -113,6 +113,8 @@ do
                 do
                     echo "========================== CHUNKED PROC =========================="
                     >&2 echo "========================== CHUNKED PROC =========================="
+                    
+                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}
 
                     echo "#%$: io_driver: nczipio"
                     echo "#%$: zip_driver: ${ZIPDRIVER}"
