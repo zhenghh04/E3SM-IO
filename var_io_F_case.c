@@ -1228,23 +1228,20 @@ run_varn_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
     MPI_Reduce(&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, io_comm);
     if (rank == 0) {
         printf("History output file postfix        = %s\n", out_postfix);
-        printf("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
-               (float)max_alloc/1048576);
-        printf("Total number of variables          = %d\n",nvars);
-        printf("Total write amount                 = %.2f MiB = %.2f GiB\n",
-               (double)total_size/1048576,(double)total_size/1073741824);
-        printf("Total number of requests           = %lld\n",total_nreqs);
-        printf("Max number of requests             = %lld\n",max_nreqs);
-        printf("Max Time of open + metadata define = %.4f sec\n",open_timing);
-        printf("Max Time of I/O preparing          = %.4f sec\n",pre_timing);
-        printf("Max Time of ncmpi_iput_varn        = %.4f sec\n",post_timing);
-        printf("Max Time of ncmpi_wait_all         = %.4f sec\n",wait_timing);
-        printf("Max Time of close                  = %.4f sec\n",close_timing);
-        printf("Max Time of TOTAL                  = %.4f sec\n",total_timing);
-        printf("I/O bandwidth (open-to-close)      = %.4f MiB/sec\n",
-               (double)total_size/1048576.0/total_timing);
-        printf("I/O bandwidth (write-only)         = %.4f MiB/sec\n",
-               (double)put_size/1048576.0/wait_timing);
+        printf("#%%$: Write_max_heap_mib: %.2f\n", (float)max_alloc/1048576);
+        printf("#%%$: Write_nvar: %d\n", nvars);
+        printf("#%%$: Write_size_mib: %.2f\n", (double)total_size/1048576);
+        printf("#%%$: Write_size_gib: %.2f\n", (double)total_size/1073741824);
+        printf("#%%$: Write_nreq_sum: %lld\n", total_nreqs);
+        printf("#%%$: Write_nreq_max: %lld\n", max_nreqs);
+        printf("#%%$: Write_open_metadata_time: %.4f\n", open_timing);
+        printf("#%%$: Write_io_prepare_time: %.4f\n", pre_timing);
+        printf("#%%$: Write_req_post_time: %.4f\n", post_timing);
+        printf("#%%$: Write_req_wait_time: %.4f\n", wait_timing);
+        printf("#%%$: Write_close_time: %.4f\n", close_timing);
+        printf("#%%$: Write_total_time: %.4f\n", total_timing);
+        printf("#%%$: Write_bandwidth_open_to_close_mib: %.4f\n", (double)total_size/1048576.0/total_timing);
+        printf("#%%$: Write_bandwidth_read_mib: %.4f\n", (double)put_size/1048576.0/wait_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }
@@ -1648,23 +1645,20 @@ run_varn_F_case_rd( MPI_Comm io_comm,         /* MPI communicator that includes 
     MPI_Reduce(&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, io_comm);
     if (rank == 0) {
         printf("History input file postfix        = %s\n", in_postfix);
-        printf("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
-               (float)max_alloc/1048576);
-        printf("Total number of variables          = %d\n",nvars);
-        printf("Total read amount                 = %.2f MiB = %.2f GiB\n",
-               (double)total_size/1048576,(double)total_size/1073741824);
-        printf("Total number of requests           = %lld\n",total_nreqs);
-        printf("Max number of requests             = %lld\n",max_nreqs);
-        printf("Max Time of open + metadata inquery = %.4f sec\n",open_timing);
-        printf("Max Time of I/O preparing          = %.4f sec\n",pre_timing);
-        printf("Max Time of ncmpi_iget_varn        = %.4f sec\n",post_timing);
-        printf("Max Time of ncmpi_wait_all         = %.4f sec\n",wait_timing);
-        printf("Max Time of close                  = %.4f sec\n",close_timing);
-        printf("Max Time of TOTAL                  = %.4f sec\n",total_timing);
-        printf("I/O bandwidth (open-to-close)      = %.4f MiB/sec\n",
-               (double)total_size/1048576.0/total_timing);
-        printf("I/O bandwidth (read-only)         = %.4f MiB/sec\n",
-               (double)get_size/1048576.0/wait_timing);
+        printf("#%%$: Read_max_heap_mib: %.2f\n", (float)max_alloc/1048576);
+        printf("#%%$: Read_nvar: %d\n", nvars);
+        printf("#%%$: Read_size_mib: %.2f\n", (double)total_size/1048576);
+        printf("#%%$: Read_size_gib: %.2f\n", (double)total_size/1073741824);
+        printf("#%%$: Read_nreq_sum: %lld\n", total_nreqs);
+        printf("#%%$: Read_nreq_max: %lld\n", max_nreqs);
+        printf("#%%$: Read_open_metadata_time: %.4f\n", open_timing);
+        printf("#%%$: Read_io_prepare_time: %.4f\n", pre_timing);
+        printf("#%%$: Read_req_post_time: %.4f\n", post_timing);
+        printf("#%%$: Read_req_wait_time: %.4f\n", wait_timing);
+        printf("#%%$: Read_close_time: %.4f\n", close_timing);
+        printf("#%%$: Read_total_time: %.4f\n", total_timing);
+        printf("#%%$: Read_bandwidth_open_to_close_mib: %.4f\n", (double)total_size/1048576.0/total_timing);
+        printf("#%%$: Read_bandwidth_read_mib: %.4f\n", (double)get_size/1048576.0/wait_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }

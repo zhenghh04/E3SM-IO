@@ -27,7 +27,7 @@ print_info(MPI_Info *info_used)
     int  i, nkeys;
 
     MPI_Info_get_nkeys(*info_used, &nkeys);
-    printf("MPI File Info: nkeys = %d\n",nkeys);
+    printf("#%%$: Info_nkeys: %d\n", nkeys);
     for (i=0; i<nkeys; i++) {
         char key[MPI_MAX_INFO_KEY], value[MPI_MAX_INFO_VAL];
         int  valuelen, flag;
@@ -35,7 +35,7 @@ print_info(MPI_Info *info_used)
         MPI_Info_get_nthkey(*info_used, i, key);
         MPI_Info_get_valuelen(*info_used, key, &valuelen, &flag);
         MPI_Info_get(*info_used, key, valuelen+1, value, &flag);
-        printf("MPI File Info: [%2d] key = %25s, value = %s\n",i,key,value);
+        printf("#%%$: Info_%25s: %s\n", key, value);
     }
 }
 
