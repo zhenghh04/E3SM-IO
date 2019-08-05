@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p debug
-#SBATCH -N 1
+#SBATCH -N 8
 #SBATCH -C haswell
-#SBATCH -t 00:05:00
-#SBATCH -o e3sm_f_1_%j.txt
-#SBATCH -e e3sm_f_1_%j.err
+#SBATCH -t 00:15:00
+#SBATCH -o e3sm_f_8_%j.txt
+#SBATCH -e e3sm_f_8_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m844
 
@@ -31,7 +31,7 @@ CONFIG=datasets/f_case_48602x72_512p.nc
 #H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 #CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-ZIPDRIVERS=(none) # zlib sz)
+ZIPDRIVERS=(none zlib sz)
 INITMETHODS=(0) # 1)
 COMMUNITS=(proc) # chunk)
 NREC=1
@@ -81,7 +81,7 @@ do
         echo "#%$: number_of_nodes: ${NN}"
         echo "#%$: number_of_proc: ${NP}"
         
-        OUTDIR=${OUTDIR_ROOT}/origin
+        OUTDIR=${OUTDIR_ROOT}/origin/
 
         echo "rm -f ${OUTDIR}/*"
         rm -f ${OUTDIR}/*
@@ -114,7 +114,7 @@ do
                     echo "========================== CHUNKED PROC =========================="
                     >&2 echo "========================== CHUNKED PROC =========================="
                     
-                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}
+                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
 
                     echo "#%$: io_driver: nczipio"
                     echo "#%$: zip_driver: ${ZIPDRIVER}"
