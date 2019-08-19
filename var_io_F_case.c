@@ -1241,7 +1241,7 @@ run_varn_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
         printf("#%%$: Write_close_time: %.4f\n", close_timing);
         printf("#%%$: Write_total_time: %.4f\n", total_timing);
         printf("#%%$: Write_bandwidth_open_to_close_mib: %.4f\n", (double)total_size/1048576.0/total_timing);
-        printf("#%%$: Write_bandwidth_read_mib: %.4f\n", (double)put_size/1048576.0/wait_timing);
+        printf("#%%$: Write_bandwidth_wait_mib: %.4f\n", (double)put_size/1048576.0/wait_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }
@@ -1658,7 +1658,7 @@ run_varn_F_case_rd( MPI_Comm io_comm,         /* MPI communicator that includes 
         printf("#%%$: Read_close_time: %.4f\n", close_timing);
         printf("#%%$: Read_total_time: %.4f\n", total_timing);
         printf("#%%$: Read_bandwidth_open_to_close_mib: %.4f\n", (double)total_size/1048576.0/total_timing);
-        printf("#%%$: Read_bandwidth_read_mib: %.4f\n", (double)get_size/1048576.0/wait_timing);
+        printf("#%%$: Read_bandwidth_wait_mib: %.4f\n", (double)get_size/1048576.0/wait_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }
