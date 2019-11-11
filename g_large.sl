@@ -31,17 +31,13 @@ SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/GMPAS-NYF_T62_oRRS18to6v3_960
 H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-ZIPDRIVERS=(zlib)
-INITMETHODS=(0) # 1)
-COMMUNITS=(proc) # chunk)
+ZIPDRIVERS=(contig zlib)
+FILE=0
 NREC=1
-FILES=(0) # 1)
+#CASE=F
 CASE=G
-# CASE=G
 TL=6
 
-echo "mkdir -p ${OUTDIR_ROOT}/origin"
-mkdir -p ${OUTDIR_ROOT}/origin
 for ZIPDRIVER in ${ZIPDRIVERS[@]}
 do
     echo "mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}"
@@ -66,180 +62,60 @@ export PNETCDF_SHOW_PERFORMANCE_INFO=1
 
 for i in ${RUNS[@]}
 do
-    for FILE in ${FILES[@]}
+    for ZIPDRIVER in ${ZIPDRIVERS[@]}
     do
-        # Ncmpio
-        echo "========================== ORIGINAL WR =========================="
-        >&2 echo "========================== ORIGINAL WR =========================="
-        
-        echo "#%$: exp: e3sm"
-        echo "#%$: io_driver: ncmpi"
-        echo "#%$: zip_driver: NA"
-        echo "#%$: delay_init: 0"
-        echo "#%$: comm_unit: NA"
-        echo "#%$: mode: WR"
-        echo "#%$: file: ${FILE}"
-        echo "#%$: case: ${CASE}"
-        echo "#%$: number_of_nodes: ${NN}"
-        echo "#%$: number_of_proc: ${NP}"
-        
-        OUTDIR=${OUTDIR_ROOT}/origin/
-
+        OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
         echo "rm -f ${OUTDIR}/*"
         rm -f ${OUTDIR}/*
+    done
 
-        STARTTIME=`date +%s.%N`
-        STARTTIME=`date +%s.%N`
-
-        echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}"
-        srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}
-
-        ENDTIME=`date +%s.%N`
-        TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
-
-        echo "#%$: exe_time: $TIMEDIFF"
-
-        echo "ls -lah ${OUTDIR}"
-        ls -lah ${OUTDIR}
-        echo "lfs getstripe ${OUTDIR}"
-        lfs getstripe ${OUTDIR}
-
-        echo '-----+-----++------------+++++++++--+---'
-
-        # Nczipio
+    for READ in ${READS[@]}
+    do
         for ZIPDRIVER in ${ZIPDRIVERS[@]}
         do
-            for INITMETHOD in ${INITMETHODS[@]}
-            do
-                for COMMUNIT in ${COMMUNITS[@]}
-                do
-                    echo "========================== CHUNKED PROC WR =========================="
-                    >&2 echo "========================== CHUNKED PROC WR =========================="
-                    
-                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
+            echo "========================== CHUNKED PROC WR =========================="
+            >&2 echo "========================== CHUNKED PROC WR =========================="
+            
+            OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
 
-                    echo "#%$: exp: e3sm"
-                    echo "#%$: io_driver: nczipio"
-                    echo "#%$: zip_driver: ${ZIPDRIVER}"
-                    echo "#%$: delay_init: ${INITMETHOD}"
-                    echo "#%$: comm_unit: ${COMMUNIT}"
-                    echo "#%$: mode: WR"
-                    echo "#%$: file: ${FILE}"
-                    echo "#%$: case: ${CASE}"
-                    echo "#%$: number_of_nodes: ${NN}"
-                    echo "#%$: number_of_proc: ${NP}"
+            echo "#%$: exp: e3sm"
+            echo "#%$: api: ncmpi"
+            echo "#%$: zip_driver: ${ZIPDRIVER}"
+            echo "#%$: delay_init: 0"
+            echo "#%$: nrec: ${NREC}"
+            echo "#%$: read: ${READ}"
+            echo "#%$: file: ${FILE}"
+            echo "#%$: case: ${CASE}"
+            echo "#%$: number_of_nodes: ${NN}"
+            echo "#%$: number_of_proc: ${NP}"
 
-                    echo "rm -f ${OUTDIR}/*"
-                    rm -f ${OUTDIR}/*
+            if [ "$ZIPDRIVER" = "zlib" ] ; then
+                export PNETCDF_HINTS="nc_compression=enable;nc_zip_driver=${ZIPDRIVER};nc_zip_buffer_size=-1"
+            fi
 
-                    export PNETCDF_HINTS="nc_compression=enable;nc_zip_driver=${ZIPDRIVER};nc_zip_delay_init=${INITMETHOD};nc_zip_comm_unit=${COMMUNIT};nc_zip_buffer_size=-1"
-                    # export PNETCDF_PROFILE_PREFIX="nczipio_profile_${ZIPDRIVER}_${INITMETHOD}_${COMMUNIT}"
+            STARTTIME=`date +%s.%N`
 
-                    STARTTIME=`date +%s.%N`
+            if [ "$READ" = "1" ] ; then
+                echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}"
+                srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}
+            else 
+                echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}"
+                srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}
+            fi
 
-                    echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}"
-                    srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}
+            ENDTIME=`date +%s.%N`
+            TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
 
-                    ENDTIME=`date +%s.%N`
-                    TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
+            unset PNETCDF_HINTS
 
-                    unset PNETCDF_HINTS
-                    # unset PNETCDF_PROFILE_PREFIX
+            echo "#%$: exe_time: $TIMEDIFF"
 
-                    echo "#%$: exe_time: $TIMEDIFF"
+            echo "ls -lah ${OUTDIR}"
+            ls -lah ${OUTDIR}
+            echo "lfs getstripe ${OUTDIR}"
+            lfs getstripe ${OUTDIR}
 
-                    echo "ls -lah ${OUTDIR}"
-                    ls -lah ${OUTDIR}
-                    echo "lfs getstripe ${OUTDIR}"
-                    lfs getstripe ${OUTDIR}
-
-                    echo '-----+-----++------------+++++++++--+---'
-                done
-            done
-        done
-
-        # Ncmpio
-        echo "========================== ORIGINAL RD =========================="
-        >&2 echo "========================== ORIGINAL RD =========================="
-
-        echo "#%$: exp: e3sm"
-        echo "#%$: io_driver: ncmpi"
-        echo "#%$: zip_driver: NA"
-        echo "#%$: delay_init: 0"
-        echo "#%$: comm_unit: NA"
-        echo "#%$: mode: RD"
-        echo "#%$: file: ${FILE}"
-        echo "#%$: case: ${CASE}"
-        echo "#%$: number_of_nodes: ${NN}"
-        echo "#%$: number_of_proc: ${NP}"
-        
-        OUTDIR=${OUTDIR_ROOT}/origin/
-
-        STARTTIME=`date +%s.%N`
-        STARTTIME=`date +%s.%N`
-
-        echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}"
-        srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}
-
-        ENDTIME=`date +%s.%N`
-        TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
-
-        echo "#%$: exe_time: $TIMEDIFF"
-
-        echo "ls -lah ${OUTDIR}"
-        ls -lah ${OUTDIR}
-        echo "lfs getstripe ${OUTDIR}"
-        lfs getstripe ${OUTDIR}
-
-        echo '-----+-----++------------+++++++++--+---'
-
-        # Nczipio
-        for ZIPDRIVER in ${ZIPDRIVERS[@]}
-        do
-            for INITMETHOD in ${INITMETHODS[@]}
-            do
-                for COMMUNIT in ${COMMUNITS[@]}
-                do
-                    echo "========================== CHUNKED PROC RD =========================="
-                    >&2 echo "========================== CHUNKED PROC RD =========================="
-                    
-                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
-
-                    echo "#%$: exp: e3sm"
-                    echo "#%$: io_driver: nczipio"
-                    echo "#%$: zip_driver: ${ZIPDRIVER}"
-                    echo "#%$: delay_init: ${INITMETHOD}"
-                    echo "#%$: comm_unit: ${COMMUNIT}"
-                    echo "#%$: mode: RD"
-                    echo "#%$: file: ${FILE}"
-                    echo "#%$: case: ${CASE}"
-                    echo "#%$: number_of_nodes: ${NN}"
-                    echo "#%$: number_of_proc: ${NP}"
-
-                    export PNETCDF_HINTS="nc_compression=enable;nc_zip_driver=${ZIPDRIVER};nc_zip_delay_init=${INITMETHOD};nc_zip_comm_unit=${COMMUNIT};nc_zip_buffer_size=-1"
-                    # export PNETCDF_PROFILE_PREFIX="nczipio_profile_${ZIPDRIVER}_${INITMETHOD}_${COMMUNIT}"
-
-                    STARTTIME=`date +%s.%N`
-
-                    echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}"
-                    srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}
-
-                    ENDTIME=`date +%s.%N`
-                    TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
-
-                    unset PNETCDF_HINTS
-                    # unset PNETCDF_PROFILE_PREFIX
-
-                    echo "#%$: exe_time: $TIMEDIFF"
-
-                    echo "ls -lah ${OUTDIR}"
-                    ls -lah ${OUTDIR}
-                    echo "lfs getstripe ${OUTDIR}"
-                    lfs getstripe ${OUTDIR}
-
-                    echo '-----+-----++------------+++++++++--+---'
-                done
-            done
+            echo '-----+-----++------------+++++++++--+---'
         done
     done
 done
