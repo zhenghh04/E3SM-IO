@@ -58,6 +58,7 @@ ulimit -c unlimited
 TSTARTTIME=`date +%s.%N`
 
 export PNETCDF_SHOW_PERFORMANCE_INFO=1
+export PNETCDF_DEFAULT_CHUNK_DIM="nCells : 16384 ; nEdges : 16384 ; nVertices : 16384 ; Time : 1 ; nVertLevelsP1 : 81 ; nVertLevels : 80 ; StrLen : 64 ;"
 
 for i in ${RUNS[@]}
 do

@@ -24,7 +24,7 @@ SRCDIR=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/src
 
 H0=${SRCDIR}/FC5AV1C-H01B_ne120_oRRS18v3_21632.cam.h0.0001-01-01-00000.nc
 #H1=${SRCDIR}/FC5AV1C-H01B_ne120_oRRS18v3_21632.cam.h1.0001-01-01-00000.nc
-CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne120_oRRS18v3_21600p.nc
+CONFIG=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/decom/FC5AV1C-H01B_ne120_oRRS18v3_21600p.nc
 
 #H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 #CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
