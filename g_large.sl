@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p regular
-#SBATCH -N 8
+#SBATCH -N 64
 #SBATCH -C haswell
 #SBATCH -t 00:40:00
-#SBATCH -o e3sm_g_9600_8_%j.txt
-#SBATCH -e e3sm_g_9600_8_%j.err
+#SBATCH -o e3sm_g_wr_9600_64_%j.txt
+#SBATCH -e e3sm_g_wr_9600_64_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -31,12 +31,13 @@ SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/GMPAS-NYF_T62_oRRS18to6v3_960
 H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-ZIPDRIVERS=(contig zlib)
+ZIPDRIVERS=(zlib)
+READS=(0)
 FILE=0
 NREC=1
-#CASE=F
+# CASE=F
 CASE=G
-TL=6
+TL=10
 
 for ZIPDRIVER in ${ZIPDRIVERS[@]}
 do

@@ -46,6 +46,8 @@ for ZIPDRIVER in ${ZIPDRIVERS[@]}
 do
     echo "mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}"
     mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}
+    echo "mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}_nopack"
+    mkdir -p ${OUTDIR_ROOT}/${ZIPDRIVER}_nopack
 done
 
 echo "mkdir -p ${INDIR}"
@@ -83,7 +85,7 @@ do
                     echo "#%$: io_driver: nczipio"
                     echo "#%$: zip_driver: ${ZIPDRIVER}"
                     echo "#%$: delay_init: ${INITMETHOD}"
-                    echo "#%$: mode: wr"
+                    echo "#%$: mode: rd"
                     echo "#%$: zipver: pack"
                     echo "#%$: comm_unit: ${COMMUNIT}"
                     echo "#%$: file: ${FILE}"
@@ -120,7 +122,7 @@ do
                     echo "========================== CHUNKED PROC NOPACK =========================="
                     >&2 echo "========================== CHUNKED PROC NOPACK =========================="
                     
-                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
+                    OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}_nopack/
 
                     echo "#%$: io_driver: nczipio"
                     echo "#%$: zip_driver: ${ZIPDRIVER}"

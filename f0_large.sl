@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p regular
-#SBATCH -N 8
+#SBATCH -N 64
 #SBATCH -C haswell
-#SBATCH -t 00:40:00
-#SBATCH -o e3sm_f_0_21600_8_%j.txt
-#SBATCH -e e3sm_f_0_21600_8_%j.err
+#SBATCH -t 00:20:00
+#SBATCH -o e3sm_f_0_wr_21600_64_%j.txt
+#SBATCH -e e3sm_f_0_wr_21600_64_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -12,15 +12,15 @@ NN=${SLURM_NNODES}
 #let NP=NN*1
 let NP=NN*32
 
-RUNS=(1 2) # Number of runs
+RUNS=(1) # Number of runs
 
 INDIR=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/realdata/
 OUTDIR_ROOT=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/
 
-#SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/FC5AV1C-H01B_ne30_ne30_512p
-#H0=${SRCDIR}/FC5AV1C-H01B_ne30_512.cam.h0.0001-01-01-00000.nc
-#H1=${SRCDIR}/FC5AV1C-H01B_ne30_512.cam.h1.0001-01-01-00000.nc
-#CONFIG=datasets/f_case_48602x72_512p.nc
+SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/FC5AV1C-H01B_ne30_ne30_512p
+H0=${SRCDIR}/FC5AV1C-H01B_ne30_512.cam.h0.0001-01-01-00000.nc
+H1=${SRCDIR}/FC5AV1C-H01B_ne30_512.cam.h1.0001-01-01-00000.nc
+CONFIG=datasets/f_case_48602x72_512p.nc
 
 SRCDIR=/global/cscratch1/sd/dqwu/e3sm_output_files/FC5AV1C-H01B_ne120_oRRS18v3_21632p
 H0=${SRCDIR}/FC5AV1C-H01B_ne120_oRRS18v3_21632.cam.h0.0001-01-01-00000.nc
@@ -32,11 +32,12 @@ CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne120_oRRS1
 #CONFIG=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
 ZIPDRIVERS=(contig zlib)
+READS=(0)
 FILE=0
 NREC=1
 CASE=F
 # CASE=G
-TL=6
+TL=10
 
 for ZIPDRIVER in ${ZIPDRIVERS[@]}
 do
