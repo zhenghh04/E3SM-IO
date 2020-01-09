@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p regular
-#SBATCH -N 64
+#SBATCH -N 32
 #SBATCH -C haswell
-#SBATCH -t 00:10:00
-#SBATCH -o e3sm_g_64_%j.txt
-#SBATCH -e e3sm_g_64_%j.err
+#SBATCH -t 00:15:00
+#SBATCH -o e3sm_g_32_nobreak_%j.txt
+#SBATCH -e e3sm_g_32_nobreak_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -90,7 +90,7 @@ do
             echo "#%$: number_of_proc: ${NP}"
 
             if [ "$ZIPDRIVER" = "zlib" ] ; then
-                export PNETCDF_HINTS="nc_compression=enable;nc_zip_driver=${ZIPDRIVER};nc_zip_buffer_size=-1"
+                export PNETCDF_HINTS="nc_compression=enable;nc_zip_delay_init=1;nc_zip_driver=${ZIPDRIVER};nc_zip_buffer_size=0"
             fi
 
             STARTTIME=`date +%s.%N`
