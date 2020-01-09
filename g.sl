@@ -3,8 +3,8 @@
 #SBATCH -N 32
 #SBATCH -C haswell
 #SBATCH -t 00:15:00
-#SBATCH -o e3sm_g_32_nobreak_%j.txt
-#SBATCH -e e3sm_g_32_nobreak_%j.err
+#SBATCH -o e3sm_g_32_updated_%j.txt
+#SBATCH -e e3sm_g_32_updated_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -29,6 +29,7 @@ SRCDIR=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/src
 H0=${SRCDIR}/mpaso.hist.0001-01-01_00000.nc
 CONFIG=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
+APPS=(e3sm_io e3sm_io_prof)
 ZIPDRIVERS=(contig zlib)
 READS=(0 1)
 FILE=0
@@ -62,60 +63,64 @@ export PNETCDF_DEFAULT_CHUNK_DIM="nCells : 16384 ; nEdges : 16384 ; nVertices : 
 
 for i in ${RUNS[@]}
 do
-    for ZIPDRIVER in ${ZIPDRIVERS[@]}
-    do
-        OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
-        echo "rm -f ${OUTDIR}/*"
-        rm -f ${OUTDIR}/*
-    done
-
-    for READ in ${READS[@]}
+    for APP in ${APPS[@]}
     do
         for ZIPDRIVER in ${ZIPDRIVERS[@]}
         do
-            echo "========================== CHUNKED PROC WR =========================="
-            >&2 echo "========================== CHUNKED PROC WR =========================="
-            
             OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
+            echo "rm -f ${OUTDIR}/*"
+            rm -f ${OUTDIR}/*
+        done
 
-            echo "#%$: exp: e3sm"
-            echo "#%$: api: ncmpi"
-            echo "#%$: zip_driver: ${ZIPDRIVER}"
-            echo "#%$: delay_init: 0"
-            echo "#%$: nrec: ${NREC}"
-            echo "#%$: read: ${READ}"
-            echo "#%$: file: ${FILE}"
-            echo "#%$: case: ${CASE}"
-            echo "#%$: number_of_nodes: ${NN}"
-            echo "#%$: number_of_proc: ${NP}"
+        for READ in ${READS[@]}
+        do
+            for ZIPDRIVER in ${ZIPDRIVERS[@]}
+            do
+                echo "========================== CHUNKED PROC WR =========================="
+                >&2 echo "========================== CHUNKED PROC WR =========================="
+                
+                OUTDIR=${OUTDIR_ROOT}/${ZIPDRIVER}/
 
-            if [ "$ZIPDRIVER" = "zlib" ] ; then
-                export PNETCDF_HINTS="nc_compression=enable;nc_zip_delay_init=1;nc_zip_driver=${ZIPDRIVER};nc_zip_buffer_size=0"
-            fi
+                echo "#%$: exp: e3sm"
+                echo "#%$: app: ${APP}"
+                echo "#%$: api: ncmpi"
+                echo "#%$: zip_driver: ${ZIPDRIVER}"
+                echo "#%$: delay_init: 0"
+                echo "#%$: nrec: ${NREC}"
+                echo "#%$: read: ${READ}"
+                echo "#%$: file: ${FILE}"
+                echo "#%$: case: ${CASE}"
+                echo "#%$: number_of_nodes: ${NN}"
+                echo "#%$: number_of_proc: ${NP}"
 
-            STARTTIME=`date +%s.%N`
+                if [ "$ZIPDRIVER" = "zlib" ] ; then
+                    export PNETCDF_HINTS="nc_compression=enable;nc_zip_delay_init=1;nc_zip_driver=${ZIPDRIVER};nc_zip_buffer_size=0"
+                fi
 
-            if [ "$READ" = "1" ] ; then
-                echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}"
-                srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}
-            else 
-                echo "srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}"
-                srun -n ${NP} -t ${TL} ./e3sm_io -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}
-            fi
+                STARTTIME=`date +%s.%N`
 
-            ENDTIME=`date +%s.%N`
-            TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
+                if [ "$READ" = "1" ] ; then
+                    echo "srun -n ${NP} -t ${TL} ./${APP} -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}"
+                    srun -n ${NP} -t ${TL} ./${APP} -t ${NREC} -k -r -i ${OUTDIR} -c ${FILE} ${CONFIG}
+                else 
+                    echo "srun -n ${NP} -t ${TL} ./${APP} -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}"
+                    srun -n ${NP} -t ${TL} ./${APP} -t ${NREC} -k -r -i ${INDIR} -w -o ${OUTDIR} -c ${FILE} ${CONFIG}
+                fi
 
-            unset PNETCDF_HINTS
+                ENDTIME=`date +%s.%N`
+                TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
 
-            echo "#%$: exe_time: $TIMEDIFF"
+                unset PNETCDF_HINTS
 
-            echo "ls -lah ${OUTDIR}"
-            ls -lah ${OUTDIR}
-            echo "lfs getstripe ${OUTDIR}"
-            lfs getstripe ${OUTDIR}
+                echo "#%$: exe_time: $TIMEDIFF"
 
-            echo '-----+-----++------------+++++++++--+---'
+                echo "ls -lah ${OUTDIR}"
+                ls -lah ${OUTDIR}
+                echo "lfs getstripe ${OUTDIR}"
+                lfs getstripe ${OUTDIR}
+
+                echo '-----+-----++------------+++++++++--+---'
+            done
         done
     done
 done
