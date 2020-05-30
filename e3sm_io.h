@@ -20,6 +20,9 @@
 #error "PnetCDF 1.10.0 and later is required to build this program"
 #endif
 
+#define UNDER_API_PNC 0
+#define UNDER_API_HDF5 1
+
 #define MAX_NUM_DECOMP 6
 
 int verbose; /* verbose mode to print additional messages on screen */
