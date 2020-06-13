@@ -284,6 +284,156 @@ if test "x$have_pnc" = xno ; then
       -----------------------------------------------------------------------])
 fi
 
+enable_netcdf4=
+AC_ARG_ENABLE([netcdf4],
+   [AS_HELP_STRING([--enable-netcdf4],
+                   [Enable NetCDF-4 support. @<:@default: disabled@:>@])],
+   [enable_netcdf4=${enableval}]
+)
+
+NETCDF4_INSTALL=""
+netcdf_includedir=""
+netcdf4_libdir=""
+AC_ARG_WITH(netcdf4,
+   [AS_HELP_STRING([--with-netcdf4=/path/to/netcdf4],
+                   [installation path(s) of NetCDF-4 libraries:
+    --with-netcdf4=INC,LIB for include directory and library directory separated by a comma
+    --with-netcdf4=DIR for directory containing include/ and lib/ subdirectories
+   ])],[ dnl this clause is run when --with-netcdf4 or --without-netcdf4 is used
+   if test "x${withval}" != xyes && test "x${withval}" != xno ; then
+      NETCDF4_INSTALL=${withval}
+   fi
+   case $NETCDF4_INSTALL in
+     "") ;;
+     *,*)
+        netcdf_includedir="`echo $NETCDF4_INSTALL |cut -f1 -d,`"
+        netcdf4_libdir="`echo $NETCDF4_INSTALL |cut -f2 -d, -s`"
+        netcdf_bindir="$netcdf_includedir/../bin"
+        ;;
+     *)
+        netcdf_includedir="$NETCDF4_INSTALL/include"
+        netcdf4_libdir="$NETCDF4_INSTALL/lib"
+        netcdf_bindir="$NETCDF4_INSTALL/bin"
+        ;;
+   esac
+   ]
+)
+
+# check conflicted command-line options
+if test "x$enable_netcdf4" = xno && test "x$with_netcdf4" != x && test "x$with_netcdf4" != xno ; then
+   AC_MSG_ERROR([conflicted options used: --disable-netcdf4 and --with-netcdf4])
+elif test "x$enable_netcdf4" = xyes && test "x$with_netcdf4" = xno ; then
+   AC_MSG_ERROR([conflicted options used: --enable-netcdf4 and --without-netcdf4])
+elif test "x$enable_netcdf4" = x ; then
+   if test "x$with_netcdf4" = x || test "x$with_netcdf4" = xno ; then
+      enable_netcdf4=no
+   else
+      enable_netcdf4=yes
+   fi
+fi
+
+if test "x$enable_netcdf4" = xyes ; then
+   # check availability of nc-config only under $NETCDF4_INSTALL/bin
+   nc_config=
+   if test "x$NETCDF4_INSTALL" != x ; then
+      AC_PATH_PROG([nc_config],[nc-config],,[$netcdf_bindir])
+   else
+      dnl Check nc-config under $PATH
+      AC_PATH_PROG([nc_config],[nc-config])
+   fi
+   if test "x$nc_config" = !x ; then
+      netcdf_includedir=`$nc_config --includedir`
+      netcdf4_libdir=`$nc_config --libdir`
+   fi
+
+   if test "x$nc_config" != x ; then
+      dnl Check if NetCDF is built with HDF5 enabled
+      netcdf_has_hdf5=`$nc_config --has-hdf5`
+      if test "x$netcdf_has_hdf5" = xno ; then
+         AC_MSG_ERROR([
+         ------------------------------------------------------------
+         NetCDF-4 library is not built with HDF5 enabled, as indicated
+         by command '$nc_config --has-hdf5'. Stop
+         ------------------------------------------------------------])
+      fi
+      unset netcdf_has_hdf5
+   fi
+
+   dnl find out how NetCDF is configured.
+
+   if test "x$netcdf_includedir" != x ; then
+       CPPFLAGS="-I${netcdf_includedir} ${CPPFLAGS}"
+   fi
+   have_netcdf4=yes
+   AC_CHECK_HEADER([netcdf.h],      [], [have_netcdf4=no])
+   AC_CHECK_HEADERS([netcdf_meta.h],[], [have_netcdf4=no], [[#include <netcdf.h>]])
+   if test "x${have_netcdf4}" = xno; then
+      AC_MSG_ERROR([
+      ------------------------------------------------------------
+      Missing NetCDF-4 header files 'netcdf.h' or 'netcdf_meta.h'
+      required to build E3SM-IO with NetCDF-4 support. Use option
+          --with-netcdf4=/path/to/implementation
+      to specify the location of NetCDF-4 installation. In addition,
+      please make sure the MPI C compiler is compatible with the one
+      used to build NetCDF-4. Check 'config.log' for more information.
+      Stopping ...
+      ------------------------------------------------------------])
+   fi
+   AC_CHECK_HEADERS([netcdf_par.h],  [], [have_netcdf4=no], [[#include <netcdf.h>]])
+   if test "x${have_netcdf4}" = xno; then
+      AC_MSG_ERROR([
+      ------------------------------------------------------------
+      Missing NetCDF-4 header file 'netcdf_par.h' required by E3SM-IO.
+      The NetCDF-4 library must be built with parallel I/O and
+      NETCDF-4 support. Check 'config.log' for more information.
+      Stopping ...
+      ------------------------------------------------------------])
+   fi
+
+   dnl Check if NetCDF version is 4.6.2 or later
+   AC_MSG_CHECKING([whether NetCDF version is 4.6.2 or later])
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <netcdf_meta.h>
+#if (NC_VERSION_MAJOR*1000000 + NC_VERSION_MINOR*1000 + NC_VERSION_PATCH < 4006002)
+#error NetCDF version is older than 4.6.2
+#endif
+   ]])], [netcdf_ge_4_6_2=yes], [netcdf_ge_4_6_2=no])
+   AC_MSG_RESULT([$netcdf_ge_4_6_2])
+   if test x$netcdf_ge_4_6_2 = xno; then
+      AC_MSG_ERROR([NetCDF-4 library is not 4.6.2 or later])
+   fi
+
+   dnl Check if NetCDF is built with parallel I/O enabled
+
+   AC_MSG_CHECKING([whether NetCDF library is built with parallel I/O enabled])
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <netcdf_meta.h>
+#if !defined(NC_HAS_PARALLEL4) || NC_HAS_PARALLEL4 == 0
+#error NetCDF NC_HAS_PARALLEL4 is either not defined or defined to 0
+#endif
+   ]])], [netcdf_has_parallel4=yes], [netcdf_has_parallel4=no])
+   if test "x$netcdf_has_parallel4" = xno ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([NetCDF-4 library is not built with HDF5 parallel I/O enabled])
+   fi
+   AC_MSG_RESULT([yes])
+
+   if test "x$nc_config" != x ; then
+      netcdf_libs=`$nc_config --libs`
+   else
+      netcdf_libs="-lnetcdf"
+   fi
+
+   # Validate netcdf library
+   if test "x$netcdf4_libdir" != x ; then
+      LDFLAGS="-L$netcdf4_libdir $LDFLAGS"
+   fi
+   LIBS="$netcdf_libs $LIBS"
+   AC_SEARCH_LIBS([nc_open], [netcdf],,[AC_MSG_ERROR([Cannot find nc_open in NetCDF-4 library])])
+
+   AC_DEFINE([ENABLE_NETCDF4], [1], [Enable nc4 mode])
+fi
+
 if test "x$LIBS" = x ; then
 LIBS="-lpnetcdf"
 else
