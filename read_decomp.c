@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include <e3sm_io.h>
+#include <pnetcdf.h>
 
 struct off_len {
     int off;

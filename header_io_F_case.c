@@ -10,6 +10,7 @@
 #include <assert.h>
 
 #include <e3sm_io.h>
+#include <pnetcdf.h>
 
 #define INQ_VID(A, B, D, E, F, C) ncmpi_inq_varid(A, B, C)
 #define NOP(A, B, D, E, C) NC_NOERR

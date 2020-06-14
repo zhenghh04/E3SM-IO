@@ -433,6 +433,7 @@ if test "x$enable_netcdf4" = xyes ; then
 
    AC_DEFINE([ENABLE_NETCDF4], [1], [Enable nc4 mode])
 fi
+AM_CONDITIONAL([ENABLE_NETCDF4], [test x$enable_netcdf4 = xyes])
 
 if test "x$LIBS" = x ; then
 LIBS="-lpnetcdf"

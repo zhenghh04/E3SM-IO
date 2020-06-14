@@ -19,6 +19,7 @@
 #include <unistd.h> /* getopt() unlink() */
 
 #include <e3sm_io.h>
+#include <pnetcdf.h>
 
 #define FIX_1D_VAR_STARTS_COUNTS(starts, counts, nreqs, disps, blocklens) { \
     starts = (MPI_Offset**) malloc(2 * nreqs * sizeof(MPI_Offset*)); \

@@ -18,6 +18,7 @@
 #include <unistd.h> /* unlink() */
 
 #include <e3sm_io.h>
+#include <pnetcdf.h>
 
 /*----< write_small_vars_F_case() >------------------------------------------*/
 static int
