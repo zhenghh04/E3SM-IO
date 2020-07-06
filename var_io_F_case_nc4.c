@@ -665,14 +665,14 @@ int run_varn_F_case_nc4 (
         txt_buf_ptr = txt_buf;
 
         /* next 27 small variables are written by rank 0 only */
-        if (rank == 0) {
+        //if (rank == 0) {
             my_nreqs += 27;
             /* post nonblocking requests using nc_put_varn() */
             err = write_small_vars_F_case_nc4 (ncid, i, varids, rec_no, gap, dims[2][0],
                                                dims[2][0] + 1, 2, 8, &int_buf_ptr, &txt_buf_ptr,
                                                &dbl_buf_ptr);
             NC4ERR
-        }
+        //}
         i += 27;
 
         post_timing += MPI_Wtime () - timing;
@@ -1102,14 +1102,14 @@ int run_varn_F_case_rd_nc4 (
         txt_buf_ptr = txt_buf;
 
         /* next 27 small variables are written by rank 0 only */
-        if (rank == 0) {
+        //if (rank == 0) {
             my_nreqs += 27;
             /* post nonblocking requests using nc_put_varn() */
             err = read_small_vars_F_case_nc4 (ncid, i, varids, rec_no, gap, dims[2][0],
                                               dims[2][0] + 1, 2, 8, &int_buf_ptr, &txt_buf_ptr,
                                               &dbl_buf_ptr);
             NC4ERR
-        }
+        //}
         i += 27;
 
         post_timing += MPI_Wtime () - timing;

@@ -16,6 +16,14 @@
 #define NOP(A, B, D, E, C)        NC_NOERR
 #define NOP2(A, B, D, E, F, C)    NC_NOERR
 
+#define NC4_DEF_VAR(A, B, C, D, E, F)                                            \
+    ({                                                                           \
+        int ret;                                                                 \
+        ret = nc_def_var (A, B, C, D, E, F);                                     \
+        if (ret == NC_NOERR) { ret = nc_var_par_access (A, *F, NC_COLLECTIVE); } \
+        ret;                                                                     \
+    })
+
 /*----< def_F_case_h0() >----------------------------------------------------*/
 int def_F_case_h0_nc4 (int ncid,             /* file ID */
                        const size_t dims[2], /* dimension sizes */
@@ -124,7 +132,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     /* define variables */
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "lat", NC_DOUBLE, 1, dimids, &lat);
+    err       = NC4_DEF_VAR (ncid, "lat", NC_DOUBLE, 1, dimids, &lat);
     NC4ERR
     err = nc_put_att_text (ncid, lat, "long_name", 8, "latitude");
     NC4ERR
@@ -133,7 +141,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = lat;
 
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "lon", NC_DOUBLE, 1, dimids, &lon);
+    err       = NC4_DEF_VAR (ncid, "lon", NC_DOUBLE, 1, dimids, &lon);
     NC4ERR
     err = nc_put_att_text (ncid, lon, "long_name", 9, "longitude");
     NC4ERR
@@ -142,14 +150,14 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = lon;
 
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "area", NC_DOUBLE, 1, dimids, &area);
+    err       = NC4_DEF_VAR (ncid, "area", NC_DOUBLE, 1, dimids, &area);
     NC4ERR
     err = nc_put_att_text (ncid, area, "long_name", 14, "gll grid areas");
     NC4ERR
     varids[i++] = area;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "lev", NC_DOUBLE, 1, dimids, &lev);
+    err       = NC4_DEF_VAR (ncid, "lev", NC_DOUBLE, 1, dimids, &lev);
     NC4ERR
     err = nc_put_att_text (ncid, lev, "long_name", 38, "hybrid level at midpoints (1000*(A+B))");
     NC4ERR
@@ -165,21 +173,21 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = lev;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "hyam", NC_DOUBLE, 1, dimids, &hyam);
+    err       = NC4_DEF_VAR (ncid, "hyam", NC_DOUBLE, 1, dimids, &hyam);
     NC4ERR
     err = nc_put_att_text (ncid, hyam, "long_name", 39, "hybrid A coefficient at layer midpoints");
     NC4ERR
     varids[i++] = hyam;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "hybm", NC_DOUBLE, 1, dimids, &hybm);
+    err       = NC4_DEF_VAR (ncid, "hybm", NC_DOUBLE, 1, dimids, &hybm);
     NC4ERR
     err = nc_put_att_text (ncid, hybm, "long_name", 39, "hybrid B coefficient at layer midpoints");
     NC4ERR
     varids[i++] = hybm;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "P0", NC_DOUBLE, 0, NULL, &P0);
+    err       = NC4_DEF_VAR (ncid, "P0", NC_DOUBLE, 0, NULL, &P0);
     NC4ERR
     err = nc_put_att_text (ncid, P0, "long_name", 18, "reference pressure");
     NC4ERR
@@ -188,7 +196,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = P0;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "ilev", NC_DOUBLE, 1, dimids, &ilev);
+    err       = NC4_DEF_VAR (ncid, "ilev", NC_DOUBLE, 1, dimids, &ilev);
     NC4ERR
     err = nc_put_att_text (ncid, ilev, "long_name", 39, "hybrid level at interfaces (1000*(A+B))");
     NC4ERR
@@ -204,21 +212,21 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = ilev;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "hyai", NC_DOUBLE, 1, dimids, &hyai);
+    err       = NC4_DEF_VAR (ncid, "hyai", NC_DOUBLE, 1, dimids, &hyai);
     NC4ERR
     err = nc_put_att_text (ncid, hyai, "long_name", 40, "hybrid A coefficient at layer interfaces");
     NC4ERR
     varids[i++] = hyai;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "hybi", NC_DOUBLE, 1, dimids, &hybi);
+    err       = NC4_DEF_VAR (ncid, "hybi", NC_DOUBLE, 1, dimids, &hybi);
     NC4ERR
     err = nc_put_att_text (ncid, hybi, "long_name", 40, "hybrid B coefficient at layer interfaces");
     NC4ERR
     varids[i++] = hybi;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "time", NC_DOUBLE, 1, dimids, &time);
+    err       = NC4_DEF_VAR (ncid, "time", NC_DOUBLE, 1, dimids, &time);
     NC4ERR
     err = nc_put_att_text (ncid, time, "long_name", 4, "time");
     NC4ERR
@@ -231,14 +239,14 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = time;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "date", NC_INT, 1, dimids, &date);
+    err       = NC4_DEF_VAR (ncid, "date", NC_INT, 1, dimids, &date);
     NC4ERR
     err = nc_put_att_text (ncid, date, "long_name", 23, "current date (YYYYMMDD)");
     NC4ERR
     varids[i++] = date;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "datesec", NC_INT, 1, dimids, &datesec);
+    err       = NC4_DEF_VAR (ncid, "datesec", NC_INT, 1, dimids, &datesec);
     NC4ERR
     err = nc_put_att_text (ncid, datesec, "long_name", 31, "current seconds of current date");
     NC4ERR
@@ -246,7 +254,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_nbnd;
-    err       = nc_def_var (ncid, "time_bnds", NC_DOUBLE, 2, dimids, &time_bnds);
+    err       = NC4_DEF_VAR (ncid, "time_bnds", NC_DOUBLE, 2, dimids, &time_bnds);
     NC4ERR
     err = nc_put_att_text (ncid, time_bnds, "long_name", 23, "time interval endpoints");
     NC4ERR
@@ -254,40 +262,40 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_chars;
-    err       = nc_def_var (ncid, "date_written", NC_CHAR, 2, dimids, &date_written);
+    err       = NC4_DEF_VAR (ncid, "date_written", NC_CHAR, 2, dimids, &date_written);
     NC4ERR
     varids[i++] = date_written;
 
     dimids[0] = dim_time;
     dimids[1] = dim_chars;
-    err       = nc_def_var (ncid, "time_written", NC_CHAR, 2, dimids, &time_written);
+    err       = NC4_DEF_VAR (ncid, "time_written", NC_CHAR, 2, dimids, &time_written);
     NC4ERR
     varids[i++] = time_written;
 
-    err = nc_def_var (ncid, "ndbase", NC_INT, 0, NULL, &ndbase);
+    err = NC4_DEF_VAR (ncid, "ndbase", NC_INT, 0, NULL, &ndbase);
     NC4ERR
     err = nc_put_att_text (ncid, ndbase, "long_name", 8, "base day");
     NC4ERR
     varids[i++] = ndbase;
-    err         = nc_def_var (ncid, "nsbase", NC_INT, 0, NULL, &nsbase);
+    err         = NC4_DEF_VAR (ncid, "nsbase", NC_INT, 0, NULL, &nsbase);
     NC4ERR
     err = nc_put_att_text (ncid, nsbase, "long_name", 19, "seconds of base day");
     NC4ERR
     varids[i++] = nsbase;
 
-    err = nc_def_var (ncid, "nbdate", NC_INT, 0, NULL, &nbdate);
+    err = NC4_DEF_VAR (ncid, "nbdate", NC_INT, 0, NULL, &nbdate);
     NC4ERR
     err = nc_put_att_text (ncid, nbdate, "long_name", 20, "base date (YYYYMMDD)");
     NC4ERR
     varids[i++] = nbdate;
 
-    err = nc_def_var (ncid, "nbsec", NC_INT, 0, NULL, &nbsec);
+    err = NC4_DEF_VAR (ncid, "nbsec", NC_INT, 0, NULL, &nbsec);
     NC4ERR
     err = nc_put_att_text (ncid, nbsec, "long_name", 20, "seconds of base date");
     NC4ERR
     varids[i++] = nbsec;
 
-    err = nc_def_var (ncid, "mdt", NC_INT, 0, NULL, &mdt);
+    err = NC4_DEF_VAR (ncid, "mdt", NC_INT, 0, NULL, &mdt);
     NC4ERR
     err = nc_put_att_text (ncid, mdt, "long_name", 8, "timestep");
     NC4ERR
@@ -296,56 +304,56 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = mdt;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "ndcur", NC_INT, 1, dimids, &ndcur);
+    err       = NC4_DEF_VAR (ncid, "ndcur", NC_INT, 1, dimids, &ndcur);
     NC4ERR
     err = nc_put_att_text (ncid, ndcur, "long_name", 27, "current day (from base day)");
     NC4ERR
     varids[i++] = ndcur;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "nscur", NC_INT, 1, dimids, &nscur);
+    err       = NC4_DEF_VAR (ncid, "nscur", NC_INT, 1, dimids, &nscur);
     NC4ERR
     err = nc_put_att_text (ncid, nscur, "long_name", 30, "current seconds of current day");
     NC4ERR
     varids[i++] = nscur;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "co2vmr", NC_DOUBLE, 1, dimids, &co2vmr);
+    err       = NC4_DEF_VAR (ncid, "co2vmr", NC_DOUBLE, 1, dimids, &co2vmr);
     NC4ERR
     err = nc_put_att_text (ncid, co2vmr, "long_name", 23, "co2 volume mixing ratio");
     NC4ERR
     varids[i++] = co2vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "ch4vmr", NC_DOUBLE, 1, dimids, &ch4vmr);
+    err       = NC4_DEF_VAR (ncid, "ch4vmr", NC_DOUBLE, 1, dimids, &ch4vmr);
     NC4ERR
     err = nc_put_att_text (ncid, ch4vmr, "long_name", 23, "ch4 volume mixing ratio");
     NC4ERR
     varids[i++] = ch4vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "n2ovmr", NC_DOUBLE, 1, dimids, &n2ovmr);
+    err       = NC4_DEF_VAR (ncid, "n2ovmr", NC_DOUBLE, 1, dimids, &n2ovmr);
     NC4ERR
     err = nc_put_att_text (ncid, n2ovmr, "long_name", 23, "n2o volume mixing ratio");
     NC4ERR
     varids[i++] = n2ovmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "f11vmr", NC_DOUBLE, 1, dimids, &f11vmr);
+    err       = NC4_DEF_VAR (ncid, "f11vmr", NC_DOUBLE, 1, dimids, &f11vmr);
     NC4ERR
     err = nc_put_att_text (ncid, f11vmr, "long_name", 23, "f11 volume mixing ratio");
     NC4ERR
     varids[i++] = f11vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "f12vmr", NC_DOUBLE, 1, dimids, &f12vmr);
+    err       = NC4_DEF_VAR (ncid, "f12vmr", NC_DOUBLE, 1, dimids, &f12vmr);
     NC4ERR
     err = nc_put_att_text (ncid, f12vmr, "long_name", 23, "f12 volume mixing ratio");
     NC4ERR
     varids[i++] = f12vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "sol_tsi", NC_DOUBLE, 1, dimids, &sol_tsi);
+    err       = NC4_DEF_VAR (ncid, "sol_tsi", NC_DOUBLE, 1, dimids, &sol_tsi);
     NC4ERR
     err = nc_put_att_text (ncid, sol_tsi, "long_name", 22, "total solar irradiance");
     NC4ERR
@@ -354,7 +362,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     varids[i++] = sol_tsi;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "nsteph", NC_INT, 1, dimids, &nsteph);
+    err       = NC4_DEF_VAR (ncid, "nsteph", NC_INT, 1, dimids, &nsteph);
     NC4ERR
     err = nc_put_att_text (ncid, nsteph, "long_name", 16, "current timestep");
     NC4ERR
@@ -362,7 +370,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AEROD_v", NC_FLOAT, 2, dimids, &AEROD_v);
+    err       = NC4_DEF_VAR (ncid, "AEROD_v", NC_FLOAT, 2, dimids, &AEROD_v);
     NC4ERR
     err = nc_put_att_float (ncid, AEROD_v, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -380,7 +388,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "ANRAIN", NC_FLOAT, 3, dimids, &ANRAIN);
+    err       = NC4_DEF_VAR (ncid, "ANRAIN", NC_FLOAT, 3, dimids, &ANRAIN);
     NC4ERR
     err = nc_put_att_int (ncid, ANRAIN, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -395,7 +403,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "ANSNOW", NC_FLOAT, 3, dimids, &ANSNOW);
+    err       = NC4_DEF_VAR (ncid, "ANSNOW", NC_FLOAT, 3, dimids, &ANSNOW);
     NC4ERR
     err = nc_put_att_int (ncid, ANSNOW, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -409,7 +417,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODABS", NC_FLOAT, 2, dimids, &AODABS);
+    err       = NC4_DEF_VAR (ncid, "AODABS", NC_FLOAT, 2, dimids, &AODABS);
     NC4ERR
     err = nc_put_att_float (ncid, AODABS, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -424,7 +432,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODABSBC", NC_FLOAT, 2, dimids, &AODABSBC);
+    err       = NC4_DEF_VAR (ncid, "AODABSBC", NC_FLOAT, 2, dimids, &AODABSBC);
     NC4ERR
     err = nc_put_att_float (ncid, AODABSBC, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -439,7 +447,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODBC", NC_FLOAT, 2, dimids, &AODBC);
+    err       = NC4_DEF_VAR (ncid, "AODBC", NC_FLOAT, 2, dimids, &AODBC);
     NC4ERR
     err = nc_put_att_float (ncid, AODBC, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -453,7 +461,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODDUST", NC_FLOAT, 2, dimids, &AODDUST);
+    err       = NC4_DEF_VAR (ncid, "AODDUST", NC_FLOAT, 2, dimids, &AODDUST);
     NC4ERR
     err = nc_put_att_float (ncid, AODDUST, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -468,7 +476,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODDUST1", NC_FLOAT, 2, dimids, &AODDUST1);
+    err       = NC4_DEF_VAR (ncid, "AODDUST1", NC_FLOAT, 2, dimids, &AODDUST1);
     NC4ERR
     err = nc_put_att_float (ncid, AODDUST1, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -483,7 +491,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODDUST3", NC_FLOAT, 2, dimids, &AODDUST3);
+    err       = NC4_DEF_VAR (ncid, "AODDUST3", NC_FLOAT, 2, dimids, &AODDUST3);
     NC4ERR
     err = nc_put_att_float (ncid, AODDUST3, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -498,7 +506,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODDUST4", NC_FLOAT, 2, dimids, &AODDUST4);
+    err       = NC4_DEF_VAR (ncid, "AODDUST4", NC_FLOAT, 2, dimids, &AODDUST4);
     NC4ERR
     err = nc_put_att_float (ncid, AODDUST4, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -513,7 +521,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODMODE1", NC_FLOAT, 2, dimids, &AODMODE1);
+    err       = NC4_DEF_VAR (ncid, "AODMODE1", NC_FLOAT, 2, dimids, &AODMODE1);
     NC4ERR
     err = nc_put_att_float (ncid, AODMODE1, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -527,7 +535,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODMODE2", NC_FLOAT, 2, dimids, &AODMODE2);
+    err       = NC4_DEF_VAR (ncid, "AODMODE2", NC_FLOAT, 2, dimids, &AODMODE2);
     NC4ERR
     err = nc_put_att_float (ncid, AODMODE2, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -541,7 +549,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODMODE3", NC_FLOAT, 2, dimids, &AODMODE3);
+    err       = NC4_DEF_VAR (ncid, "AODMODE3", NC_FLOAT, 2, dimids, &AODMODE3);
     NC4ERR
     err = nc_put_att_float (ncid, AODMODE3, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -555,7 +563,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODMODE4", NC_FLOAT, 2, dimids, &AODMODE4);
+    err       = NC4_DEF_VAR (ncid, "AODMODE4", NC_FLOAT, 2, dimids, &AODMODE4);
     NC4ERR
     err = nc_put_att_float (ncid, AODMODE4, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -569,7 +577,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODNIR", NC_FLOAT, 2, dimids, &AODNIR);
+    err       = NC4_DEF_VAR (ncid, "AODNIR", NC_FLOAT, 2, dimids, &AODNIR);
     NC4ERR
     err = nc_put_att_float (ncid, AODNIR, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -583,7 +591,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODPOM", NC_FLOAT, 2, dimids, &AODPOM);
+    err       = NC4_DEF_VAR (ncid, "AODPOM", NC_FLOAT, 2, dimids, &AODPOM);
     NC4ERR
     err = nc_put_att_float (ncid, AODPOM, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -597,7 +605,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODSO4", NC_FLOAT, 2, dimids, &AODSO4);
+    err       = NC4_DEF_VAR (ncid, "AODSO4", NC_FLOAT, 2, dimids, &AODSO4);
     NC4ERR
     err = nc_put_att_float (ncid, AODSO4, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -611,7 +619,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODSOA", NC_FLOAT, 2, dimids, &AODSOA);
+    err       = NC4_DEF_VAR (ncid, "AODSOA", NC_FLOAT, 2, dimids, &AODSOA);
     NC4ERR
     err = nc_put_att_float (ncid, AODSOA, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -625,7 +633,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODSS", NC_FLOAT, 2, dimids, &AODSS);
+    err       = NC4_DEF_VAR (ncid, "AODSS", NC_FLOAT, 2, dimids, &AODSS);
     NC4ERR
     err = nc_put_att_float (ncid, AODSS, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -640,7 +648,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODUV", NC_FLOAT, 2, dimids, &AODUV);
+    err       = NC4_DEF_VAR (ncid, "AODUV", NC_FLOAT, 2, dimids, &AODUV);
     NC4ERR
     err = nc_put_att_float (ncid, AODUV, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -654,7 +662,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AODVIS", NC_FLOAT, 2, dimids, &AODVIS);
+    err       = NC4_DEF_VAR (ncid, "AODVIS", NC_FLOAT, 2, dimids, &AODVIS);
     NC4ERR
     err = nc_put_att_float (ncid, AODVIS, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -669,7 +677,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AQRAIN", NC_FLOAT, 3, dimids, &AQRAIN);
+    err       = NC4_DEF_VAR (ncid, "AQRAIN", NC_FLOAT, 3, dimids, &AQRAIN);
     NC4ERR
     err = nc_put_att_int (ncid, AQRAIN, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -684,7 +692,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AQSNOW", NC_FLOAT, 3, dimids, &AQSNOW);
+    err       = NC4_DEF_VAR (ncid, "AQSNOW", NC_FLOAT, 3, dimids, &AQSNOW);
     NC4ERR
     err = nc_put_att_int (ncid, AQSNOW, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -698,7 +706,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_DMS", NC_FLOAT, 2, dimids, &AQ_DMS);
+    err       = NC4_DEF_VAR (ncid, "AQ_DMS", NC_FLOAT, 2, dimids, &AQ_DMS);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_DMS, "units", 7, "kg/m2/s");
     NC4ERR
@@ -711,7 +719,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_H2O2", NC_FLOAT, 2, dimids, &AQ_H2O2);
+    err       = NC4_DEF_VAR (ncid, "AQ_H2O2", NC_FLOAT, 2, dimids, &AQ_H2O2);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_H2O2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -724,7 +732,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_H2SO4", NC_FLOAT, 2, dimids, &AQ_H2SO4);
+    err       = NC4_DEF_VAR (ncid, "AQ_H2SO4", NC_FLOAT, 2, dimids, &AQ_H2SO4);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_H2SO4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -737,7 +745,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_O3", NC_FLOAT, 2, dimids, &AQ_O3);
+    err       = NC4_DEF_VAR (ncid, "AQ_O3", NC_FLOAT, 2, dimids, &AQ_O3);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_O3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -749,7 +757,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_SO2", NC_FLOAT, 2, dimids, &AQ_SO2);
+    err       = NC4_DEF_VAR (ncid, "AQ_SO2", NC_FLOAT, 2, dimids, &AQ_SO2);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_SO2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -762,7 +770,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "AQ_SOAG", NC_FLOAT, 2, dimids, &AQ_SOAG);
+    err       = NC4_DEF_VAR (ncid, "AQ_SOAG", NC_FLOAT, 2, dimids, &AQ_SOAG);
     NC4ERR
     err = nc_put_att_text (ncid, AQ_SOAG, "units", 7, "kg/m2/s");
     NC4ERR
@@ -776,7 +784,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AREI", NC_FLOAT, 3, dimids, &AREI);
+    err       = NC4_DEF_VAR (ncid, "AREI", NC_FLOAT, 3, dimids, &AREI);
     NC4ERR
     err = nc_put_att_int (ncid, AREI, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -791,7 +799,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AREL", NC_FLOAT, 3, dimids, &AREL);
+    err       = NC4_DEF_VAR (ncid, "AREL", NC_FLOAT, 3, dimids, &AREL);
     NC4ERR
     err = nc_put_att_int (ncid, AREL, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -806,7 +814,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AWNC", NC_FLOAT, 3, dimids, &AWNC);
+    err       = NC4_DEF_VAR (ncid, "AWNC", NC_FLOAT, 3, dimids, &AWNC);
     NC4ERR
     err = nc_put_att_int (ncid, AWNC, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -821,7 +829,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "AWNI", NC_FLOAT, 3, dimids, &AWNI);
+    err       = NC4_DEF_VAR (ncid, "AWNI", NC_FLOAT, 3, dimids, &AWNI);
     NC4ERR
     err = nc_put_att_int (ncid, AWNI, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -836,7 +844,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CCN3", NC_FLOAT, 3, dimids, &CCN3);
+    err       = NC4_DEF_VAR (ncid, "CCN3", NC_FLOAT, 3, dimids, &CCN3);
     NC4ERR
     err = nc_put_att_int (ncid, CCN3, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -850,7 +858,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CDNUMC", NC_FLOAT, 2, dimids, &CDNUMC);
+    err       = NC4_DEF_VAR (ncid, "CDNUMC", NC_FLOAT, 2, dimids, &CDNUMC);
     NC4ERR
     err = nc_put_att_text (ncid, CDNUMC, "units", 4, "1/m2");
     NC4ERR
@@ -863,7 +871,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDHGH", NC_FLOAT, 2, dimids, &CLDHGH);
+    err       = NC4_DEF_VAR (ncid, "CLDHGH", NC_FLOAT, 2, dimids, &CLDHGH);
     NC4ERR
     err = nc_put_att_text (ncid, CLDHGH, "units", 8, "fraction");
     NC4ERR
@@ -876,7 +884,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDICE", NC_FLOAT, 3, dimids, &CLDICE);
+    err       = NC4_DEF_VAR (ncid, "CLDICE", NC_FLOAT, 3, dimids, &CLDICE);
     NC4ERR
     err = nc_put_att_int (ncid, CLDICE, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -891,7 +899,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDLIQ", NC_FLOAT, 3, dimids, &CLDLIQ);
+    err       = NC4_DEF_VAR (ncid, "CLDLIQ", NC_FLOAT, 3, dimids, &CLDLIQ);
     NC4ERR
     err = nc_put_att_int (ncid, CLDLIQ, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -905,7 +913,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDLOW", NC_FLOAT, 2, dimids, &CLDLOW);
+    err       = NC4_DEF_VAR (ncid, "CLDLOW", NC_FLOAT, 2, dimids, &CLDLOW);
     NC4ERR
     err = nc_put_att_text (ncid, CLDLOW, "units", 8, "fraction");
     NC4ERR
@@ -917,7 +925,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDMED", NC_FLOAT, 2, dimids, &CLDMED);
+    err       = NC4_DEF_VAR (ncid, "CLDMED", NC_FLOAT, 2, dimids, &CLDMED);
     NC4ERR
     err = nc_put_att_text (ncid, CLDMED, "units", 8, "fraction");
     NC4ERR
@@ -929,7 +937,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDTOT", NC_FLOAT, 2, dimids, &CLDTOT);
+    err       = NC4_DEF_VAR (ncid, "CLDTOT", NC_FLOAT, 2, dimids, &CLDTOT);
     NC4ERR
     err = nc_put_att_text (ncid, CLDTOT, "units", 8, "fraction");
     NC4ERR
@@ -942,7 +950,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CLOUD", NC_FLOAT, 3, dimids, &CLOUD);
+    err       = NC4_DEF_VAR (ncid, "CLOUD", NC_FLOAT, 3, dimids, &CLOUD);
     NC4ERR
     err = nc_put_att_int (ncid, CLOUD, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -957,7 +965,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CLOUDFRAC_CLUBB", NC_FLOAT, 3, dimids, &CLOUDFRAC_CLUBB);
+    err       = NC4_DEF_VAR (ncid, "CLOUDFRAC_CLUBB", NC_FLOAT, 3, dimids, &CLOUDFRAC_CLUBB);
     NC4ERR
     err = nc_put_att_int (ncid, CLOUDFRAC_CLUBB, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -972,7 +980,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "CONCLD", NC_FLOAT, 3, dimids, &CONCLD);
+    err       = NC4_DEF_VAR (ncid, "CONCLD", NC_FLOAT, 3, dimids, &CONCLD);
     NC4ERR
     err = nc_put_att_int (ncid, CONCLD, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -987,7 +995,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "DCQ", NC_FLOAT, 3, dimids, &DCQ);
+    err       = NC4_DEF_VAR (ncid, "DCQ", NC_FLOAT, 3, dimids, &DCQ);
     NC4ERR
     err = nc_put_att_int (ncid, DCQ, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1001,7 +1009,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_DMS", NC_FLOAT, 2, dimids, &DF_DMS);
+    err       = NC4_DEF_VAR (ncid, "DF_DMS", NC_FLOAT, 2, dimids, &DF_DMS);
     NC4ERR
     err = nc_put_att_text (ncid, DF_DMS, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1013,7 +1021,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_H2O2", NC_FLOAT, 2, dimids, &DF_H2O2);
+    err       = NC4_DEF_VAR (ncid, "DF_H2O2", NC_FLOAT, 2, dimids, &DF_H2O2);
     NC4ERR
     err = nc_put_att_text (ncid, DF_H2O2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1025,7 +1033,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_H2SO4", NC_FLOAT, 2, dimids, &DF_H2SO4);
+    err       = NC4_DEF_VAR (ncid, "DF_H2SO4", NC_FLOAT, 2, dimids, &DF_H2SO4);
     NC4ERR
     err = nc_put_att_text (ncid, DF_H2SO4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1037,7 +1045,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_O3", NC_FLOAT, 2, dimids, &DF_O3);
+    err       = NC4_DEF_VAR (ncid, "DF_O3", NC_FLOAT, 2, dimids, &DF_O3);
     NC4ERR
     err = nc_put_att_text (ncid, DF_O3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1049,7 +1057,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_SO2", NC_FLOAT, 2, dimids, &DF_SO2);
+    err       = NC4_DEF_VAR (ncid, "DF_SO2", NC_FLOAT, 2, dimids, &DF_SO2);
     NC4ERR
     err = nc_put_att_text (ncid, DF_SO2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1061,7 +1069,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DF_SOAG", NC_FLOAT, 2, dimids, &DF_SOAG);
+    err       = NC4_DEF_VAR (ncid, "DF_SOAG", NC_FLOAT, 2, dimids, &DF_SOAG);
     NC4ERR
     err = nc_put_att_text (ncid, DF_SOAG, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1073,7 +1081,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DMS_SRF", NC_FLOAT, 2, dimids, &DMS_SRF);
+    err       = NC4_DEF_VAR (ncid, "DMS_SRF", NC_FLOAT, 2, dimids, &DMS_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, DMS_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -1085,7 +1093,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DP_KCLDBASE", NC_FLOAT, 2, dimids, &DP_KCLDBASE);
+    err       = NC4_DEF_VAR (ncid, "DP_KCLDBASE", NC_FLOAT, 2, dimids, &DP_KCLDBASE);
     NC4ERR
     err = nc_put_att_text (ncid, DP_KCLDBASE, "units", 1, "1");
     NC4ERR
@@ -1097,7 +1105,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DP_MFUP_MAX", NC_FLOAT, 2, dimids, &DP_MFUP_MAX);
+    err       = NC4_DEF_VAR (ncid, "DP_MFUP_MAX", NC_FLOAT, 2, dimids, &DP_MFUP_MAX);
     NC4ERR
     err = nc_put_att_text (ncid, DP_MFUP_MAX, "units", 5, "kg/m2");
     NC4ERR
@@ -1110,7 +1118,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DP_WCLDBASE", NC_FLOAT, 2, dimids, &DP_WCLDBASE);
+    err       = NC4_DEF_VAR (ncid, "DP_WCLDBASE", NC_FLOAT, 2, dimids, &DP_WCLDBASE);
     NC4ERR
     err = nc_put_att_text (ncid, DP_WCLDBASE, "units", 3, "m/s");
     NC4ERR
@@ -1123,7 +1131,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DSTSFMBL", NC_FLOAT, 2, dimids, &DSTSFMBL);
+    err       = NC4_DEF_VAR (ncid, "DSTSFMBL", NC_FLOAT, 2, dimids, &DSTSFMBL);
     NC4ERR
     err = nc_put_att_text (ncid, DSTSFMBL, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1136,7 +1144,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "DTCOND", NC_FLOAT, 3, dimids, &DTCOND);
+    err       = NC4_DEF_VAR (ncid, "DTCOND", NC_FLOAT, 3, dimids, &DTCOND);
     NC4ERR
     err = nc_put_att_int (ncid, DTCOND, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1150,7 +1158,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DTENDTH", NC_FLOAT, 2, dimids, &DTENDTH);
+    err       = NC4_DEF_VAR (ncid, "DTENDTH", NC_FLOAT, 2, dimids, &DTENDTH);
     NC4ERR
     err = nc_put_att_text (ncid, DTENDTH, "units", 4, "W/m2");
     NC4ERR
@@ -1163,7 +1171,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "DTENDTQ", NC_FLOAT, 2, dimids, &DTENDTQ);
+    err       = NC4_DEF_VAR (ncid, "DTENDTQ", NC_FLOAT, 2, dimids, &DTENDTQ);
     NC4ERR
     err = nc_put_att_text (ncid, DTENDTQ, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1177,7 +1185,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "EXTINCT", NC_FLOAT, 3, dimids, &EXTINCT);
+    err       = NC4_DEF_VAR (ncid, "EXTINCT", NC_FLOAT, 3, dimids, &EXTINCT);
     NC4ERR
     err = nc_put_att_int (ncid, EXTINCT, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1196,7 +1204,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "FICE", NC_FLOAT, 3, dimids, &FICE);
+    err       = NC4_DEF_VAR (ncid, "FICE", NC_FLOAT, 3, dimids, &FICE);
     NC4ERR
     err = nc_put_att_int (ncid, FICE, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1210,7 +1218,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLDS", NC_FLOAT, 2, dimids, &FLDS);
+    err       = NC4_DEF_VAR (ncid, "FLDS", NC_FLOAT, 2, dimids, &FLDS);
     NC4ERR
     err = nc_put_att_text (ncid, FLDS, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1224,7 +1232,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLNS", NC_FLOAT, 2, dimids, &FLNS);
+    err       = NC4_DEF_VAR (ncid, "FLNS", NC_FLOAT, 2, dimids, &FLNS);
     NC4ERR
     err = nc_put_att_text (ncid, FLNS, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1238,7 +1246,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLNSC", NC_FLOAT, 2, dimids, &FLNSC);
+    err       = NC4_DEF_VAR (ncid, "FLNSC", NC_FLOAT, 2, dimids, &FLNSC);
     NC4ERR
     err = nc_put_att_text (ncid, FLNSC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1252,7 +1260,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLNT", NC_FLOAT, 2, dimids, &FLNT);
+    err       = NC4_DEF_VAR (ncid, "FLNT", NC_FLOAT, 2, dimids, &FLNT);
     NC4ERR
     err = nc_put_att_text (ncid, FLNT, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1266,7 +1274,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLNTC", NC_FLOAT, 2, dimids, &FLNTC);
+    err       = NC4_DEF_VAR (ncid, "FLNTC", NC_FLOAT, 2, dimids, &FLNTC);
     NC4ERR
     err = nc_put_att_text (ncid, FLNTC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1281,7 +1289,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLUT", NC_FLOAT, 2, dimids, &FLUT);
+    err       = NC4_DEF_VAR (ncid, "FLUT", NC_FLOAT, 2, dimids, &FLUT);
     NC4ERR
     err = nc_put_att_text (ncid, FLUT, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1295,7 +1303,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLUTC", NC_FLOAT, 2, dimids, &FLUTC);
+    err       = NC4_DEF_VAR (ncid, "FLUTC", NC_FLOAT, 2, dimids, &FLUTC);
     NC4ERR
     err = nc_put_att_text (ncid, FLUTC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1311,7 +1319,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "FREQI", NC_FLOAT, 3, dimids, &FREQI);
+    err       = NC4_DEF_VAR (ncid, "FREQI", NC_FLOAT, 3, dimids, &FREQI);
     NC4ERR
     err = nc_put_att_int (ncid, FREQI, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1326,7 +1334,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "FREQL", NC_FLOAT, 3, dimids, &FREQL);
+    err       = NC4_DEF_VAR (ncid, "FREQL", NC_FLOAT, 3, dimids, &FREQL);
     NC4ERR
     err = nc_put_att_int (ncid, FREQL, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1341,7 +1349,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "FREQR", NC_FLOAT, 3, dimids, &FREQR);
+    err       = NC4_DEF_VAR (ncid, "FREQR", NC_FLOAT, 3, dimids, &FREQR);
     NC4ERR
     err = nc_put_att_int (ncid, FREQR, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1356,7 +1364,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "FREQS", NC_FLOAT, 3, dimids, &FREQS);
+    err       = NC4_DEF_VAR (ncid, "FREQS", NC_FLOAT, 3, dimids, &FREQS);
     NC4ERR
     err = nc_put_att_int (ncid, FREQS, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1370,7 +1378,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSDS", NC_FLOAT, 2, dimids, &FSDS);
+    err       = NC4_DEF_VAR (ncid, "FSDS", NC_FLOAT, 2, dimids, &FSDS);
     NC4ERR
     err = nc_put_att_text (ncid, FSDS, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1384,7 +1392,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSDSC", NC_FLOAT, 2, dimids, &FSDSC);
+    err       = NC4_DEF_VAR (ncid, "FSDSC", NC_FLOAT, 2, dimids, &FSDSC);
     NC4ERR
     err = nc_put_att_text (ncid, FSDSC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1399,7 +1407,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNS", NC_FLOAT, 2, dimids, &FSNS);
+    err       = NC4_DEF_VAR (ncid, "FSNS", NC_FLOAT, 2, dimids, &FSNS);
     NC4ERR
     err = nc_put_att_text (ncid, FSNS, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1413,7 +1421,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNSC", NC_FLOAT, 2, dimids, &FSNSC);
+    err       = NC4_DEF_VAR (ncid, "FSNSC", NC_FLOAT, 2, dimids, &FSNSC);
     NC4ERR
     err = nc_put_att_text (ncid, FSNSC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1427,7 +1435,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNT", NC_FLOAT, 2, dimids, &FSNT);
+    err       = NC4_DEF_VAR (ncid, "FSNT", NC_FLOAT, 2, dimids, &FSNT);
     NC4ERR
     err = nc_put_att_text (ncid, FSNT, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1441,7 +1449,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNTC", NC_FLOAT, 2, dimids, &FSNTC);
+    err       = NC4_DEF_VAR (ncid, "FSNTC", NC_FLOAT, 2, dimids, &FSNTC);
     NC4ERR
     err = nc_put_att_text (ncid, FSNTC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1455,7 +1463,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNTOA", NC_FLOAT, 2, dimids, &FSNTOA);
+    err       = NC4_DEF_VAR (ncid, "FSNTOA", NC_FLOAT, 2, dimids, &FSNTOA);
     NC4ERR
     err = nc_put_att_text (ncid, FSNTOA, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1469,7 +1477,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSNTOAC", NC_FLOAT, 2, dimids, &FSNTOAC);
+    err       = NC4_DEF_VAR (ncid, "FSNTOAC", NC_FLOAT, 2, dimids, &FSNTOAC);
     NC4ERR
     err = nc_put_att_text (ncid, FSNTOAC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1484,7 +1492,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSUTOA", NC_FLOAT, 2, dimids, &FSUTOA);
+    err       = NC4_DEF_VAR (ncid, "FSUTOA", NC_FLOAT, 2, dimids, &FSUTOA);
     NC4ERR
     err = nc_put_att_text (ncid, FSUTOA, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1499,7 +1507,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FSUTOAC", NC_FLOAT, 2, dimids, &FSUTOAC);
+    err       = NC4_DEF_VAR (ncid, "FSUTOAC", NC_FLOAT, 2, dimids, &FSUTOAC);
     NC4ERR
     err = nc_put_att_text (ncid, FSUTOAC, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1514,7 +1522,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "F_eff", NC_FLOAT, 2, dimids, &F_eff);
+    err       = NC4_DEF_VAR (ncid, "F_eff", NC_FLOAT, 2, dimids, &F_eff);
     NC4ERR
     err = nc_put_att_text (ncid, F_eff, "units", 1, "1");
     NC4ERR
@@ -1527,7 +1535,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "H2O2_SRF", NC_FLOAT, 2, dimids, &H2O2_SRF);
+    err       = NC4_DEF_VAR (ncid, "H2O2_SRF", NC_FLOAT, 2, dimids, &H2O2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, H2O2_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -1539,7 +1547,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "H2SO4_SRF", NC_FLOAT, 2, dimids, &H2SO4_SRF);
+    err       = NC4_DEF_VAR (ncid, "H2SO4_SRF", NC_FLOAT, 2, dimids, &H2SO4_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, H2SO4_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -1551,7 +1559,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "H2SO4_sfgaex1", NC_FLOAT, 2, dimids, &H2SO4_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "H2SO4_sfgaex1", NC_FLOAT, 2, dimids, &H2SO4_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, H2SO4_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -1564,7 +1572,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ICEFRAC", NC_FLOAT, 2, dimids, &ICEFRAC);
+    err       = NC4_DEF_VAR (ncid, "ICEFRAC", NC_FLOAT, 2, dimids, &ICEFRAC);
     NC4ERR
     err = nc_put_att_text (ncid, ICEFRAC, "units", 8, "fraction");
     NC4ERR
@@ -1578,7 +1586,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "ICIMR", NC_FLOAT, 3, dimids, &ICIMR);
+    err       = NC4_DEF_VAR (ncid, "ICIMR", NC_FLOAT, 3, dimids, &ICIMR);
     NC4ERR
     err = nc_put_att_int (ncid, ICIMR, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1593,7 +1601,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "ICWMR", NC_FLOAT, 3, dimids, &ICWMR);
+    err       = NC4_DEF_VAR (ncid, "ICWMR", NC_FLOAT, 3, dimids, &ICWMR);
     NC4ERR
     err = nc_put_att_int (ncid, ICWMR, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1608,7 +1616,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "IWC", NC_FLOAT, 3, dimids, &IWC);
+    err       = NC4_DEF_VAR (ncid, "IWC", NC_FLOAT, 3, dimids, &IWC);
     NC4ERR
     err = nc_put_att_int (ncid, IWC, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1622,7 +1630,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LANDFRAC", NC_FLOAT, 2, dimids, &LANDFRAC);
+    err       = NC4_DEF_VAR (ncid, "LANDFRAC", NC_FLOAT, 2, dimids, &LANDFRAC);
     NC4ERR
     err = nc_put_att_text (ncid, LANDFRAC, "units", 8, "fraction");
     NC4ERR
@@ -1634,7 +1642,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LHFLX", NC_FLOAT, 2, dimids, &LHFLX);
+    err       = NC4_DEF_VAR (ncid, "LHFLX", NC_FLOAT, 2, dimids, &LHFLX);
     NC4ERR
     err = nc_put_att_text (ncid, LHFLX, "units", 4, "W/m2");
     NC4ERR
@@ -1647,7 +1655,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_DO3", NC_FLOAT, 3, dimids, &LINOZ_DO3);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_DO3", NC_FLOAT, 3, dimids, &LINOZ_DO3);
     NC4ERR
     err = nc_put_att_int (ncid, LINOZ_DO3, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1663,7 +1671,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_DO3_PSC", NC_FLOAT, 3, dimids, &LINOZ_DO3_PSC);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_DO3_PSC", NC_FLOAT, 3, dimids, &LINOZ_DO3_PSC);
     NC4ERR
     err = nc_put_att_int (ncid, LINOZ_DO3_PSC, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1679,7 +1687,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_O3CLIM", NC_FLOAT, 3, dimids, &LINOZ_O3CLIM);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_O3CLIM", NC_FLOAT, 3, dimids, &LINOZ_O3CLIM);
     NC4ERR
     err = nc_put_att_int (ncid, LINOZ_O3CLIM, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1694,7 +1702,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_O3COL", NC_FLOAT, 3, dimids, &LINOZ_O3COL);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_O3COL", NC_FLOAT, 3, dimids, &LINOZ_O3COL);
     NC4ERR
     err = nc_put_att_int (ncid, LINOZ_O3COL, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1709,7 +1717,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_SSO3", NC_FLOAT, 3, dimids, &LINOZ_SSO3);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_SSO3", NC_FLOAT, 3, dimids, &LINOZ_SSO3);
     NC4ERR
     err = nc_put_att_int (ncid, LINOZ_SSO3, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1723,7 +1731,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LINOZ_SZA", NC_FLOAT, 2, dimids, &LINOZ_SZA);
+    err       = NC4_DEF_VAR (ncid, "LINOZ_SZA", NC_FLOAT, 2, dimids, &LINOZ_SZA);
     NC4ERR
     err = nc_put_att_text (ncid, LINOZ_SZA, "units", 7, "degrees");
     NC4ERR
@@ -1735,7 +1743,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LND_MBL", NC_FLOAT, 2, dimids, &LND_MBL);
+    err       = NC4_DEF_VAR (ncid, "LND_MBL", NC_FLOAT, 2, dimids, &LND_MBL);
     NC4ERR
     err = nc_put_att_text (ncid, LND_MBL, "units", 4, "frac");
     NC4ERR
@@ -1747,7 +1755,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LWCF", NC_FLOAT, 2, dimids, &LWCF);
+    err       = NC4_DEF_VAR (ncid, "LWCF", NC_FLOAT, 2, dimids, &LWCF);
     NC4ERR
     err = nc_put_att_text (ncid, LWCF, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -1762,7 +1770,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_bc", NC_FLOAT, 3, dimids, &Mass_bc);
+    err       = NC4_DEF_VAR (ncid, "Mass_bc", NC_FLOAT, 3, dimids, &Mass_bc);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_bc, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1778,7 +1786,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_dst", NC_FLOAT, 3, dimids, &Mass_dst);
+    err       = NC4_DEF_VAR (ncid, "Mass_dst", NC_FLOAT, 3, dimids, &Mass_dst);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_dst, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1794,7 +1802,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_mom", NC_FLOAT, 3, dimids, &Mass_mom);
+    err       = NC4_DEF_VAR (ncid, "Mass_mom", NC_FLOAT, 3, dimids, &Mass_mom);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_mom, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1811,7 +1819,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_ncl", NC_FLOAT, 3, dimids, &Mass_ncl);
+    err       = NC4_DEF_VAR (ncid, "Mass_ncl", NC_FLOAT, 3, dimids, &Mass_ncl);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_ncl, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1828,7 +1836,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_pom", NC_FLOAT, 3, dimids, &Mass_pom);
+    err       = NC4_DEF_VAR (ncid, "Mass_pom", NC_FLOAT, 3, dimids, &Mass_pom);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_pom, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1845,7 +1853,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_so4", NC_FLOAT, 3, dimids, &Mass_so4);
+    err       = NC4_DEF_VAR (ncid, "Mass_so4", NC_FLOAT, 3, dimids, &Mass_so4);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_so4, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1862,7 +1870,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Mass_soa", NC_FLOAT, 3, dimids, &Mass_soa);
+    err       = NC4_DEF_VAR (ncid, "Mass_soa", NC_FLOAT, 3, dimids, &Mass_soa);
     NC4ERR
     err = nc_put_att_int (ncid, Mass_soa, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1879,7 +1887,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "NUMICE", NC_FLOAT, 3, dimids, &NUMICE);
+    err       = NC4_DEF_VAR (ncid, "NUMICE", NC_FLOAT, 3, dimids, &NUMICE);
     NC4ERR
     err = nc_put_att_int (ncid, NUMICE, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1894,7 +1902,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "NUMLIQ", NC_FLOAT, 3, dimids, &NUMLIQ);
+    err       = NC4_DEF_VAR (ncid, "NUMLIQ", NC_FLOAT, 3, dimids, &NUMLIQ);
     NC4ERR
     err = nc_put_att_int (ncid, NUMLIQ, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1909,7 +1917,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "NUMRAI", NC_FLOAT, 3, dimids, &NUMRAI);
+    err       = NC4_DEF_VAR (ncid, "NUMRAI", NC_FLOAT, 3, dimids, &NUMRAI);
     NC4ERR
     err = nc_put_att_int (ncid, NUMRAI, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1924,7 +1932,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "NUMSNO", NC_FLOAT, 3, dimids, &NUMSNO);
+    err       = NC4_DEF_VAR (ncid, "NUMSNO", NC_FLOAT, 3, dimids, &NUMSNO);
     NC4ERR
     err = nc_put_att_int (ncid, NUMSNO, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1939,7 +1947,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "O3", NC_FLOAT, 3, dimids, &O3);
+    err       = NC4_DEF_VAR (ncid, "O3", NC_FLOAT, 3, dimids, &O3);
     NC4ERR
     err = nc_put_att_int (ncid, O3, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1953,7 +1961,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "O3_SRF", NC_FLOAT, 2, dimids, &O3_SRF);
+    err       = NC4_DEF_VAR (ncid, "O3_SRF", NC_FLOAT, 2, dimids, &O3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, O3_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -1965,7 +1973,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "OCNFRAC", NC_FLOAT, 2, dimids, &OCNFRAC);
+    err       = NC4_DEF_VAR (ncid, "OCNFRAC", NC_FLOAT, 2, dimids, &OCNFRAC);
     NC4ERR
     err = nc_put_att_text (ncid, OCNFRAC, "units", 8, "fraction");
     NC4ERR
@@ -1978,7 +1986,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "OMEGA", NC_FLOAT, 3, dimids, &OMEGA);
+    err       = NC4_DEF_VAR (ncid, "OMEGA", NC_FLOAT, 3, dimids, &OMEGA);
     NC4ERR
     err = nc_put_att_int (ncid, OMEGA, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -1992,7 +2000,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "OMEGA500", NC_FLOAT, 2, dimids, &OMEGA500);
+    err       = NC4_DEF_VAR (ncid, "OMEGA500", NC_FLOAT, 2, dimids, &OMEGA500);
     NC4ERR
     err = nc_put_att_text (ncid, OMEGA500, "units", 4, "Pa/s");
     NC4ERR
@@ -2006,7 +2014,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "OMEGAT", NC_FLOAT, 3, dimids, &OMEGAT);
+    err       = NC4_DEF_VAR (ncid, "OMEGAT", NC_FLOAT, 3, dimids, &OMEGAT);
     NC4ERR
     err = nc_put_att_int (ncid, OMEGAT, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2020,7 +2028,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PBLH", NC_FLOAT, 2, dimids, &PBLH);
+    err       = NC4_DEF_VAR (ncid, "PBLH", NC_FLOAT, 2, dimids, &PBLH);
     NC4ERR
     err = nc_put_att_text (ncid, PBLH, "units", 1, "m");
     NC4ERR
@@ -2032,7 +2040,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PHIS", NC_FLOAT, 2, dimids, &PHIS);
+    err       = NC4_DEF_VAR (ncid, "PHIS", NC_FLOAT, 2, dimids, &PHIS);
     NC4ERR
     err = nc_put_att_text (ncid, PHIS, "units", 5, "m2/s2");
     NC4ERR
@@ -2042,7 +2050,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PRECC", NC_FLOAT, 2, dimids, &PRECC);
+    err       = NC4_DEF_VAR (ncid, "PRECC", NC_FLOAT, 2, dimids, &PRECC);
     NC4ERR
     err = nc_put_att_text (ncid, PRECC, "units", 3, "m/s");
     NC4ERR
@@ -2055,7 +2063,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PRECL", NC_FLOAT, 2, dimids, &PRECL);
+    err       = NC4_DEF_VAR (ncid, "PRECL", NC_FLOAT, 2, dimids, &PRECL);
     NC4ERR
     err = nc_put_att_text (ncid, PRECL, "units", 3, "m/s");
     NC4ERR
@@ -2068,7 +2076,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PRECSC", NC_FLOAT, 2, dimids, &PRECSC);
+    err       = NC4_DEF_VAR (ncid, "PRECSC", NC_FLOAT, 2, dimids, &PRECSC);
     NC4ERR
     err = nc_put_att_text (ncid, PRECSC, "units", 3, "m/s");
     NC4ERR
@@ -2081,7 +2089,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PRECSL", NC_FLOAT, 2, dimids, &PRECSL);
+    err       = NC4_DEF_VAR (ncid, "PRECSL", NC_FLOAT, 2, dimids, &PRECSL);
     NC4ERR
     err = nc_put_att_text (ncid, PRECSL, "units", 3, "m/s");
     NC4ERR
@@ -2094,7 +2102,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PS", NC_FLOAT, 2, dimids, &PS);
+    err       = NC4_DEF_VAR (ncid, "PS", NC_FLOAT, 2, dimids, &PS);
     NC4ERR
     err = nc_put_att_text (ncid, PS, "units", 2, "Pa");
     NC4ERR
@@ -2106,7 +2114,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PSL", NC_FLOAT, 2, dimids, &PSL);
+    err       = NC4_DEF_VAR (ncid, "PSL", NC_FLOAT, 2, dimids, &PSL);
     NC4ERR
     err = nc_put_att_text (ncid, PSL, "units", 2, "Pa");
     NC4ERR
@@ -2119,7 +2127,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Q", NC_FLOAT, 3, dimids, &Q);
+    err       = NC4_DEF_VAR (ncid, "Q", NC_FLOAT, 3, dimids, &Q);
     NC4ERR
     err = nc_put_att_int (ncid, Q, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2133,7 +2141,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "QFLX", NC_FLOAT, 2, dimids, &QFLX);
+    err       = NC4_DEF_VAR (ncid, "QFLX", NC_FLOAT, 2, dimids, &QFLX);
     NC4ERR
     err = nc_put_att_text (ncid, QFLX, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2145,7 +2153,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "QREFHT", NC_FLOAT, 2, dimids, &QREFHT);
+    err       = NC4_DEF_VAR (ncid, "QREFHT", NC_FLOAT, 2, dimids, &QREFHT);
     NC4ERR
     err = nc_put_att_text (ncid, QREFHT, "units", 5, "kg/kg");
     NC4ERR
@@ -2158,7 +2166,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "QRL", NC_FLOAT, 3, dimids, &QRL);
+    err       = NC4_DEF_VAR (ncid, "QRL", NC_FLOAT, 3, dimids, &QRL);
     NC4ERR
     err = nc_put_att_int (ncid, QRL, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2175,7 +2183,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "QRS", NC_FLOAT, 3, dimids, &QRS);
+    err       = NC4_DEF_VAR (ncid, "QRS", NC_FLOAT, 3, dimids, &QRS);
     NC4ERR
     err = nc_put_att_int (ncid, QRS, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2192,7 +2200,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "RAINQM", NC_FLOAT, 3, dimids, &RAINQM);
+    err       = NC4_DEF_VAR (ncid, "RAINQM", NC_FLOAT, 3, dimids, &RAINQM);
     NC4ERR
     err = nc_put_att_int (ncid, RAINQM, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2206,7 +2214,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "RAM1", NC_FLOAT, 2, dimids, &RAM1);
+    err       = NC4_DEF_VAR (ncid, "RAM1", NC_FLOAT, 2, dimids, &RAM1);
     NC4ERR
     err = nc_put_att_text (ncid, RAM1, "units", 4, "frac");
     NC4ERR
@@ -2219,7 +2227,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "RELHUM", NC_FLOAT, 3, dimids, &RELHUM);
+    err       = NC4_DEF_VAR (ncid, "RELHUM", NC_FLOAT, 3, dimids, &RELHUM);
     NC4ERR
     err = nc_put_att_int (ncid, RELHUM, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2233,7 +2241,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFDMS", NC_FLOAT, 2, dimids, &SFDMS);
+    err       = NC4_DEF_VAR (ncid, "SFDMS", NC_FLOAT, 2, dimids, &SFDMS);
     NC4ERR
     err = nc_put_att_text (ncid, SFDMS, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2245,7 +2253,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFH2O2", NC_FLOAT, 2, dimids, &SFH2O2);
+    err       = NC4_DEF_VAR (ncid, "SFH2O2", NC_FLOAT, 2, dimids, &SFH2O2);
     NC4ERR
     err = nc_put_att_text (ncid, SFH2O2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2257,7 +2265,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFH2SO4", NC_FLOAT, 2, dimids, &SFH2SO4);
+    err       = NC4_DEF_VAR (ncid, "SFH2SO4", NC_FLOAT, 2, dimids, &SFH2SO4);
     NC4ERR
     err = nc_put_att_text (ncid, SFH2SO4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2269,7 +2277,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFO3", NC_FLOAT, 2, dimids, &SFO3);
+    err       = NC4_DEF_VAR (ncid, "SFO3", NC_FLOAT, 2, dimids, &SFO3);
     NC4ERR
     err = nc_put_att_text (ncid, SFO3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2281,7 +2289,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFSO2", NC_FLOAT, 2, dimids, &SFSO2);
+    err       = NC4_DEF_VAR (ncid, "SFSO2", NC_FLOAT, 2, dimids, &SFSO2);
     NC4ERR
     err = nc_put_att_text (ncid, SFSO2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2293,7 +2301,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFSOAG", NC_FLOAT, 2, dimids, &SFSOAG);
+    err       = NC4_DEF_VAR (ncid, "SFSOAG", NC_FLOAT, 2, dimids, &SFSOAG);
     NC4ERR
     err = nc_put_att_text (ncid, SFSOAG, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2305,7 +2313,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFbc_a1", NC_FLOAT, 2, dimids, &SFbc_a1);
+    err       = NC4_DEF_VAR (ncid, "SFbc_a1", NC_FLOAT, 2, dimids, &SFbc_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFbc_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2317,7 +2325,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFbc_a3", NC_FLOAT, 2, dimids, &SFbc_a3);
+    err       = NC4_DEF_VAR (ncid, "SFbc_a3", NC_FLOAT, 2, dimids, &SFbc_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFbc_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2329,7 +2337,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFbc_a4", NC_FLOAT, 2, dimids, &SFbc_a4);
+    err       = NC4_DEF_VAR (ncid, "SFbc_a4", NC_FLOAT, 2, dimids, &SFbc_a4);
     NC4ERR
     err = nc_put_att_text (ncid, SFbc_a4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2341,7 +2349,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFdst_a1", NC_FLOAT, 2, dimids, &SFdst_a1);
+    err       = NC4_DEF_VAR (ncid, "SFdst_a1", NC_FLOAT, 2, dimids, &SFdst_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFdst_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2353,7 +2361,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFdst_a3", NC_FLOAT, 2, dimids, &SFdst_a3);
+    err       = NC4_DEF_VAR (ncid, "SFdst_a3", NC_FLOAT, 2, dimids, &SFdst_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFdst_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2365,7 +2373,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFmom_a1", NC_FLOAT, 2, dimids, &SFmom_a1);
+    err       = NC4_DEF_VAR (ncid, "SFmom_a1", NC_FLOAT, 2, dimids, &SFmom_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFmom_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2377,7 +2385,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFmom_a2", NC_FLOAT, 2, dimids, &SFmom_a2);
+    err       = NC4_DEF_VAR (ncid, "SFmom_a2", NC_FLOAT, 2, dimids, &SFmom_a2);
     NC4ERR
     err = nc_put_att_text (ncid, SFmom_a2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2389,7 +2397,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFmom_a3", NC_FLOAT, 2, dimids, &SFmom_a3);
+    err       = NC4_DEF_VAR (ncid, "SFmom_a3", NC_FLOAT, 2, dimids, &SFmom_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFmom_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2401,7 +2409,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFmom_a4", NC_FLOAT, 2, dimids, &SFmom_a4);
+    err       = NC4_DEF_VAR (ncid, "SFmom_a4", NC_FLOAT, 2, dimids, &SFmom_a4);
     NC4ERR
     err = nc_put_att_text (ncid, SFmom_a4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2413,7 +2421,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFncl_a1", NC_FLOAT, 2, dimids, &SFncl_a1);
+    err       = NC4_DEF_VAR (ncid, "SFncl_a1", NC_FLOAT, 2, dimids, &SFncl_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFncl_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2425,7 +2433,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFncl_a2", NC_FLOAT, 2, dimids, &SFncl_a2);
+    err       = NC4_DEF_VAR (ncid, "SFncl_a2", NC_FLOAT, 2, dimids, &SFncl_a2);
     NC4ERR
     err = nc_put_att_text (ncid, SFncl_a2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2437,7 +2445,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFncl_a3", NC_FLOAT, 2, dimids, &SFncl_a3);
+    err       = NC4_DEF_VAR (ncid, "SFncl_a3", NC_FLOAT, 2, dimids, &SFncl_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFncl_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2449,7 +2457,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFnum_a1", NC_FLOAT, 2, dimids, &SFnum_a1);
+    err       = NC4_DEF_VAR (ncid, "SFnum_a1", NC_FLOAT, 2, dimids, &SFnum_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFnum_a1, "units", 7, " 1/m2/s");
     NC4ERR
@@ -2461,7 +2469,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFnum_a2", NC_FLOAT, 2, dimids, &SFnum_a2);
+    err       = NC4_DEF_VAR (ncid, "SFnum_a2", NC_FLOAT, 2, dimids, &SFnum_a2);
     NC4ERR
     err = nc_put_att_text (ncid, SFnum_a2, "units", 7, " 1/m2/s");
     NC4ERR
@@ -2473,7 +2481,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFnum_a3", NC_FLOAT, 2, dimids, &SFnum_a3);
+    err       = NC4_DEF_VAR (ncid, "SFnum_a3", NC_FLOAT, 2, dimids, &SFnum_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFnum_a3, "units", 7, " 1/m2/s");
     NC4ERR
@@ -2485,7 +2493,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFnum_a4", NC_FLOAT, 2, dimids, &SFnum_a4);
+    err       = NC4_DEF_VAR (ncid, "SFnum_a4", NC_FLOAT, 2, dimids, &SFnum_a4);
     NC4ERR
     err = nc_put_att_text (ncid, SFnum_a4, "units", 7, " 1/m2/s");
     NC4ERR
@@ -2497,7 +2505,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFpom_a1", NC_FLOAT, 2, dimids, &SFpom_a1);
+    err       = NC4_DEF_VAR (ncid, "SFpom_a1", NC_FLOAT, 2, dimids, &SFpom_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFpom_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2509,7 +2517,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFpom_a3", NC_FLOAT, 2, dimids, &SFpom_a3);
+    err       = NC4_DEF_VAR (ncid, "SFpom_a3", NC_FLOAT, 2, dimids, &SFpom_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFpom_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2521,7 +2529,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFpom_a4", NC_FLOAT, 2, dimids, &SFpom_a4);
+    err       = NC4_DEF_VAR (ncid, "SFpom_a4", NC_FLOAT, 2, dimids, &SFpom_a4);
     NC4ERR
     err = nc_put_att_text (ncid, SFpom_a4, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2533,7 +2541,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFso4_a1", NC_FLOAT, 2, dimids, &SFso4_a1);
+    err       = NC4_DEF_VAR (ncid, "SFso4_a1", NC_FLOAT, 2, dimids, &SFso4_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFso4_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2545,7 +2553,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFso4_a2", NC_FLOAT, 2, dimids, &SFso4_a2);
+    err       = NC4_DEF_VAR (ncid, "SFso4_a2", NC_FLOAT, 2, dimids, &SFso4_a2);
     NC4ERR
     err = nc_put_att_text (ncid, SFso4_a2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2557,7 +2565,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFso4_a3", NC_FLOAT, 2, dimids, &SFso4_a3);
+    err       = NC4_DEF_VAR (ncid, "SFso4_a3", NC_FLOAT, 2, dimids, &SFso4_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFso4_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2569,7 +2577,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFsoa_a1", NC_FLOAT, 2, dimids, &SFsoa_a1);
+    err       = NC4_DEF_VAR (ncid, "SFsoa_a1", NC_FLOAT, 2, dimids, &SFsoa_a1);
     NC4ERR
     err = nc_put_att_text (ncid, SFsoa_a1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2581,7 +2589,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFsoa_a2", NC_FLOAT, 2, dimids, &SFsoa_a2);
+    err       = NC4_DEF_VAR (ncid, "SFsoa_a2", NC_FLOAT, 2, dimids, &SFsoa_a2);
     NC4ERR
     err = nc_put_att_text (ncid, SFsoa_a2, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2593,7 +2601,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SFsoa_a3", NC_FLOAT, 2, dimids, &SFsoa_a3);
+    err       = NC4_DEF_VAR (ncid, "SFsoa_a3", NC_FLOAT, 2, dimids, &SFsoa_a3);
     NC4ERR
     err = nc_put_att_text (ncid, SFsoa_a3, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2605,7 +2613,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SHFLX", NC_FLOAT, 2, dimids, &SHFLX);
+    err       = NC4_DEF_VAR (ncid, "SHFLX", NC_FLOAT, 2, dimids, &SHFLX);
     NC4ERR
     err = nc_put_att_text (ncid, SHFLX, "units", 4, "W/m2");
     NC4ERR
@@ -2617,7 +2625,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SH_KCLDBASE", NC_FLOAT, 2, dimids, &SH_KCLDBASE);
+    err       = NC4_DEF_VAR (ncid, "SH_KCLDBASE", NC_FLOAT, 2, dimids, &SH_KCLDBASE);
     NC4ERR
     err = nc_put_att_text (ncid, SH_KCLDBASE, "units", 1, "1");
     NC4ERR
@@ -2630,7 +2638,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SH_MFUP_MAX", NC_FLOAT, 2, dimids, &SH_MFUP_MAX);
+    err       = NC4_DEF_VAR (ncid, "SH_MFUP_MAX", NC_FLOAT, 2, dimids, &SH_MFUP_MAX);
     NC4ERR
     err = nc_put_att_text (ncid, SH_MFUP_MAX, "units", 5, "kg/m2");
     NC4ERR
@@ -2643,7 +2651,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SH_WCLDBASE", NC_FLOAT, 2, dimids, &SH_WCLDBASE);
+    err       = NC4_DEF_VAR (ncid, "SH_WCLDBASE", NC_FLOAT, 2, dimids, &SH_WCLDBASE);
     NC4ERR
     err = nc_put_att_text (ncid, SH_WCLDBASE, "units", 3, "m/s");
     NC4ERR
@@ -2656,7 +2664,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SNOWHICE", NC_FLOAT, 2, dimids, &SNOWHICE);
+    err       = NC4_DEF_VAR (ncid, "SNOWHICE", NC_FLOAT, 2, dimids, &SNOWHICE);
     NC4ERR
     err = nc_put_att_text (ncid, SNOWHICE, "units", 1, "m");
     NC4ERR
@@ -2668,7 +2676,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SNOWHLND", NC_FLOAT, 2, dimids, &SNOWHLND);
+    err       = NC4_DEF_VAR (ncid, "SNOWHLND", NC_FLOAT, 2, dimids, &SNOWHLND);
     NC4ERR
     err = nc_put_att_text (ncid, SNOWHLND, "units", 1, "m");
     NC4ERR
@@ -2681,7 +2689,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "SNOWQM", NC_FLOAT, 3, dimids, &SNOWQM);
+    err       = NC4_DEF_VAR (ncid, "SNOWQM", NC_FLOAT, 3, dimids, &SNOWQM);
     NC4ERR
     err = nc_put_att_int (ncid, SNOWQM, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2696,7 +2704,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "SO2", NC_FLOAT, 3, dimids, &SO2);
+    err       = NC4_DEF_VAR (ncid, "SO2", NC_FLOAT, 3, dimids, &SO2);
     NC4ERR
     err = nc_put_att_int (ncid, SO2, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2710,7 +2718,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SO2_CLXF", NC_FLOAT, 2, dimids, &SO2_CLXF);
+    err       = NC4_DEF_VAR (ncid, "SO2_CLXF", NC_FLOAT, 2, dimids, &SO2_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, SO2_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -2723,7 +2731,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SO2_SRF", NC_FLOAT, 2, dimids, &SO2_SRF);
+    err       = NC4_DEF_VAR (ncid, "SO2_SRF", NC_FLOAT, 2, dimids, &SO2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, SO2_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -2735,7 +2743,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SOAG_CLXF", NC_FLOAT, 2, dimids, &SOAG_CLXF);
+    err       = NC4_DEF_VAR (ncid, "SOAG_CLXF", NC_FLOAT, 2, dimids, &SOAG_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, SOAG_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -2748,7 +2756,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SOAG_SRF", NC_FLOAT, 2, dimids, &SOAG_SRF);
+    err       = NC4_DEF_VAR (ncid, "SOAG_SRF", NC_FLOAT, 2, dimids, &SOAG_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, SOAG_SRF, "units", 7, "mol/mol");
     NC4ERR
@@ -2760,7 +2768,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SOAG_sfgaex1", NC_FLOAT, 2, dimids, &SOAG_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "SOAG_sfgaex1", NC_FLOAT, 2, dimids, &SOAG_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, SOAG_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2773,7 +2781,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SOLIN", NC_FLOAT, 2, dimids, &SOLIN);
+    err       = NC4_DEF_VAR (ncid, "SOLIN", NC_FLOAT, 2, dimids, &SOLIN);
     NC4ERR
     err = nc_put_att_text (ncid, SOLIN, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -2787,7 +2795,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SSAVIS", NC_FLOAT, 2, dimids, &SSAVIS);
+    err       = NC4_DEF_VAR (ncid, "SSAVIS", NC_FLOAT, 2, dimids, &SSAVIS);
     NC4ERR
     err = nc_put_att_float (ncid, SSAVIS, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -2801,7 +2809,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SSTSFMBL", NC_FLOAT, 2, dimids, &SSTSFMBL);
+    err       = NC4_DEF_VAR (ncid, "SSTSFMBL", NC_FLOAT, 2, dimids, &SSTSFMBL);
     NC4ERR
     err = nc_put_att_text (ncid, SSTSFMBL, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2813,7 +2821,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SSTSFMBL_OM", NC_FLOAT, 2, dimids, &SSTSFMBL_OM);
+    err       = NC4_DEF_VAR (ncid, "SSTSFMBL_OM", NC_FLOAT, 2, dimids, &SSTSFMBL_OM);
     NC4ERR
     err = nc_put_att_text (ncid, SSTSFMBL_OM, "units", 7, "kg/m2/s");
     NC4ERR
@@ -2826,7 +2834,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SWCF", NC_FLOAT, 2, dimids, &SWCF);
+    err       = NC4_DEF_VAR (ncid, "SWCF", NC_FLOAT, 2, dimids, &SWCF);
     NC4ERR
     err = nc_put_att_text (ncid, SWCF, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -2841,7 +2849,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "T", NC_FLOAT, 3, dimids, &T);
+    err       = NC4_DEF_VAR (ncid, "T", NC_FLOAT, 3, dimids, &T);
     NC4ERR
     err = nc_put_att_int (ncid, T, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -2855,7 +2863,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TAUGWX", NC_FLOAT, 2, dimids, &TAUGWX);
+    err       = NC4_DEF_VAR (ncid, "TAUGWX", NC_FLOAT, 2, dimids, &TAUGWX);
     NC4ERR
     err = nc_put_att_text (ncid, TAUGWX, "units", 4, "N/m2");
     NC4ERR
@@ -2867,7 +2875,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TAUGWY", NC_FLOAT, 2, dimids, &TAUGWY);
+    err       = NC4_DEF_VAR (ncid, "TAUGWY", NC_FLOAT, 2, dimids, &TAUGWY);
     NC4ERR
     err = nc_put_att_text (ncid, TAUGWY, "units", 4, "N/m2");
     NC4ERR
@@ -2879,7 +2887,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TAUX", NC_FLOAT, 2, dimids, &TAUX);
+    err       = NC4_DEF_VAR (ncid, "TAUX", NC_FLOAT, 2, dimids, &TAUX);
     NC4ERR
     err = nc_put_att_text (ncid, TAUX, "units", 4, "N/m2");
     NC4ERR
@@ -2891,7 +2899,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TAUY", NC_FLOAT, 2, dimids, &TAUY);
+    err       = NC4_DEF_VAR (ncid, "TAUY", NC_FLOAT, 2, dimids, &TAUY);
     NC4ERR
     err = nc_put_att_text (ncid, TAUY, "units", 4, "N/m2");
     NC4ERR
@@ -2903,7 +2911,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TGCLDCWP", NC_FLOAT, 2, dimids, &TGCLDCWP);
+    err       = NC4_DEF_VAR (ncid, "TGCLDCWP", NC_FLOAT, 2, dimids, &TGCLDCWP);
     NC4ERR
     err = nc_put_att_text (ncid, TGCLDCWP, "units", 5, "kg/m2");
     NC4ERR
@@ -2916,7 +2924,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TGCLDIWP", NC_FLOAT, 2, dimids, &TGCLDIWP);
+    err       = NC4_DEF_VAR (ncid, "TGCLDIWP", NC_FLOAT, 2, dimids, &TGCLDIWP);
     NC4ERR
     err = nc_put_att_text (ncid, TGCLDIWP, "units", 5, "kg/m2");
     NC4ERR
@@ -2928,7 +2936,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TGCLDLWP", NC_FLOAT, 2, dimids, &TGCLDLWP);
+    err       = NC4_DEF_VAR (ncid, "TGCLDLWP", NC_FLOAT, 2, dimids, &TGCLDLWP);
     NC4ERR
     err = nc_put_att_text (ncid, TGCLDLWP, "units", 5, "kg/m2");
     NC4ERR
@@ -2941,7 +2949,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TH7001000", NC_FLOAT, 2, dimids, &TH7001000);
+    err       = NC4_DEF_VAR (ncid, "TH7001000", NC_FLOAT, 2, dimids, &TH7001000);
     NC4ERR
     err = nc_put_att_text (ncid, TH7001000, "units", 1, "K");
     NC4ERR
@@ -2953,7 +2961,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TMQ", NC_FLOAT, 2, dimids, &TMQ);
+    err       = NC4_DEF_VAR (ncid, "TMQ", NC_FLOAT, 2, dimids, &TMQ);
     NC4ERR
     err = nc_put_att_text (ncid, TMQ, "units", 5, "kg/m2");
     NC4ERR
@@ -2966,7 +2974,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TREFHT", NC_FLOAT, 2, dimids, &TREFHT);
+    err       = NC4_DEF_VAR (ncid, "TREFHT", NC_FLOAT, 2, dimids, &TREFHT);
     NC4ERR
     err = nc_put_att_text (ncid, TREFHT, "units", 1, "K");
     NC4ERR
@@ -2978,7 +2986,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TROP_P", NC_FLOAT, 2, dimids, &TROP_P);
+    err       = NC4_DEF_VAR (ncid, "TROP_P", NC_FLOAT, 2, dimids, &TROP_P);
     NC4ERR
     err = nc_put_att_float (ncid, TROP_P, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -2994,7 +3002,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TROP_T", NC_FLOAT, 2, dimids, &TROP_T);
+    err       = NC4_DEF_VAR (ncid, "TROP_T", NC_FLOAT, 2, dimids, &TROP_T);
     NC4ERR
     err = nc_put_att_float (ncid, TROP_T, _FillValue, NC_FLOAT, 1, &fillv);
     NC4ERR
@@ -3010,7 +3018,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TS", NC_FLOAT, 2, dimids, &TS);
+    err       = NC4_DEF_VAR (ncid, "TS", NC_FLOAT, 2, dimids, &TS);
     NC4ERR
     err = nc_put_att_text (ncid, TS, "units", 1, "K");
     NC4ERR
@@ -3022,7 +3030,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TSMN", NC_FLOAT, 2, dimids, &TSMN);
+    err       = NC4_DEF_VAR (ncid, "TSMN", NC_FLOAT, 2, dimids, &TSMN);
     NC4ERR
     err = nc_put_att_text (ncid, TSMN, "units", 1, "K");
     NC4ERR
@@ -3035,7 +3043,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TSMX", NC_FLOAT, 2, dimids, &TSMX);
+    err       = NC4_DEF_VAR (ncid, "TSMX", NC_FLOAT, 2, dimids, &TSMX);
     NC4ERR
     err = nc_put_att_text (ncid, TSMX, "units", 1, "K");
     NC4ERR
@@ -3048,7 +3056,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TUH", NC_FLOAT, 2, dimids, &TUH);
+    err       = NC4_DEF_VAR (ncid, "TUH", NC_FLOAT, 2, dimids, &TUH);
     NC4ERR
     err = nc_put_att_text (ncid, TUH, "units", 3, "W/m");
     NC4ERR
@@ -3061,7 +3069,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TUQ", NC_FLOAT, 2, dimids, &TUQ);
+    err       = NC4_DEF_VAR (ncid, "TUQ", NC_FLOAT, 2, dimids, &TUQ);
     NC4ERR
     err = nc_put_att_text (ncid, TUQ, "units", 6, "kg/m/s");
     NC4ERR
@@ -3074,7 +3082,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TVH", NC_FLOAT, 2, dimids, &TVH);
+    err       = NC4_DEF_VAR (ncid, "TVH", NC_FLOAT, 2, dimids, &TVH);
     NC4ERR
     err = nc_put_att_text (ncid, TVH, "units", 3, "W/m");
     NC4ERR
@@ -3087,7 +3095,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TVQ", NC_FLOAT, 2, dimids, &TVQ);
+    err       = NC4_DEF_VAR (ncid, "TVQ", NC_FLOAT, 2, dimids, &TVQ);
     NC4ERR
     err = nc_put_att_text (ncid, TVQ, "units", 6, "kg/m/s");
     NC4ERR
@@ -3101,7 +3109,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "U", NC_FLOAT, 3, dimids, &U);
+    err       = NC4_DEF_VAR (ncid, "U", NC_FLOAT, 3, dimids, &U);
     NC4ERR
     err = nc_put_att_int (ncid, U, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3115,7 +3123,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "U10", NC_FLOAT, 2, dimids, &U10);
+    err       = NC4_DEF_VAR (ncid, "U10", NC_FLOAT, 2, dimids, &U10);
     NC4ERR
     err = nc_put_att_text (ncid, U10, "units", 3, "m/s");
     NC4ERR
@@ -3128,7 +3136,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "UU", NC_FLOAT, 3, dimids, &UU);
+    err       = NC4_DEF_VAR (ncid, "UU", NC_FLOAT, 3, dimids, &UU);
     NC4ERR
     err = nc_put_att_int (ncid, UU, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3143,7 +3151,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "V", NC_FLOAT, 3, dimids, &V);
+    err       = NC4_DEF_VAR (ncid, "V", NC_FLOAT, 3, dimids, &V);
     NC4ERR
     err = nc_put_att_int (ncid, V, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3158,7 +3166,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "VQ", NC_FLOAT, 3, dimids, &VQ);
+    err       = NC4_DEF_VAR (ncid, "VQ", NC_FLOAT, 3, dimids, &VQ);
     NC4ERR
     err = nc_put_att_int (ncid, VQ, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3173,7 +3181,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "VT", NC_FLOAT, 3, dimids, &VT);
+    err       = NC4_DEF_VAR (ncid, "VT", NC_FLOAT, 3, dimids, &VT);
     NC4ERR
     err = nc_put_att_int (ncid, VT, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3188,7 +3196,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "VU", NC_FLOAT, 3, dimids, &VU);
+    err       = NC4_DEF_VAR (ncid, "VU", NC_FLOAT, 3, dimids, &VU);
     NC4ERR
     err = nc_put_att_int (ncid, VU, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3203,7 +3211,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "VV", NC_FLOAT, 3, dimids, &VV);
+    err       = NC4_DEF_VAR (ncid, "VV", NC_FLOAT, 3, dimids, &VV);
     NC4ERR
     err = nc_put_att_int (ncid, VV, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3217,7 +3225,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "WD_H2O2", NC_FLOAT, 2, dimids, &WD_H2O2);
+    err       = NC4_DEF_VAR (ncid, "WD_H2O2", NC_FLOAT, 2, dimids, &WD_H2O2);
     NC4ERR
     err = nc_put_att_text (ncid, WD_H2O2, "units", 4, "kg/s");
     NC4ERR
@@ -3229,7 +3237,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "WD_H2SO4", NC_FLOAT, 2, dimids, &WD_H2SO4);
+    err       = NC4_DEF_VAR (ncid, "WD_H2SO4", NC_FLOAT, 2, dimids, &WD_H2SO4);
     NC4ERR
     err = nc_put_att_text (ncid, WD_H2SO4, "units", 4, "kg/s");
     NC4ERR
@@ -3241,7 +3249,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "WD_SO2", NC_FLOAT, 2, dimids, &WD_SO2);
+    err       = NC4_DEF_VAR (ncid, "WD_SO2", NC_FLOAT, 2, dimids, &WD_SO2);
     NC4ERR
     err = nc_put_att_text (ncid, WD_SO2, "units", 4, "kg/s");
     NC4ERR
@@ -3254,7 +3262,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "WSUB", NC_FLOAT, 3, dimids, &WSUB);
+    err       = NC4_DEF_VAR (ncid, "WSUB", NC_FLOAT, 3, dimids, &WSUB);
     NC4ERR
     err = nc_put_att_int (ncid, WSUB, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3269,7 +3277,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "Z3", NC_FLOAT, 3, dimids, &Z3);
+    err       = NC4_DEF_VAR (ncid, "Z3", NC_FLOAT, 3, dimids, &Z3);
     NC4ERR
     err = nc_put_att_int (ncid, Z3, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3284,7 +3292,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "aero_water", NC_FLOAT, 3, dimids, &aero_water);
+    err       = NC4_DEF_VAR (ncid, "aero_water", NC_FLOAT, 3, dimids, &aero_water);
     NC4ERR
     err = nc_put_att_int (ncid, aero_water, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3300,7 +3308,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "airFV", NC_FLOAT, 2, dimids, &airFV);
+    err       = NC4_DEF_VAR (ncid, "airFV", NC_FLOAT, 2, dimids, &airFV);
     NC4ERR
     err = nc_put_att_text (ncid, airFV, "units", 4, "frac");
     NC4ERR
@@ -3312,7 +3320,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a1DDF", NC_FLOAT, 2, dimids, &bc_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_a1DDF", NC_FLOAT, 2, dimids, &bc_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3325,7 +3333,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a1SFWET", NC_FLOAT, 2, dimids, &bc_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_a1SFWET", NC_FLOAT, 2, dimids, &bc_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3337,7 +3345,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a1_SRF", NC_FLOAT, 2, dimids, &bc_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "bc_a1_SRF", NC_FLOAT, 2, dimids, &bc_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3349,7 +3357,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a1_sfgaex1", NC_FLOAT, 2, dimids, &bc_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "bc_a1_sfgaex1", NC_FLOAT, 2, dimids, &bc_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3362,7 +3370,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a3DDF", NC_FLOAT, 2, dimids, &bc_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_a3DDF", NC_FLOAT, 2, dimids, &bc_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3375,7 +3383,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a3SFWET", NC_FLOAT, 2, dimids, &bc_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_a3SFWET", NC_FLOAT, 2, dimids, &bc_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3387,7 +3395,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a3_SRF", NC_FLOAT, 2, dimids, &bc_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "bc_a3_SRF", NC_FLOAT, 2, dimids, &bc_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3399,7 +3407,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a4DDF", NC_FLOAT, 2, dimids, &bc_a4DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_a4DDF", NC_FLOAT, 2, dimids, &bc_a4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3412,7 +3420,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a4SFWET", NC_FLOAT, 2, dimids, &bc_a4SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_a4SFWET", NC_FLOAT, 2, dimids, &bc_a4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3424,7 +3432,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a4_CLXF", NC_FLOAT, 2, dimids, &bc_a4_CLXF);
+    err       = NC4_DEF_VAR (ncid, "bc_a4_CLXF", NC_FLOAT, 2, dimids, &bc_a4_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a4_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -3437,7 +3445,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a4_SRF", NC_FLOAT, 2, dimids, &bc_a4_SRF);
+    err       = NC4_DEF_VAR (ncid, "bc_a4_SRF", NC_FLOAT, 2, dimids, &bc_a4_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a4_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3449,7 +3457,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_a4_sfgaex1", NC_FLOAT, 2, dimids, &bc_a4_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "bc_a4_sfgaex1", NC_FLOAT, 2, dimids, &bc_a4_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, bc_a4_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3462,7 +3470,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c1DDF", NC_FLOAT, 2, dimids, &bc_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_c1DDF", NC_FLOAT, 2, dimids, &bc_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3475,7 +3483,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c1SFWET", NC_FLOAT, 2, dimids, &bc_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_c1SFWET", NC_FLOAT, 2, dimids, &bc_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3488,7 +3496,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c3DDF", NC_FLOAT, 2, dimids, &bc_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_c3DDF", NC_FLOAT, 2, dimids, &bc_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3501,7 +3509,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c3SFWET", NC_FLOAT, 2, dimids, &bc_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_c3SFWET", NC_FLOAT, 2, dimids, &bc_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3514,7 +3522,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c4DDF", NC_FLOAT, 2, dimids, &bc_c4DDF);
+    err       = NC4_DEF_VAR (ncid, "bc_c4DDF", NC_FLOAT, 2, dimids, &bc_c4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3527,7 +3535,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "bc_c4SFWET", NC_FLOAT, 2, dimids, &bc_c4SFWET);
+    err       = NC4_DEF_VAR (ncid, "bc_c4SFWET", NC_FLOAT, 2, dimids, &bc_c4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, bc_c4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3540,7 +3548,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "chla", NC_FLOAT, 2, dimids, &chla);
+    err       = NC4_DEF_VAR (ncid, "chla", NC_FLOAT, 2, dimids, &chla);
     NC4ERR
     err = nc_put_att_text (ncid, chla, "units", 6, "mg L-1");
     NC4ERR
@@ -3552,7 +3560,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a1DDF", NC_FLOAT, 2, dimids, &dst_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "dst_a1DDF", NC_FLOAT, 2, dimids, &dst_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3565,7 +3573,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a1SF", NC_FLOAT, 2, dimids, &dst_a1SF);
+    err       = NC4_DEF_VAR (ncid, "dst_a1SF", NC_FLOAT, 2, dimids, &dst_a1SF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a1SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3577,7 +3585,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a1SFWET", NC_FLOAT, 2, dimids, &dst_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "dst_a1SFWET", NC_FLOAT, 2, dimids, &dst_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3589,7 +3597,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a1_SRF", NC_FLOAT, 2, dimids, &dst_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "dst_a1_SRF", NC_FLOAT, 2, dimids, &dst_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3601,7 +3609,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a3DDF", NC_FLOAT, 2, dimids, &dst_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "dst_a3DDF", NC_FLOAT, 2, dimids, &dst_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3614,7 +3622,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a3SF", NC_FLOAT, 2, dimids, &dst_a3SF);
+    err       = NC4_DEF_VAR (ncid, "dst_a3SF", NC_FLOAT, 2, dimids, &dst_a3SF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a3SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3626,7 +3634,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a3SFWET", NC_FLOAT, 2, dimids, &dst_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "dst_a3SFWET", NC_FLOAT, 2, dimids, &dst_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3638,7 +3646,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_a3_SRF", NC_FLOAT, 2, dimids, &dst_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "dst_a3_SRF", NC_FLOAT, 2, dimids, &dst_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3650,7 +3658,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_c1DDF", NC_FLOAT, 2, dimids, &dst_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "dst_c1DDF", NC_FLOAT, 2, dimids, &dst_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3663,7 +3671,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_c1SFWET", NC_FLOAT, 2, dimids, &dst_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "dst_c1SFWET", NC_FLOAT, 2, dimids, &dst_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, dst_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3676,7 +3684,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_c3DDF", NC_FLOAT, 2, dimids, &dst_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "dst_c3DDF", NC_FLOAT, 2, dimids, &dst_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, dst_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3689,7 +3697,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "dst_c3SFWET", NC_FLOAT, 2, dimids, &dst_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "dst_c3SFWET", NC_FLOAT, 2, dimids, &dst_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, dst_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3703,7 +3711,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "hstobie_linoz", NC_FLOAT, 3, dimids, &hstobie_linoz);
+    err       = NC4_DEF_VAR (ncid, "hstobie_linoz", NC_FLOAT, 3, dimids, &hstobie_linoz);
     NC4ERR
     err = nc_put_att_int (ncid, hstobie_linoz, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -3715,7 +3723,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mlip", NC_FLOAT, 2, dimids, &mlip);
+    err       = NC4_DEF_VAR (ncid, "mlip", NC_FLOAT, 2, dimids, &mlip);
     NC4ERR
     err = nc_put_att_text (ncid, mlip, "units", 4, "uM C");
     NC4ERR
@@ -3727,7 +3735,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a1DDF", NC_FLOAT, 2, dimids, &mom_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_a1DDF", NC_FLOAT, 2, dimids, &mom_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3740,7 +3748,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a1SF", NC_FLOAT, 2, dimids, &mom_a1SF);
+    err       = NC4_DEF_VAR (ncid, "mom_a1SF", NC_FLOAT, 2, dimids, &mom_a1SF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a1SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3752,7 +3760,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a1SFWET", NC_FLOAT, 2, dimids, &mom_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_a1SFWET", NC_FLOAT, 2, dimids, &mom_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3764,7 +3772,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a1_SRF", NC_FLOAT, 2, dimids, &mom_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "mom_a1_SRF", NC_FLOAT, 2, dimids, &mom_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3776,7 +3784,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a1_sfgaex1", NC_FLOAT, 2, dimids, &mom_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "mom_a1_sfgaex1", NC_FLOAT, 2, dimids, &mom_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3789,7 +3797,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a2DDF", NC_FLOAT, 2, dimids, &mom_a2DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_a2DDF", NC_FLOAT, 2, dimids, &mom_a2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3802,7 +3810,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a2SF", NC_FLOAT, 2, dimids, &mom_a2SF);
+    err       = NC4_DEF_VAR (ncid, "mom_a2SF", NC_FLOAT, 2, dimids, &mom_a2SF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a2SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3814,7 +3822,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a2SFWET", NC_FLOAT, 2, dimids, &mom_a2SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_a2SFWET", NC_FLOAT, 2, dimids, &mom_a2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3826,7 +3834,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a2_SRF", NC_FLOAT, 2, dimids, &mom_a2_SRF);
+    err       = NC4_DEF_VAR (ncid, "mom_a2_SRF", NC_FLOAT, 2, dimids, &mom_a2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a2_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3838,7 +3846,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a3DDF", NC_FLOAT, 2, dimids, &mom_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_a3DDF", NC_FLOAT, 2, dimids, &mom_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3851,7 +3859,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a3SFWET", NC_FLOAT, 2, dimids, &mom_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_a3SFWET", NC_FLOAT, 2, dimids, &mom_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3863,7 +3871,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a3_SRF", NC_FLOAT, 2, dimids, &mom_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "mom_a3_SRF", NC_FLOAT, 2, dimids, &mom_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3875,7 +3883,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a4DDF", NC_FLOAT, 2, dimids, &mom_a4DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_a4DDF", NC_FLOAT, 2, dimids, &mom_a4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3888,7 +3896,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a4SF", NC_FLOAT, 2, dimids, &mom_a4SF);
+    err       = NC4_DEF_VAR (ncid, "mom_a4SF", NC_FLOAT, 2, dimids, &mom_a4SF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a4SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3900,7 +3908,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a4SFWET", NC_FLOAT, 2, dimids, &mom_a4SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_a4SFWET", NC_FLOAT, 2, dimids, &mom_a4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3912,7 +3920,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a4_SRF", NC_FLOAT, 2, dimids, &mom_a4_SRF);
+    err       = NC4_DEF_VAR (ncid, "mom_a4_SRF", NC_FLOAT, 2, dimids, &mom_a4_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a4_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -3924,7 +3932,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_a4_sfgaex1", NC_FLOAT, 2, dimids, &mom_a4_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "mom_a4_sfgaex1", NC_FLOAT, 2, dimids, &mom_a4_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, mom_a4_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3937,7 +3945,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c1DDF", NC_FLOAT, 2, dimids, &mom_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_c1DDF", NC_FLOAT, 2, dimids, &mom_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3950,7 +3958,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c1SFWET", NC_FLOAT, 2, dimids, &mom_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_c1SFWET", NC_FLOAT, 2, dimids, &mom_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3963,7 +3971,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c2DDF", NC_FLOAT, 2, dimids, &mom_c2DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_c2DDF", NC_FLOAT, 2, dimids, &mom_c2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3976,7 +3984,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c2SFWET", NC_FLOAT, 2, dimids, &mom_c2SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_c2SFWET", NC_FLOAT, 2, dimids, &mom_c2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -3989,7 +3997,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c3DDF", NC_FLOAT, 2, dimids, &mom_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_c3DDF", NC_FLOAT, 2, dimids, &mom_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4002,7 +4010,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c3SFWET", NC_FLOAT, 2, dimids, &mom_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_c3SFWET", NC_FLOAT, 2, dimids, &mom_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4015,7 +4023,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c4DDF", NC_FLOAT, 2, dimids, &mom_c4DDF);
+    err       = NC4_DEF_VAR (ncid, "mom_c4DDF", NC_FLOAT, 2, dimids, &mom_c4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4028,7 +4036,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mom_c4SFWET", NC_FLOAT, 2, dimids, &mom_c4SFWET);
+    err       = NC4_DEF_VAR (ncid, "mom_c4SFWET", NC_FLOAT, 2, dimids, &mom_c4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, mom_c4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4041,7 +4049,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mpoly", NC_FLOAT, 2, dimids, &mpoly);
+    err       = NC4_DEF_VAR (ncid, "mpoly", NC_FLOAT, 2, dimids, &mpoly);
     NC4ERR
     err = nc_put_att_text (ncid, mpoly, "units", 4, "uM C");
     NC4ERR
@@ -4053,7 +4061,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "mprot", NC_FLOAT, 2, dimids, &mprot);
+    err       = NC4_DEF_VAR (ncid, "mprot", NC_FLOAT, 2, dimids, &mprot);
     NC4ERR
     err = nc_put_att_text (ncid, mprot, "units", 4, "uM C");
     NC4ERR
@@ -4065,7 +4073,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a1DDF", NC_FLOAT, 2, dimids, &ncl_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a1DDF", NC_FLOAT, 2, dimids, &ncl_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4078,7 +4086,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a1SF", NC_FLOAT, 2, dimids, &ncl_a1SF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a1SF", NC_FLOAT, 2, dimids, &ncl_a1SF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a1SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4090,7 +4098,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a1SFWET", NC_FLOAT, 2, dimids, &ncl_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_a1SFWET", NC_FLOAT, 2, dimids, &ncl_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4102,7 +4110,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a1_SRF", NC_FLOAT, 2, dimids, &ncl_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a1_SRF", NC_FLOAT, 2, dimids, &ncl_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4114,7 +4122,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a2DDF", NC_FLOAT, 2, dimids, &ncl_a2DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a2DDF", NC_FLOAT, 2, dimids, &ncl_a2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4127,7 +4135,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a2SF", NC_FLOAT, 2, dimids, &ncl_a2SF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a2SF", NC_FLOAT, 2, dimids, &ncl_a2SF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a2SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4139,7 +4147,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a2SFWET", NC_FLOAT, 2, dimids, &ncl_a2SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_a2SFWET", NC_FLOAT, 2, dimids, &ncl_a2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4151,7 +4159,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a2_SRF", NC_FLOAT, 2, dimids, &ncl_a2_SRF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a2_SRF", NC_FLOAT, 2, dimids, &ncl_a2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a2_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4163,7 +4171,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a3DDF", NC_FLOAT, 2, dimids, &ncl_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a3DDF", NC_FLOAT, 2, dimids, &ncl_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4176,7 +4184,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a3SF", NC_FLOAT, 2, dimids, &ncl_a3SF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a3SF", NC_FLOAT, 2, dimids, &ncl_a3SF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a3SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4188,7 +4196,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a3SFWET", NC_FLOAT, 2, dimids, &ncl_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_a3SFWET", NC_FLOAT, 2, dimids, &ncl_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4200,7 +4208,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_a3_SRF", NC_FLOAT, 2, dimids, &ncl_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "ncl_a3_SRF", NC_FLOAT, 2, dimids, &ncl_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4212,7 +4220,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c1DDF", NC_FLOAT, 2, dimids, &ncl_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_c1DDF", NC_FLOAT, 2, dimids, &ncl_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4225,7 +4233,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c1SFWET", NC_FLOAT, 2, dimids, &ncl_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_c1SFWET", NC_FLOAT, 2, dimids, &ncl_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4238,7 +4246,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c2DDF", NC_FLOAT, 2, dimids, &ncl_c2DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_c2DDF", NC_FLOAT, 2, dimids, &ncl_c2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4251,7 +4259,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c2SFWET", NC_FLOAT, 2, dimids, &ncl_c2SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_c2SFWET", NC_FLOAT, 2, dimids, &ncl_c2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4264,7 +4272,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c3DDF", NC_FLOAT, 2, dimids, &ncl_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "ncl_c3DDF", NC_FLOAT, 2, dimids, &ncl_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4277,7 +4285,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "ncl_c3SFWET", NC_FLOAT, 2, dimids, &ncl_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "ncl_c3SFWET", NC_FLOAT, 2, dimids, &ncl_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, ncl_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4290,7 +4298,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1DDF", NC_FLOAT, 2, dimids, &num_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "num_a1DDF", NC_FLOAT, 2, dimids, &num_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4303,7 +4311,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1SF", NC_FLOAT, 2, dimids, &num_a1SF);
+    err       = NC4_DEF_VAR (ncid, "num_a1SF", NC_FLOAT, 2, dimids, &num_a1SF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4315,7 +4323,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1SFWET", NC_FLOAT, 2, dimids, &num_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_a1SFWET", NC_FLOAT, 2, dimids, &num_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4327,7 +4335,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1_CLXF", NC_FLOAT, 2, dimids, &num_a1_CLXF);
+    err       = NC4_DEF_VAR (ncid, "num_a1_CLXF", NC_FLOAT, 2, dimids, &num_a1_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4340,7 +4348,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1_SRF", NC_FLOAT, 2, dimids, &num_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "num_a1_SRF", NC_FLOAT, 2, dimids, &num_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1_SRF, "units", 5, " 1/kg");
     NC4ERR
@@ -4352,7 +4360,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a1_sfgaex1", NC_FLOAT, 2, dimids, &num_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "num_a1_sfgaex1", NC_FLOAT, 2, dimids, &num_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, num_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4365,7 +4373,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a2DDF", NC_FLOAT, 2, dimids, &num_a2DDF);
+    err       = NC4_DEF_VAR (ncid, "num_a2DDF", NC_FLOAT, 2, dimids, &num_a2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a2DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4378,7 +4386,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a2SFWET", NC_FLOAT, 2, dimids, &num_a2SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_a2SFWET", NC_FLOAT, 2, dimids, &num_a2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_a2SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4390,7 +4398,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a2_CLXF", NC_FLOAT, 2, dimids, &num_a2_CLXF);
+    err       = NC4_DEF_VAR (ncid, "num_a2_CLXF", NC_FLOAT, 2, dimids, &num_a2_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a2_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4403,7 +4411,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a2_SRF", NC_FLOAT, 2, dimids, &num_a2_SRF);
+    err       = NC4_DEF_VAR (ncid, "num_a2_SRF", NC_FLOAT, 2, dimids, &num_a2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a2_SRF, "units", 5, " 1/kg");
     NC4ERR
@@ -4415,7 +4423,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a3DDF", NC_FLOAT, 2, dimids, &num_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "num_a3DDF", NC_FLOAT, 2, dimids, &num_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a3DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4428,7 +4436,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a3SF", NC_FLOAT, 2, dimids, &num_a3SF);
+    err       = NC4_DEF_VAR (ncid, "num_a3SF", NC_FLOAT, 2, dimids, &num_a3SF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a3SF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4440,7 +4448,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a3SFWET", NC_FLOAT, 2, dimids, &num_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_a3SFWET", NC_FLOAT, 2, dimids, &num_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_a3SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4452,7 +4460,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a3_SRF", NC_FLOAT, 2, dimids, &num_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "num_a3_SRF", NC_FLOAT, 2, dimids, &num_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a3_SRF, "units", 5, " 1/kg");
     NC4ERR
@@ -4464,7 +4472,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a4DDF", NC_FLOAT, 2, dimids, &num_a4DDF);
+    err       = NC4_DEF_VAR (ncid, "num_a4DDF", NC_FLOAT, 2, dimids, &num_a4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a4DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4477,7 +4485,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a4SFWET", NC_FLOAT, 2, dimids, &num_a4SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_a4SFWET", NC_FLOAT, 2, dimids, &num_a4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_a4SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4489,7 +4497,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a4_CLXF", NC_FLOAT, 2, dimids, &num_a4_CLXF);
+    err       = NC4_DEF_VAR (ncid, "num_a4_CLXF", NC_FLOAT, 2, dimids, &num_a4_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a4_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4502,7 +4510,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a4_SRF", NC_FLOAT, 2, dimids, &num_a4_SRF);
+    err       = NC4_DEF_VAR (ncid, "num_a4_SRF", NC_FLOAT, 2, dimids, &num_a4_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, num_a4_SRF, "units", 5, " 1/kg");
     NC4ERR
@@ -4514,7 +4522,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_a4_sfgaex1", NC_FLOAT, 2, dimids, &num_a4_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "num_a4_sfgaex1", NC_FLOAT, 2, dimids, &num_a4_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, num_a4_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4527,7 +4535,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c1DDF", NC_FLOAT, 2, dimids, &num_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "num_c1DDF", NC_FLOAT, 2, dimids, &num_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_c1DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4540,7 +4548,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c1SFWET", NC_FLOAT, 2, dimids, &num_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_c1SFWET", NC_FLOAT, 2, dimids, &num_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_c1SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4553,7 +4561,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c2DDF", NC_FLOAT, 2, dimids, &num_c2DDF);
+    err       = NC4_DEF_VAR (ncid, "num_c2DDF", NC_FLOAT, 2, dimids, &num_c2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_c2DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4566,7 +4574,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c2SFWET", NC_FLOAT, 2, dimids, &num_c2SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_c2SFWET", NC_FLOAT, 2, dimids, &num_c2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_c2SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4579,7 +4587,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c3DDF", NC_FLOAT, 2, dimids, &num_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "num_c3DDF", NC_FLOAT, 2, dimids, &num_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_c3DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4592,7 +4600,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c3SFWET", NC_FLOAT, 2, dimids, &num_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_c3SFWET", NC_FLOAT, 2, dimids, &num_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_c3SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4605,7 +4613,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c4DDF", NC_FLOAT, 2, dimids, &num_c4DDF);
+    err       = NC4_DEF_VAR (ncid, "num_c4DDF", NC_FLOAT, 2, dimids, &num_c4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, num_c4DDF, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4618,7 +4626,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "num_c4SFWET", NC_FLOAT, 2, dimids, &num_c4SFWET);
+    err       = NC4_DEF_VAR (ncid, "num_c4SFWET", NC_FLOAT, 2, dimids, &num_c4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, num_c4SFWET, "units", 7, " 1/m2/s");
     NC4ERR
@@ -4631,7 +4639,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a1DDF", NC_FLOAT, 2, dimids, &pom_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_a1DDF", NC_FLOAT, 2, dimids, &pom_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4644,7 +4652,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a1SFWET", NC_FLOAT, 2, dimids, &pom_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_a1SFWET", NC_FLOAT, 2, dimids, &pom_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4656,7 +4664,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a1_SRF", NC_FLOAT, 2, dimids, &pom_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "pom_a1_SRF", NC_FLOAT, 2, dimids, &pom_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4668,7 +4676,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a1_sfgaex1", NC_FLOAT, 2, dimids, &pom_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "pom_a1_sfgaex1", NC_FLOAT, 2, dimids, &pom_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4681,7 +4689,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a3DDF", NC_FLOAT, 2, dimids, &pom_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_a3DDF", NC_FLOAT, 2, dimids, &pom_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4694,7 +4702,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a3SFWET", NC_FLOAT, 2, dimids, &pom_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_a3SFWET", NC_FLOAT, 2, dimids, &pom_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4706,7 +4714,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a3_SRF", NC_FLOAT, 2, dimids, &pom_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "pom_a3_SRF", NC_FLOAT, 2, dimids, &pom_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4718,7 +4726,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a4DDF", NC_FLOAT, 2, dimids, &pom_a4DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_a4DDF", NC_FLOAT, 2, dimids, &pom_a4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4731,7 +4739,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a4SFWET", NC_FLOAT, 2, dimids, &pom_a4SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_a4SFWET", NC_FLOAT, 2, dimids, &pom_a4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4743,7 +4751,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a4_CLXF", NC_FLOAT, 2, dimids, &pom_a4_CLXF);
+    err       = NC4_DEF_VAR (ncid, "pom_a4_CLXF", NC_FLOAT, 2, dimids, &pom_a4_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a4_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4756,7 +4764,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a4_SRF", NC_FLOAT, 2, dimids, &pom_a4_SRF);
+    err       = NC4_DEF_VAR (ncid, "pom_a4_SRF", NC_FLOAT, 2, dimids, &pom_a4_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a4_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4768,7 +4776,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_a4_sfgaex1", NC_FLOAT, 2, dimids, &pom_a4_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "pom_a4_sfgaex1", NC_FLOAT, 2, dimids, &pom_a4_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, pom_a4_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4781,7 +4789,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c1DDF", NC_FLOAT, 2, dimids, &pom_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_c1DDF", NC_FLOAT, 2, dimids, &pom_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4794,7 +4802,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c1SFWET", NC_FLOAT, 2, dimids, &pom_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_c1SFWET", NC_FLOAT, 2, dimids, &pom_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4807,7 +4815,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c3DDF", NC_FLOAT, 2, dimids, &pom_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_c3DDF", NC_FLOAT, 2, dimids, &pom_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4820,7 +4828,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c3SFWET", NC_FLOAT, 2, dimids, &pom_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_c3SFWET", NC_FLOAT, 2, dimids, &pom_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4833,7 +4841,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c4DDF", NC_FLOAT, 2, dimids, &pom_c4DDF);
+    err       = NC4_DEF_VAR (ncid, "pom_c4DDF", NC_FLOAT, 2, dimids, &pom_c4DDF);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c4DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4846,7 +4854,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "pom_c4SFWET", NC_FLOAT, 2, dimids, &pom_c4SFWET);
+    err       = NC4_DEF_VAR (ncid, "pom_c4SFWET", NC_FLOAT, 2, dimids, &pom_c4SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, pom_c4SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4859,7 +4867,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a1DDF", NC_FLOAT, 2, dimids, &so4_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_a1DDF", NC_FLOAT, 2, dimids, &so4_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4872,7 +4880,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a1SFWET", NC_FLOAT, 2, dimids, &so4_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_a1SFWET", NC_FLOAT, 2, dimids, &so4_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4884,7 +4892,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a1_CLXF", NC_FLOAT, 2, dimids, &so4_a1_CLXF);
+    err       = NC4_DEF_VAR (ncid, "so4_a1_CLXF", NC_FLOAT, 2, dimids, &so4_a1_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a1_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4897,7 +4905,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a1_SRF", NC_FLOAT, 2, dimids, &so4_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "so4_a1_SRF", NC_FLOAT, 2, dimids, &so4_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4909,7 +4917,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a1_sfgaex1", NC_FLOAT, 2, dimids, &so4_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "so4_a1_sfgaex1", NC_FLOAT, 2, dimids, &so4_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4922,7 +4930,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a2DDF", NC_FLOAT, 2, dimids, &so4_a2DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_a2DDF", NC_FLOAT, 2, dimids, &so4_a2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4935,7 +4943,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a2SFWET", NC_FLOAT, 2, dimids, &so4_a2SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_a2SFWET", NC_FLOAT, 2, dimids, &so4_a2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4947,7 +4955,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a2_CLXF", NC_FLOAT, 2, dimids, &so4_a2_CLXF);
+    err       = NC4_DEF_VAR (ncid, "so4_a2_CLXF", NC_FLOAT, 2, dimids, &so4_a2_CLXF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a2_CLXF, "units", 11, "molec/cm2/s");
     NC4ERR
@@ -4960,7 +4968,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a2_SRF", NC_FLOAT, 2, dimids, &so4_a2_SRF);
+    err       = NC4_DEF_VAR (ncid, "so4_a2_SRF", NC_FLOAT, 2, dimids, &so4_a2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a2_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -4972,7 +4980,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a2_sfgaex1", NC_FLOAT, 2, dimids, &so4_a2_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "so4_a2_sfgaex1", NC_FLOAT, 2, dimids, &so4_a2_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a2_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4985,7 +4993,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a3DDF", NC_FLOAT, 2, dimids, &so4_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_a3DDF", NC_FLOAT, 2, dimids, &so4_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -4998,7 +5006,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a3SFWET", NC_FLOAT, 2, dimids, &so4_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_a3SFWET", NC_FLOAT, 2, dimids, &so4_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5010,7 +5018,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a3_SRF", NC_FLOAT, 2, dimids, &so4_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "so4_a3_SRF", NC_FLOAT, 2, dimids, &so4_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -5022,7 +5030,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_a3_sfgaex1", NC_FLOAT, 2, dimids, &so4_a3_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "so4_a3_sfgaex1", NC_FLOAT, 2, dimids, &so4_a3_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, so4_a3_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5035,7 +5043,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c1DDF", NC_FLOAT, 2, dimids, &so4_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_c1DDF", NC_FLOAT, 2, dimids, &so4_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5048,7 +5056,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c1SFWET", NC_FLOAT, 2, dimids, &so4_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_c1SFWET", NC_FLOAT, 2, dimids, &so4_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5061,7 +5069,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c2DDF", NC_FLOAT, 2, dimids, &so4_c2DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_c2DDF", NC_FLOAT, 2, dimids, &so4_c2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5074,7 +5082,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c2SFWET", NC_FLOAT, 2, dimids, &so4_c2SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_c2SFWET", NC_FLOAT, 2, dimids, &so4_c2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5087,7 +5095,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c3DDF", NC_FLOAT, 2, dimids, &so4_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "so4_c3DDF", NC_FLOAT, 2, dimids, &so4_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5100,7 +5108,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "so4_c3SFWET", NC_FLOAT, 2, dimids, &so4_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "so4_c3SFWET", NC_FLOAT, 2, dimids, &so4_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, so4_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5113,7 +5121,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a1DDF", NC_FLOAT, 2, dimids, &soa_a1DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_a1DDF", NC_FLOAT, 2, dimids, &soa_a1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5126,7 +5134,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a1SFWET", NC_FLOAT, 2, dimids, &soa_a1SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_a1SFWET", NC_FLOAT, 2, dimids, &soa_a1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5138,7 +5146,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a1_SRF", NC_FLOAT, 2, dimids, &soa_a1_SRF);
+    err       = NC4_DEF_VAR (ncid, "soa_a1_SRF", NC_FLOAT, 2, dimids, &soa_a1_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a1_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -5150,7 +5158,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a1_sfgaex1", NC_FLOAT, 2, dimids, &soa_a1_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "soa_a1_sfgaex1", NC_FLOAT, 2, dimids, &soa_a1_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a1_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5163,7 +5171,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a2DDF", NC_FLOAT, 2, dimids, &soa_a2DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_a2DDF", NC_FLOAT, 2, dimids, &soa_a2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5176,7 +5184,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a2SFWET", NC_FLOAT, 2, dimids, &soa_a2SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_a2SFWET", NC_FLOAT, 2, dimids, &soa_a2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5188,7 +5196,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a2_SRF", NC_FLOAT, 2, dimids, &soa_a2_SRF);
+    err       = NC4_DEF_VAR (ncid, "soa_a2_SRF", NC_FLOAT, 2, dimids, &soa_a2_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a2_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -5200,7 +5208,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a2_sfgaex1", NC_FLOAT, 2, dimids, &soa_a2_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "soa_a2_sfgaex1", NC_FLOAT, 2, dimids, &soa_a2_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a2_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5213,7 +5221,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a3DDF", NC_FLOAT, 2, dimids, &soa_a3DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_a3DDF", NC_FLOAT, 2, dimids, &soa_a3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5226,7 +5234,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a3SFWET", NC_FLOAT, 2, dimids, &soa_a3SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_a3SFWET", NC_FLOAT, 2, dimids, &soa_a3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5238,7 +5246,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a3_SRF", NC_FLOAT, 2, dimids, &soa_a3_SRF);
+    err       = NC4_DEF_VAR (ncid, "soa_a3_SRF", NC_FLOAT, 2, dimids, &soa_a3_SRF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a3_SRF, "units", 5, "kg/kg");
     NC4ERR
@@ -5250,7 +5258,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_a3_sfgaex1", NC_FLOAT, 2, dimids, &soa_a3_sfgaex1);
+    err       = NC4_DEF_VAR (ncid, "soa_a3_sfgaex1", NC_FLOAT, 2, dimids, &soa_a3_sfgaex1);
     NC4ERR
     err = nc_put_att_text (ncid, soa_a3_sfgaex1, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5263,7 +5271,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c1DDF", NC_FLOAT, 2, dimids, &soa_c1DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_c1DDF", NC_FLOAT, 2, dimids, &soa_c1DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c1DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5276,7 +5284,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c1SFWET", NC_FLOAT, 2, dimids, &soa_c1SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_c1SFWET", NC_FLOAT, 2, dimids, &soa_c1SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c1SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5289,7 +5297,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c2DDF", NC_FLOAT, 2, dimids, &soa_c2DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_c2DDF", NC_FLOAT, 2, dimids, &soa_c2DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c2DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5302,7 +5310,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c2SFWET", NC_FLOAT, 2, dimids, &soa_c2SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_c2SFWET", NC_FLOAT, 2, dimids, &soa_c2SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c2SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5315,7 +5323,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c3DDF", NC_FLOAT, 2, dimids, &soa_c3DDF);
+    err       = NC4_DEF_VAR (ncid, "soa_c3DDF", NC_FLOAT, 2, dimids, &soa_c3DDF);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c3DDF, "units", 7, "kg/m2/s");
     NC4ERR
@@ -5328,7 +5336,7 @@ int def_F_case_h0_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "soa_c3SFWET", NC_FLOAT, 2, dimids, &soa_c3SFWET);
+    err       = NC4_DEF_VAR (ncid, "soa_c3SFWET", NC_FLOAT, 2, dimids, &soa_c3SFWET);
     NC4ERR
     err = nc_put_att_text (ncid, soa_c3SFWET, "units", 7, "kg/m2/s");
     NC4ERR
@@ -10677,7 +10685,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     /* define variables */
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "lat", NC_DOUBLE, 1, dimids, &lat);
+    err       = NC4_DEF_VAR (ncid, "lat", NC_DOUBLE, 1, dimids, &lat);
     NC4ERR
     err = nc_put_att_text (ncid, lat, "long_name", 8, "latitude");
     NC4ERR
@@ -10686,7 +10694,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = lat;
 
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "lon", NC_DOUBLE, 1, dimids, &lon);
+    err       = NC4_DEF_VAR (ncid, "lon", NC_DOUBLE, 1, dimids, &lon);
     NC4ERR
     err = nc_put_att_text (ncid, lon, "long_name", 9, "longitude");
     NC4ERR
@@ -10695,14 +10703,14 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = lon;
 
     dimids[0] = dim_ncol;
-    err       = nc_def_var (ncid, "area", NC_DOUBLE, 1, dimids, &area);
+    err       = NC4_DEF_VAR (ncid, "area", NC_DOUBLE, 1, dimids, &area);
     NC4ERR
     err = nc_put_att_text (ncid, area, "long_name", 14, "gll grid areas");
     NC4ERR
     varids[i++] = area;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "lev", NC_DOUBLE, 1, dimids, &lev);
+    err       = NC4_DEF_VAR (ncid, "lev", NC_DOUBLE, 1, dimids, &lev);
     NC4ERR
     err = nc_put_att_text (ncid, lev, "long_name", 38, "hybrid level at midpoints (1000*(A+B))");
     NC4ERR
@@ -10718,21 +10726,21 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = lev;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "hyam", NC_DOUBLE, 1, dimids, &hyam);
+    err       = NC4_DEF_VAR (ncid, "hyam", NC_DOUBLE, 1, dimids, &hyam);
     NC4ERR
     err = nc_put_att_text (ncid, hyam, "long_name", 39, "hybrid A coefficient at layer midpoints");
     NC4ERR
     varids[i++] = hyam;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "hybm", NC_DOUBLE, 1, dimids, &hybm);
+    err       = NC4_DEF_VAR (ncid, "hybm", NC_DOUBLE, 1, dimids, &hybm);
     NC4ERR
     err = nc_put_att_text (ncid, hybm, "long_name", 39, "hybrid B coefficient at layer midpoints");
     NC4ERR
     varids[i++] = hybm;
 
     dimids[0] = dim_lev;
-    err       = nc_def_var (ncid, "P0", NC_DOUBLE, 0, NULL, &P0);
+    err       = NC4_DEF_VAR (ncid, "P0", NC_DOUBLE, 0, NULL, &P0);
     NC4ERR
     err = nc_put_att_text (ncid, P0, "long_name", 18, "reference pressure");
     NC4ERR
@@ -10741,7 +10749,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = P0;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "ilev", NC_DOUBLE, 1, dimids, &ilev);
+    err       = NC4_DEF_VAR (ncid, "ilev", NC_DOUBLE, 1, dimids, &ilev);
     NC4ERR
     err = nc_put_att_text (ncid, ilev, "long_name", 39, "hybrid level at interfaces (1000*(A+B))");
     NC4ERR
@@ -10757,21 +10765,21 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = ilev;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "hyai", NC_DOUBLE, 1, dimids, &hyai);
+    err       = NC4_DEF_VAR (ncid, "hyai", NC_DOUBLE, 1, dimids, &hyai);
     NC4ERR
     err = nc_put_att_text (ncid, hyai, "long_name", 40, "hybrid A coefficient at layer interfaces");
     NC4ERR
     varids[i++] = hyai;
 
     dimids[0] = dim_ilev;
-    err       = nc_def_var (ncid, "hybi", NC_DOUBLE, 1, dimids, &hybi);
+    err       = NC4_DEF_VAR (ncid, "hybi", NC_DOUBLE, 1, dimids, &hybi);
     NC4ERR
     err = nc_put_att_text (ncid, hybi, "long_name", 40, "hybrid B coefficient at layer interfaces");
     NC4ERR
     varids[i++] = hybi;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "time", NC_DOUBLE, 1, dimids, &time);
+    err       = NC4_DEF_VAR (ncid, "time", NC_DOUBLE, 1, dimids, &time);
     NC4ERR
     err = nc_put_att_text (ncid, time, "long_name", 4, "time");
     NC4ERR
@@ -10784,14 +10792,14 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = time;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "date", NC_INT, 1, dimids, &date);
+    err       = NC4_DEF_VAR (ncid, "date", NC_INT, 1, dimids, &date);
     NC4ERR
     err = nc_put_att_text (ncid, date, "long_name", 23, "current date (YYYYMMDD)");
     NC4ERR
     varids[i++] = date;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "datesec", NC_INT, 1, dimids, &datesec);
+    err       = NC4_DEF_VAR (ncid, "datesec", NC_INT, 1, dimids, &datesec);
     NC4ERR
     err = nc_put_att_text (ncid, datesec, "long_name", 31, "current seconds of current date");
     NC4ERR
@@ -10799,7 +10807,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_nbnd;
-    err       = nc_def_var (ncid, "time_bnds", NC_DOUBLE, 2, dimids, &time_bnds);
+    err       = NC4_DEF_VAR (ncid, "time_bnds", NC_DOUBLE, 2, dimids, &time_bnds);
     NC4ERR
     err = nc_put_att_text (ncid, time_bnds, "long_name", 23, "time interval endpoints");
     NC4ERR
@@ -10807,40 +10815,40 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_chars;
-    err       = nc_def_var (ncid, "date_written", NC_CHAR, 2, dimids, &date_written);
+    err       = NC4_DEF_VAR (ncid, "date_written", NC_CHAR, 2, dimids, &date_written);
     NC4ERR
     varids[i++] = date_written;
 
     dimids[0] = dim_time;
     dimids[1] = dim_chars;
-    err       = nc_def_var (ncid, "time_written", NC_CHAR, 2, dimids, &time_written);
+    err       = NC4_DEF_VAR (ncid, "time_written", NC_CHAR, 2, dimids, &time_written);
     NC4ERR
     varids[i++] = time_written;
 
-    err = nc_def_var (ncid, "ndbase", NC_INT, 0, NULL, &ndbase);
+    err = NC4_DEF_VAR (ncid, "ndbase", NC_INT, 0, NULL, &ndbase);
     NC4ERR
     err = nc_put_att_text (ncid, ndbase, "long_name", 8, "base day");
     NC4ERR
     varids[i++] = ndbase;
-    err         = nc_def_var (ncid, "nsbase", NC_INT, 0, NULL, &nsbase);
+    err         = NC4_DEF_VAR (ncid, "nsbase", NC_INT, 0, NULL, &nsbase);
     NC4ERR
     err = nc_put_att_text (ncid, nsbase, "long_name", 19, "seconds of base day");
     NC4ERR
     varids[i++] = nsbase;
 
-    err = nc_def_var (ncid, "nbdate", NC_INT, 0, NULL, &nbdate);
+    err = NC4_DEF_VAR (ncid, "nbdate", NC_INT, 0, NULL, &nbdate);
     NC4ERR
     err = nc_put_att_text (ncid, nbdate, "long_name", 20, "base date (YYYYMMDD)");
     NC4ERR
     varids[i++] = nbdate;
 
-    err = nc_def_var (ncid, "nbsec", NC_INT, 0, NULL, &nbsec);
+    err = NC4_DEF_VAR (ncid, "nbsec", NC_INT, 0, NULL, &nbsec);
     NC4ERR
     err = nc_put_att_text (ncid, nbsec, "long_name", 20, "seconds of base date");
     NC4ERR
     varids[i++] = nbsec;
 
-    err = nc_def_var (ncid, "mdt", NC_INT, 0, NULL, &mdt);
+    err = NC4_DEF_VAR (ncid, "mdt", NC_INT, 0, NULL, &mdt);
     NC4ERR
     err = nc_put_att_text (ncid, mdt, "long_name", 8, "timestep");
     NC4ERR
@@ -10849,56 +10857,56 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = mdt;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "ndcur", NC_INT, 1, dimids, &ndcur);
+    err       = NC4_DEF_VAR (ncid, "ndcur", NC_INT, 1, dimids, &ndcur);
     NC4ERR
     err = nc_put_att_text (ncid, ndcur, "long_name", 27, "current day (from base day)");
     NC4ERR
     varids[i++] = ndcur;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "nscur", NC_INT, 1, dimids, &nscur);
+    err       = NC4_DEF_VAR (ncid, "nscur", NC_INT, 1, dimids, &nscur);
     NC4ERR
     err = nc_put_att_text (ncid, nscur, "long_name", 30, "current seconds of current day");
     NC4ERR
     varids[i++] = nscur;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "co2vmr", NC_DOUBLE, 1, dimids, &co2vmr);
+    err       = NC4_DEF_VAR (ncid, "co2vmr", NC_DOUBLE, 1, dimids, &co2vmr);
     NC4ERR
     err = nc_put_att_text (ncid, co2vmr, "long_name", 23, "co2 volume mixing ratio");
     NC4ERR
     varids[i++] = co2vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "ch4vmr", NC_DOUBLE, 1, dimids, &ch4vmr);
+    err       = NC4_DEF_VAR (ncid, "ch4vmr", NC_DOUBLE, 1, dimids, &ch4vmr);
     NC4ERR
     err = nc_put_att_text (ncid, ch4vmr, "long_name", 23, "ch4 volume mixing ratio");
     NC4ERR
     varids[i++] = ch4vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "n2ovmr", NC_DOUBLE, 1, dimids, &n2ovmr);
+    err       = NC4_DEF_VAR (ncid, "n2ovmr", NC_DOUBLE, 1, dimids, &n2ovmr);
     NC4ERR
     err = nc_put_att_text (ncid, n2ovmr, "long_name", 23, "n2o volume mixing ratio");
     NC4ERR
     varids[i++] = n2ovmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "f11vmr", NC_DOUBLE, 1, dimids, &f11vmr);
+    err       = NC4_DEF_VAR (ncid, "f11vmr", NC_DOUBLE, 1, dimids, &f11vmr);
     NC4ERR
     err = nc_put_att_text (ncid, f11vmr, "long_name", 23, "f11 volume mixing ratio");
     NC4ERR
     varids[i++] = f11vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "f12vmr", NC_DOUBLE, 1, dimids, &f12vmr);
+    err       = NC4_DEF_VAR (ncid, "f12vmr", NC_DOUBLE, 1, dimids, &f12vmr);
     NC4ERR
     err = nc_put_att_text (ncid, f12vmr, "long_name", 23, "f12 volume mixing ratio");
     NC4ERR
     varids[i++] = f12vmr;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "sol_tsi", NC_DOUBLE, 1, dimids, &sol_tsi);
+    err       = NC4_DEF_VAR (ncid, "sol_tsi", NC_DOUBLE, 1, dimids, &sol_tsi);
     NC4ERR
     err = nc_put_att_text (ncid, sol_tsi, "long_name", 22, "total solar irradiance");
     NC4ERR
@@ -10907,7 +10915,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     varids[i++] = sol_tsi;
 
     dimids[0] = dim_time;
-    err       = nc_def_var (ncid, "nsteph", NC_INT, 1, dimids, &nsteph);
+    err       = NC4_DEF_VAR (ncid, "nsteph", NC_INT, 1, dimids, &nsteph);
     NC4ERR
     err = nc_put_att_text (ncid, nsteph, "long_name", 16, "current timestep");
     NC4ERR
@@ -10915,7 +10923,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDHGH", NC_FLOAT, 2, dimids, &CLDHGH);
+    err       = NC4_DEF_VAR (ncid, "CLDHGH", NC_FLOAT, 2, dimids, &CLDHGH);
     NC4ERR
     err = nc_put_att_text (ncid, CLDHGH, "units", 8, "fraction");
     NC4ERR
@@ -10925,7 +10933,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDLOW", NC_FLOAT, 2, dimids, &CLDLOW);
+    err       = NC4_DEF_VAR (ncid, "CLDLOW", NC_FLOAT, 2, dimids, &CLDLOW);
     NC4ERR
     err = nc_put_att_text (ncid, CLDLOW, "units", 8, "fraction");
     NC4ERR
@@ -10935,7 +10943,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "CLDMED", NC_FLOAT, 2, dimids, &CLDMED);
+    err       = NC4_DEF_VAR (ncid, "CLDMED", NC_FLOAT, 2, dimids, &CLDMED);
     NC4ERR
     err = nc_put_att_text (ncid, CLDMED, "units", 8, "fraction");
     NC4ERR
@@ -10945,7 +10953,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "FLNT", NC_FLOAT, 2, dimids, &FLNT);
+    err       = NC4_DEF_VAR (ncid, "FLNT", NC_FLOAT, 2, dimids, &FLNT);
     NC4ERR
     err = nc_put_att_text (ncid, FLNT, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -10957,7 +10965,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "LWCF", NC_FLOAT, 2, dimids, &LWCF);
+    err       = NC4_DEF_VAR (ncid, "LWCF", NC_FLOAT, 2, dimids, &LWCF);
     NC4ERR
     err = nc_put_att_text (ncid, LWCF, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -10969,7 +10977,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "OMEGA500", NC_FLOAT, 2, dimids, &OMEGA500);
+    err       = NC4_DEF_VAR (ncid, "OMEGA500", NC_FLOAT, 2, dimids, &OMEGA500);
     NC4ERR
     err = nc_put_att_text (ncid, OMEGA500, "units", 4, "Pa/s");
     NC4ERR
@@ -10980,7 +10988,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "OMEGA850", NC_FLOAT, 2, dimids, &OMEGA850);
+    err       = NC4_DEF_VAR (ncid, "OMEGA850", NC_FLOAT, 2, dimids, &OMEGA850);
     NC4ERR
     err = nc_put_att_text (ncid, OMEGA850, "units", 4, "Pa/s");
     NC4ERR
@@ -10991,7 +10999,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PRECT", NC_FLOAT, 2, dimids, &PRECT);
+    err       = NC4_DEF_VAR (ncid, "PRECT", NC_FLOAT, 2, dimids, &PRECT);
     NC4ERR
     err = nc_put_att_text (ncid, PRECT, "units", 3, "m/s");
     NC4ERR
@@ -11002,7 +11010,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "PS", NC_FLOAT, 2, dimids, &PS);
+    err       = NC4_DEF_VAR (ncid, "PS", NC_FLOAT, 2, dimids, &PS);
     NC4ERR
     err = nc_put_att_text (ncid, PS, "units", 2, "Pa");
     NC4ERR
@@ -11012,7 +11020,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "SWCF", NC_FLOAT, 2, dimids, &SWCF);
+    err       = NC4_DEF_VAR (ncid, "SWCF", NC_FLOAT, 2, dimids, &SWCF);
     NC4ERR
     err = nc_put_att_text (ncid, SWCF, "Sampling_Sequence", 8, "rad_lwsw");
     NC4ERR
@@ -11024,7 +11032,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "T850", NC_FLOAT, 2, dimids, &T850);
+    err       = NC4_DEF_VAR (ncid, "T850", NC_FLOAT, 2, dimids, &T850);
     NC4ERR
     err = nc_put_att_text (ncid, T850, "units", 1, "K");
     NC4ERR
@@ -11034,7 +11042,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TMQ", NC_FLOAT, 2, dimids, &TMQ);
+    err       = NC4_DEF_VAR (ncid, "TMQ", NC_FLOAT, 2, dimids, &TMQ);
     NC4ERR
     err = nc_put_att_text (ncid, TMQ, "units", 5, "kg/m2");
     NC4ERR
@@ -11045,7 +11053,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "TS", NC_FLOAT, 2, dimids, &TS);
+    err       = NC4_DEF_VAR (ncid, "TS", NC_FLOAT, 2, dimids, &TS);
     NC4ERR
     err = nc_put_att_text (ncid, TS, "units", 1, "K");
     NC4ERR
@@ -11056,7 +11064,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
     dimids[0] = dim_time;
     dimids[1] = dim_lev;
     dimids[2] = dim_ncol;
-    err       = nc_def_var (ncid, "U", NC_FLOAT, 3, dimids, &U);
+    err       = NC4_DEF_VAR (ncid, "U", NC_FLOAT, 3, dimids, &U);
     NC4ERR
     err = nc_put_att_int (ncid, U, "mdims", NC_INT, 1, &mdims);
     NC4ERR
@@ -11068,7 +11076,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "U250", NC_FLOAT, 2, dimids, &U250);
+    err       = NC4_DEF_VAR (ncid, "U250", NC_FLOAT, 2, dimids, &U250);
     NC4ERR
     err = nc_put_att_text (ncid, U250, "units", 3, "m/s");
     NC4ERR
@@ -11078,7 +11086,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "U850", NC_FLOAT, 2, dimids, &U850);
+    err       = NC4_DEF_VAR (ncid, "U850", NC_FLOAT, 2, dimids, &U850);
     NC4ERR
     err = nc_put_att_text (ncid, U850, "units", 3, "m/s");
     NC4ERR
@@ -11088,7 +11096,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "UBOT", NC_FLOAT, 2, dimids, &UBOT);
+    err       = NC4_DEF_VAR (ncid, "UBOT", NC_FLOAT, 2, dimids, &UBOT);
     NC4ERR
     err = nc_put_att_text (ncid, UBOT, "units", 3, "m/s");
     NC4ERR
@@ -11098,7 +11106,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "V250", NC_FLOAT, 2, dimids, &V250);
+    err       = NC4_DEF_VAR (ncid, "V250", NC_FLOAT, 2, dimids, &V250);
     NC4ERR
     err = nc_put_att_text (ncid, V250, "units", 3, "m/s");
     NC4ERR
@@ -11109,7 +11117,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "V850", NC_FLOAT, 2, dimids, &V850);
+    err       = NC4_DEF_VAR (ncid, "V850", NC_FLOAT, 2, dimids, &V850);
     NC4ERR
     err = nc_put_att_text (ncid, V850, "units", 3, "m/s");
     NC4ERR
@@ -11120,7 +11128,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "VBOT", NC_FLOAT, 2, dimids, &VBOT);
+    err       = NC4_DEF_VAR (ncid, "VBOT", NC_FLOAT, 2, dimids, &VBOT);
     NC4ERR
     err = nc_put_att_text (ncid, VBOT, "units", 3, "m/s");
     NC4ERR
@@ -11130,7 +11138,7 @@ int def_F_case_h1_nc4 (int ncid,             /* file ID */
 
     dimids[0] = dim_time;
     dimids[1] = dim_ncol;
-    err       = nc_def_var (ncid, "Z500", NC_FLOAT, 2, dimids, &Z500);
+    err       = NC4_DEF_VAR (ncid, "Z500", NC_FLOAT, 2, dimids, &Z500);
     NC4ERR
     err = nc_put_att_text (ncid, Z500, "units", 1, "m");
     NC4ERR

@@ -197,7 +197,7 @@ AC_CHECK_FUNC([MPI_File_open], [],
      e3sm_io requires MPI-IO support to work properly. Abort.
    -----------------------------------------------------------------------])
 ])])
-AC_LANG_POP(C++)
+
 
 AC_CHECK_DECL([access], [], [], [[#include <unistd.h>]])
 if test "x$ac_cv_have_decl_access" = xyes ; then
@@ -282,6 +282,12 @@ if test "x$have_pnc" = xno ; then
       configure command-line option --with-pnetcdf=/path/to/implementation
       to specify the location of PnetCDF installation. Abort.
       -----------------------------------------------------------------------])
+fi
+
+if test "x$LIBS" = x ; then
+LIBS="-lpnetcdf"
+else
+LIBS="$LIBS -lpnetcdf"
 fi
 
 enable_netcdf4=
@@ -428,18 +434,15 @@ if test "x$enable_netcdf4" = xyes ; then
    if test "x$netcdf4_libdir" != x ; then
       LDFLAGS="-L$netcdf4_libdir $LDFLAGS"
    fi
-   LIBS="$netcdf_libs $LIBS"
+   
+   LIBS="$LIBS $netcdf_libs"
    AC_SEARCH_LIBS([nc_open], [netcdf],,[AC_MSG_ERROR([Cannot find nc_open in NetCDF-4 library])])
 
    AC_DEFINE([ENABLE_NETCDF4], [1], [Enable nc4 mode])
 fi
 AM_CONDITIONAL([ENABLE_NETCDF4], [test x$enable_netcdf4 = xyes])
 
-if test "x$LIBS" = x ; then
-LIBS="-lpnetcdf"
-else
-LIBS="$LIBS -lpnetcdf"
-fi
+AC_LANG_POP(C++)
 
 AC_CONFIG_FILES(Makefile)
 

@@ -16,6 +16,15 @@
 #define NOP(A, B, D, E, C)        NC_NOERR
 #define NOP2(A, B, D, E, F, C)    NC_NOERR
 
+#define NC4_DEF_VAR(A, B, C, D, E, F)                                            \
+    ({                                                                            \
+        int ret;                                                                 \
+        ret = nc_def_var (A, B, C, D, E, F);                                     \
+        if (ret == NC_NOERR) { ret = nc_var_par_access (A, *F, NC_COLLECTIVE); } \
+        ret;                                                                     \
+    })
+
+
 static int define_global_attributes (int ncid) {
     int err, nerrs = 0, iattr;
     double dattr;
@@ -2799,7 +2808,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_Time;
     dimids[1] = dim_nCells;
 
-    err = nc_def_var (ncid, "salinitySurfaceRestoringTendency", NC_DOUBLE, 2, dimids,
+    err = NC4_DEF_VAR (ncid, "salinitySurfaceRestoringTendency", NC_DOUBLE, 2, dimids,
                       &salinitySurfaceRestoringTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinitySurfaceRestoringTendency, "units", 7, "m PSU/s");
@@ -2814,7 +2823,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevelsP1;
 
-    err = nc_def_var (ncid, "vertTransportVelocityTop", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "vertTransportVelocityTop", NC_DOUBLE, 3, dimids,
                       &vertTransportVelocityTop);
     NC4ERR
     err = nc_put_att_text (ncid, vertTransportVelocityTop, "units", 8, "m s^{-1}");
@@ -2829,7 +2838,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     varids[i++] = vertTransportVelocityTop;
 
     err =
-        nc_def_var (ncid, "vertGMBolusVelocityTop", NC_DOUBLE, 3, dimids, &vertGMBolusVelocityTop);
+        NC4_DEF_VAR (ncid, "vertGMBolusVelocityTop", NC_DOUBLE, 3, dimids, &vertGMBolusVelocityTop);
     NC4ERR
     err = nc_put_att_text (ncid, vertGMBolusVelocityTop, "units", 8, "m s^{-1}");
     NC4ERR
@@ -2841,7 +2850,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = vertGMBolusVelocityTop;
 
-    err = nc_def_var (ncid, "vertAleTransportTop", NC_DOUBLE, 3, dimids, &vertAleTransportTop);
+    err = NC4_DEF_VAR (ncid, "vertAleTransportTop", NC_DOUBLE, 3, dimids, &vertAleTransportTop);
     NC4ERR
     err = nc_put_att_text (ncid, vertAleTransportTop, "units", 8, "m s^{-1}");
     NC4ERR
@@ -2855,7 +2864,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_Time;
     dimids[1] = dim_nCells;
 
-    err = nc_def_var (ncid, "tendSSH", NC_DOUBLE, 2, dimids, &tendSSH);
+    err = NC4_DEF_VAR (ncid, "tendSSH", NC_DOUBLE, 2, dimids, &tendSSH);
     NC4ERR
     err = nc_put_att_text (ncid, tendSSH, "units", 8, "m s^{-1}");
     NC4ERR
@@ -2868,7 +2877,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "layerThickness", NC_DOUBLE, 3, dimids, &layerThickness);
+    err = NC4_DEF_VAR (ncid, "layerThickness", NC_DOUBLE, 3, dimids, &layerThickness);
     NC4ERR
     err = nc_put_att_text (ncid, layerThickness, "units", 1, "m");
     NC4ERR
@@ -2881,7 +2890,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nEdges;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "normalVelocity", NC_DOUBLE, 3, dimids, &normalVelocity);
+    err = NC4_DEF_VAR (ncid, "normalVelocity", NC_DOUBLE, 3, dimids, &normalVelocity);
     NC4ERR
     err = nc_put_att_text (ncid, normalVelocity, "units", 8, "m s^{-1}");
     NC4ERR
@@ -2895,7 +2904,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_Time;
     dimids[1] = dim_nCells;
 
-    err = nc_def_var (ncid, "ssh", NC_DOUBLE, 2, dimids, &ssh);
+    err = NC4_DEF_VAR (ncid, "ssh", NC_DOUBLE, 2, dimids, &ssh);
     NC4ERR
     err = nc_put_att_text (ncid, ssh, "units", 1, "m");
     NC4ERR
@@ -2906,7 +2915,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 int (nEdges) */
     dimids[0] = dim_nEdges;
 
-    err = nc_def_var (ncid, "maxLevelEdgeTop", NC_INT, 1, dimids, &maxLevelEdgeTop);
+    err = NC4_DEF_VAR (ncid, "maxLevelEdgeTop", NC_INT, 1, dimids, &maxLevelEdgeTop);
     NC4ERR
     err = nc_put_att_text (ncid, maxLevelEdgeTop, "units", 8, "unitless");
     NC4ERR
@@ -2919,7 +2928,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 double (nVertLevels) */
     dimids[0] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "vertCoordMovementWeights", NC_DOUBLE, 1, dimids,
+    err = NC4_DEF_VAR (ncid, "vertCoordMovementWeights", NC_DOUBLE, 1, dimids,
                       &vertCoordMovementWeights);
     NC4ERR
     err = nc_put_att_text (ncid, vertCoordMovementWeights, "units", 8, "unitless");
@@ -2935,7 +2944,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_nEdges;
     dimids[1] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "edgeMask", NC_INT, 2, dimids, &edgeMask);
+    err = NC4_DEF_VAR (ncid, "edgeMask", NC_INT, 2, dimids, &edgeMask);
     NC4ERR
     err = nc_put_att_text (ncid, edgeMask, "units", 8, "unitless");
     NC4ERR
@@ -2949,7 +2958,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_nCells;
     dimids[1] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "cellMask", NC_INT, 2, dimids, &cellMask);
+    err = NC4_DEF_VAR (ncid, "cellMask", NC_INT, 2, dimids, &cellMask);
     NC4ERR
     err = nc_put_att_text (ncid, cellMask, "units", 8, "unitless");
     NC4ERR
@@ -2963,7 +2972,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_nVertices;
     dimids[1] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "vertexMask", NC_INT, 2, dimids, &vertexMask);
+    err = NC4_DEF_VAR (ncid, "vertexMask", NC_INT, 2, dimids, &vertexMask);
     NC4ERR
     err = nc_put_att_text (ncid, vertexMask, "units", 8, "unitless");
     NC4ERR
@@ -2976,7 +2985,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 2 double (nVertLevels) */
     dimids[0] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "refZMid", NC_DOUBLE, 1, dimids, &refZMid);
+    err = NC4_DEF_VAR (ncid, "refZMid", NC_DOUBLE, 1, dimids, &refZMid);
     NC4ERR
     err = nc_put_att_text (ncid, refZMid, "units", 1, "m");
     NC4ERR
@@ -2986,7 +2995,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = refZMid;
 
-    err = nc_def_var (ncid, "refLayerThickness", NC_DOUBLE, 1, dimids, &refLayerThickness);
+    err = NC4_DEF_VAR (ncid, "refLayerThickness", NC_DOUBLE, 1, dimids, &refLayerThickness);
     NC4ERR
     err = nc_put_att_text (ncid, refLayerThickness, "units", 1, "m");
     NC4ERR
@@ -3000,7 +3009,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_Time;
     dimids[1] = dim_StrLen;
 
-    err = nc_def_var (ncid, "xtime", NC_CHAR, 2, dimids, &xtime);
+    err = NC4_DEF_VAR (ncid, "xtime", NC_CHAR, 2, dimids, &xtime);
     NC4ERR
     err = nc_put_att_text (ncid, xtime, "units", 8, "unitless");
     NC4ERR
@@ -3014,7 +3023,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "kineticEnergyCell", NC_DOUBLE, 3, dimids, &kineticEnergyCell);
+    err = NC4_DEF_VAR (ncid, "kineticEnergyCell", NC_DOUBLE, 3, dimids, &kineticEnergyCell);
     NC4ERR
     err = nc_put_att_text (ncid, kineticEnergyCell, "units", 10, "m^2 s^{-2}");
     NC4ERR
@@ -3024,7 +3033,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = kineticEnergyCell;
 
-    err = nc_def_var (ncid, "relativeVorticityCell", NC_DOUBLE, 3, dimids, &relativeVorticityCell);
+    err = NC4_DEF_VAR (ncid, "relativeVorticityCell", NC_DOUBLE, 3, dimids, &relativeVorticityCell);
     NC4ERR
     err = nc_put_att_text (ncid, relativeVorticityCell, "units", 6, "s^{-1}");
     NC4ERR
@@ -3039,7 +3048,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nVertices;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "relativeVorticity", NC_DOUBLE, 3, dimids, &relativeVorticity);
+    err = NC4_DEF_VAR (ncid, "relativeVorticity", NC_DOUBLE, 3, dimids, &relativeVorticity);
     NC4ERR
     err = nc_put_att_text (ncid, relativeVorticity, "units", 6, "s^{-1}");
     NC4ERR
@@ -3054,7 +3063,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "divergence", NC_DOUBLE, 3, dimids, &divergence);
+    err = NC4_DEF_VAR (ncid, "divergence", NC_DOUBLE, 3, dimids, &divergence);
     NC4ERR
     err = nc_put_att_text (ncid, divergence, "units", 6, "s^{-1}");
     NC4ERR
@@ -3065,7 +3074,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 6 double (Time) */
     dimids[0] = dim_Time;
 
-    err = nc_def_var (ncid, "areaCellGlobal", NC_DOUBLE, 1, dimids, &areaCellGlobal);
+    err = NC4_DEF_VAR (ncid, "areaCellGlobal", NC_DOUBLE, 1, dimids, &areaCellGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, areaCellGlobal, "units", 3, "m^2");
     NC4ERR
@@ -3075,7 +3084,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = areaCellGlobal;
 
-    err = nc_def_var (ncid, "areaEdgeGlobal", NC_DOUBLE, 1, dimids, &areaEdgeGlobal);
+    err = NC4_DEF_VAR (ncid, "areaEdgeGlobal", NC_DOUBLE, 1, dimids, &areaEdgeGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, areaEdgeGlobal, "units", 3, "m^2");
     NC4ERR
@@ -3085,7 +3094,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = areaEdgeGlobal;
 
-    err = nc_def_var (ncid, "areaTriangleGlobal", NC_DOUBLE, 1, dimids, &areaTriangleGlobal);
+    err = NC4_DEF_VAR (ncid, "areaTriangleGlobal", NC_DOUBLE, 1, dimids, &areaTriangleGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, areaTriangleGlobal, "units", 3, "m^2");
     NC4ERR
@@ -3095,7 +3104,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = areaTriangleGlobal;
 
-    err = nc_def_var (ncid, "volumeCellGlobal", NC_DOUBLE, 1, dimids, &volumeCellGlobal);
+    err = NC4_DEF_VAR (ncid, "volumeCellGlobal", NC_DOUBLE, 1, dimids, &volumeCellGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, volumeCellGlobal, "units", 3, "m^3");
     NC4ERR
@@ -3105,7 +3114,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = volumeCellGlobal;
 
-    err = nc_def_var (ncid, "volumeEdgeGlobal", NC_DOUBLE, 1, dimids, &volumeEdgeGlobal);
+    err = NC4_DEF_VAR (ncid, "volumeEdgeGlobal", NC_DOUBLE, 1, dimids, &volumeEdgeGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, volumeEdgeGlobal, "units", 3, "m^3");
     NC4ERR
@@ -3115,7 +3124,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = volumeEdgeGlobal;
 
-    err = nc_def_var (ncid, "CFLNumberGlobal", NC_DOUBLE, 1, dimids, &CFLNumberGlobal);
+    err = NC4_DEF_VAR (ncid, "CFLNumberGlobal", NC_DOUBLE, 1, dimids, &CFLNumberGlobal);
     NC4ERR
     err = nc_put_att_text (ncid, CFLNumberGlobal, "units", 8, "unitless");
     NC4ERR
@@ -3129,7 +3138,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "BruntVaisalaFreqTop", NC_DOUBLE, 3, dimids, &BruntVaisalaFreqTop);
+    err = NC4_DEF_VAR (ncid, "BruntVaisalaFreqTop", NC_DOUBLE, 3, dimids, &BruntVaisalaFreqTop);
     NC4ERR
     err = nc_put_att_text (ncid, BruntVaisalaFreqTop, "units", 6, "s^{-2}");
     NC4ERR
@@ -3144,7 +3153,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevelsP1;
 
-    err = nc_def_var (ncid, "vertVelocityTop", NC_DOUBLE, 3, dimids, &vertVelocityTop);
+    err = NC4_DEF_VAR (ncid, "vertVelocityTop", NC_DOUBLE, 3, dimids, &vertVelocityTop);
     NC4ERR
     err = nc_put_att_text (ncid, vertVelocityTop, "units", 8, "m s^{-1}");
     NC4ERR
@@ -3159,7 +3168,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "velocityZonal", NC_DOUBLE, 3, dimids, &velocityZonal);
+    err = NC4_DEF_VAR (ncid, "velocityZonal", NC_DOUBLE, 3, dimids, &velocityZonal);
     NC4ERR
     err = nc_put_att_text (ncid, velocityZonal, "units", 8, "m s^{-1}");
     NC4ERR
@@ -3169,7 +3178,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = velocityZonal;
 
-    err = nc_def_var (ncid, "velocityMeridional", NC_DOUBLE, 3, dimids, &velocityMeridional);
+    err = NC4_DEF_VAR (ncid, "velocityMeridional", NC_DOUBLE, 3, dimids, &velocityMeridional);
     NC4ERR
     err = nc_put_att_text (ncid, velocityMeridional, "units", 8, "m s^{-1}");
     NC4ERR
@@ -3179,7 +3188,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = velocityMeridional;
 
-    err = nc_def_var (ncid, "displacedDensity", NC_DOUBLE, 3, dimids, &displacedDensity);
+    err = NC4_DEF_VAR (ncid, "displacedDensity", NC_DOUBLE, 3, dimids, &displacedDensity);
     NC4ERR
     err = nc_put_att_text (ncid, displacedDensity, "units", 9, "kg m^{-3}");
     NC4ERR
@@ -3191,7 +3200,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = displacedDensity;
 
-    err = nc_def_var (ncid, "potentialDensity", NC_DOUBLE, 3, dimids, &potentialDensity);
+    err = NC4_DEF_VAR (ncid, "potentialDensity", NC_DOUBLE, 3, dimids, &potentialDensity);
     NC4ERR
     err = nc_put_att_text (ncid, potentialDensity, "units", 9, "kg m^{-3}");
     NC4ERR
@@ -3201,7 +3210,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = potentialDensity;
 
-    err = nc_def_var (ncid, "pressure", NC_DOUBLE, 3, dimids, &pressure);
+    err = NC4_DEF_VAR (ncid, "pressure", NC_DOUBLE, 3, dimids, &pressure);
     NC4ERR
     err = nc_put_att_text (ncid, pressure, "units", 8, "N m^{-2}");
     NC4ERR
@@ -3213,7 +3222,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 double (nVertLevels) */
     dimids[0] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "refBottomDepth", NC_DOUBLE, 1, dimids, &refBottomDepth);
+    err = NC4_DEF_VAR (ncid, "refBottomDepth", NC_DOUBLE, 1, dimids, &refBottomDepth);
     NC4ERR
     err = nc_put_att_text (ncid, refBottomDepth, "units", 1, "m");
     NC4ERR
@@ -3228,7 +3237,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "zMid", NC_DOUBLE, 3, dimids, &zMid);
+    err = NC4_DEF_VAR (ncid, "zMid", NC_DOUBLE, 3, dimids, &zMid);
     NC4ERR
     err = nc_put_att_text (ncid, zMid, "units", 1, "m");
     NC4ERR
@@ -3240,7 +3249,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 double (nCells) */
     dimids[0] = dim_nCells;
 
-    err = nc_def_var (ncid, "bottomDepth", NC_DOUBLE, 1, dimids, &bottomDepth);
+    err = NC4_DEF_VAR (ncid, "bottomDepth", NC_DOUBLE, 1, dimids, &bottomDepth);
     NC4ERR
     err = nc_put_att_text (ncid, bottomDepth, "units", 1, "m");
     NC4ERR
@@ -3253,7 +3262,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 int (nCells) */
     dimids[0] = dim_nCells;
 
-    err = nc_def_var (ncid, "maxLevelCell", NC_INT, 1, dimids, &maxLevelCell);
+    err = NC4_DEF_VAR (ncid, "maxLevelCell", NC_INT, 1, dimids, &maxLevelCell);
     NC4ERR
     err = nc_put_att_text (ncid, maxLevelCell, "units", 8, "unitless");
     NC4ERR
@@ -3265,7 +3274,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     /* 1 int (nEdges) */
     dimids[0] = dim_nEdges;
 
-    err = nc_def_var (ncid, "maxLevelEdgeBot", NC_INT, 1, dimids, &maxLevelEdgeBot);
+    err = NC4_DEF_VAR (ncid, "maxLevelEdgeBot", NC_INT, 1, dimids, &maxLevelEdgeBot);
     NC4ERR
     err = nc_put_att_text (ncid, maxLevelEdgeBot, "units", 8, "unitless");
     NC4ERR
@@ -3279,7 +3288,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[0] = dim_Time;
     dimids[1] = dim_nCells;
 
-    err = nc_def_var (ncid, "columnIntegratedSpeed", NC_DOUBLE, 2, dimids, &columnIntegratedSpeed);
+    err = NC4_DEF_VAR (ncid, "columnIntegratedSpeed", NC_DOUBLE, 2, dimids, &columnIntegratedSpeed);
     NC4ERR
     err = nc_put_att_text (ncid, columnIntegratedSpeed, "units", 10, "m^2 s^{-1}");
     NC4ERR
@@ -3295,7 +3304,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     dimids[1] = dim_nCells;
     dimids[2] = dim_nVertLevels;
 
-    err = nc_def_var (ncid, "temperatureHorizontalAdvectionTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureHorizontalAdvectionTendency", NC_DOUBLE, 3, dimids,
                       &temperatureHorizontalAdvectionTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureHorizontalAdvectionTendency, "long_name", 58,
@@ -3307,7 +3316,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureHorizontalAdvectionTendency;
 
-    err = nc_def_var (ncid, "salinityHorizontalAdvectionTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "salinityHorizontalAdvectionTendency", NC_DOUBLE, 3, dimids,
                       &salinityHorizontalAdvectionTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinityHorizontalAdvectionTendency, "long_name", 45,
@@ -3319,7 +3328,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = salinityHorizontalAdvectionTendency;
 
-    err = nc_def_var (ncid, "temperatureVerticalAdvectionTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureVerticalAdvectionTendency", NC_DOUBLE, 3, dimids,
                       &temperatureVerticalAdvectionTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureVerticalAdvectionTendency, "long_name", 56,
@@ -3331,7 +3340,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureVerticalAdvectionTendency;
 
-    err = nc_def_var (ncid, "salinityVerticalAdvectionTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "salinityVerticalAdvectionTendency", NC_DOUBLE, 3, dimids,
                       &salinityVerticalAdvectionTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinityVerticalAdvectionTendency, "long_name", 43,
@@ -3342,7 +3351,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = salinityVerticalAdvectionTendency;
 
-    err = nc_def_var (ncid, "temperatureVertMixTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureVertMixTendency", NC_DOUBLE, 3, dimids,
                       &temperatureVertMixTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureVertMixTendency, "long_name", 53,
@@ -3354,7 +3363,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureVertMixTendency;
 
-    err = nc_def_var (ncid, "salinityVertMixTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "salinityVertMixTendency", NC_DOUBLE, 3, dimids,
                       &salinityVertMixTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinityVertMixTendency, "long_name", 40,
@@ -3364,7 +3373,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = salinityVertMixTendency;
 
-    err = nc_def_var (ncid, "temperatureSurfaceFluxTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureSurfaceFluxTendency", NC_DOUBLE, 3, dimids,
                       &temperatureSurfaceFluxTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureSurfaceFluxTendency, "long_name", 52,
@@ -3376,7 +3385,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureSurfaceFluxTendency;
 
-    err = nc_def_var (ncid, "salinitySurfaceFluxTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "salinitySurfaceFluxTendency", NC_DOUBLE, 3, dimids,
                       &salinitySurfaceFluxTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinitySurfaceFluxTendency, "long_name", 39,
@@ -3386,7 +3395,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = salinitySurfaceFluxTendency;
 
-    err = nc_def_var (ncid, "temperatureShortWaveTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureShortWaveTendency", NC_DOUBLE, 3, dimids,
                       &temperatureShortWaveTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureShortWaveTendency, "units", 26,
@@ -3398,7 +3407,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureShortWaveTendency;
 
-    err = nc_def_var (ncid, "temperatureNonLocalTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "temperatureNonLocalTendency", NC_DOUBLE, 3, dimids,
                       &temperatureNonLocalTendency);
     NC4ERR
     err = nc_put_att_text (ncid, temperatureNonLocalTendency, "long_name", 56,
@@ -3410,7 +3419,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperatureNonLocalTendency;
 
-    err = nc_def_var (ncid, "salinityNonLocalTendency", NC_DOUBLE, 3, dimids,
+    err = NC4_DEF_VAR (ncid, "salinityNonLocalTendency", NC_DOUBLE, 3, dimids,
                       &salinityNonLocalTendency);
     NC4ERR
     err = nc_put_att_text (ncid, salinityNonLocalTendency, "long_name", 43,
@@ -3420,7 +3429,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = salinityNonLocalTendency;
 
-    err = nc_def_var (ncid, "temperature", NC_DOUBLE, 3, dimids, &temperature);
+    err = NC4_DEF_VAR (ncid, "temperature", NC_DOUBLE, 3, dimids, &temperature);
     NC4ERR
     err = nc_put_att_text (ncid, temperature, "long_name", 21, "potential temperature");
     NC4ERR
@@ -3428,7 +3437,7 @@ int def_G_case_h0_nc4 (int ncid,                /* file ID */
     NC4ERR
     varids[i++] = temperature;
 
-    err = nc_def_var (ncid, "salinity", NC_DOUBLE, 3, dimids, &salinity);
+    err = NC4_DEF_VAR (ncid, "salinity", NC_DOUBLE, 3, dimids, &salinity);
     NC4ERR
     err = nc_put_att_text (ncid, salinity, "long_name", 8, "salinity");
     NC4ERR
