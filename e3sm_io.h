@@ -10,6 +10,8 @@
 #ifndef _H_E3SM_IO_
 #define _H_E3SM_IO_
 
+#include "config.h"
+
 #include <stdio.h>
 
 #include <mpi.h>
