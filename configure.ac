@@ -346,6 +346,52 @@ else
 fi
 AM_CONDITIONAL(ENABLE_HDF5, [test "x$have_hdf5" = xyes])
 
+# Check for logvol
+AC_ARG_WITH([logvol],
+   [AS_HELP_STRING([--with-logvol=/path/to/logvol], [Specify logvol installation path(s):
+    --with-logvol=INC,LIB for include directory and library directory separated by a comma
+    --with-logvol=DIR for directory containing include/ and lib/ subdirectories
+   ])], [
+   case $withval in
+     *,*)
+        logvol_inc="`echo $withval |cut -f1 -d,`"
+        logvol_lib="`echo $withval |cut -f2 -d, -s`"
+        ;;
+     *)
+        if test -n "$withval"; then
+          logvol_inc="$withval/include"
+          logvol_lib="$withval/lib"
+        fi
+        ;;
+   esac
+   if test "x$logvol_inc" != x ; then
+      if test "x$CPPFLAGS" = x ; then
+         CPPFLAGS="-I$logvol_inc"
+      elif ! echo "${CPPFLAGS}" | ${EGREP} -q -w -- "-I$logvol_inc" ; then
+         # append only if not already appear in CPPFLAGS
+         CPPFLAGS="$CPPFLAGS -I$logvol_inc"
+      fi
+   fi
+   if test "x$logvol_lib" != x ; then
+      if test "x$LDFLAGS" = x ; then
+         LDFLAGS="-L$logvol_lib"
+      elif ! echo "${LDFLAGS}" | ${EGREP} -q -w -- "-L$logvol_lib" ; then
+         # append only if not already appear in LDFLAGS
+         LDFLAGS="$LDFLAGS -L$logvol_lib"
+      fi
+   fi
+])
+AC_CHECK_HEADER([logvol.h], [have_logvol=yes], [have_logvol=no])
+if test "x$have_logvol" = xno ; then
+      AC_MSG_WARN([
+      -----------------------------------------------------------------------
+      Missing logvol-header files 'logvol.h' required to build E3SM_IO. Use
+      configure command-line option --with-logvol=/path/to/implementation
+      to specify the location of logvol installation. Disable logvol support.
+      -----------------------------------------------------------------------])
+fi
+AM_CONDITIONAL(ENABLE_LOGVOL, [test "x$have_logvol" = xyes])
+
 if test "x$LIBS" = x ; then
 LIBS="-lpnetcdf"
 else
@@ -359,6 +405,15 @@ if test "x$have_hdf5" = xyes ; then
     LIBS="$LIBS -lhdf5"
     fi
     AC_DEFINE([ENABLE_HDF5], [1], [Build HDF5 benchmark])
+fi
+
+if test "x$have_logvol" = xyes ; then
+    if test "x$LIBS" = x ; then
+    LIBS="-llogvol"
+    else
+    LIBS="$LIBS -llogvol"
+    fi
+    AC_DEFINE([ENABLE_LOGVOL], [1], [Build logvol benchmark])
 fi
 
 AC_CONFIG_FILES(Makefile)

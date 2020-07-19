@@ -11,3 +11,8 @@ e3sm_io_SOURCES += e3sm_io_hdf5.c var_io_F_case_hdf5.c header_io_F_case_hdf5.c
 e3sm_io_SOURCES += e3sm_io_hdf5.h 
 e3sm_io_LDADD += -lhdf5
 endif
+
+if ENABLE_LOGVOL
+e3sm_io_SOURCES += dummy.cpp
+e3sm_io_LDADD += -llogvol
+endif

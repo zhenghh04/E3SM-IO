@@ -18,6 +18,11 @@
 
 #include "e3sm_io_hdf5.h"
 
+#ifdef ENABLE_LOGVOL
+#include "logvol.h"
+#endif
+#include <sys/stat.h>
+
 /*----< write_small_vars_F_case() >------------------------------------------*/
 static int write_small_vars_F_case_hdf5 (hid_t fid,
                                          int vid, /* starting variable ID */
@@ -501,6 +506,10 @@ int run_varn_F_case_hdf5 (
     MPI_Offset **starts_D2 = NULL, **counts_D2 = NULL;
     MPI_Offset **starts_D3 = NULL, **counts_D3 = NULL;
     MPI_Info info_used = MPI_INFO_NULL;
+#ifdef ENABLE_LOGVOL
+    hid_t log_vlid;
+#endif
+    struct stat file_stat;
 
     MPI_Barrier (io_comm); /*-----------------------------------------*/
     total_timing = pre_timing = MPI_Wtime ();
@@ -565,15 +574,18 @@ int run_varn_F_case_hdf5 (
     err = hdf5_wrap_init ();
     ERR;
 
+#ifdef ENABLE_LOGVOL
     // Register LOG VOL plugin
-    // log_vlid = H5VLregister_connector(&H5VL_log_g, H5P_DEFAULT);
+    log_vlid = H5VLregister_connector (&H5VL_log_g, H5P_DEFAULT);
+#endif
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     // MPI and collective metadata is required by LOG VOL
     H5Pset_fapl_mpio (faplid, io_comm, info);
     H5Pset_all_coll_metadata_ops (faplid, 1);
-    // H5Pset_vol(faplid, log_vlid, NULL);
-
+#ifdef ENABLE_LOGVOL
+    H5Pset_vol (faplid, log_vlid, NULL);
+#endif
     // Create file
     ncid = H5Fcreate (outfname, H5F_ACC_TRUNC, H5P_DEFAULT, faplid);
     CHECK_HID (ncid)
@@ -594,8 +606,11 @@ int run_varn_F_case_hdf5 (
     ERR;
 
     /* I/O amount so far */
-    err = HDF5_INQ_PUT_SIZE (ncid, &metadata_size);
-    ERR;
+    //err = HDF5_INQ_PUT_SIZE (ncid, &metadata_size);
+    //ERR;
+    stat (outfname, &file_stat);
+    metadata_size = file_stat.st_size;
+
     err = HDF5_INQ_FILE_INFO (ncid, &info_used);
     ERR;
     open_timing += MPI_Wtime () - timing;
@@ -827,8 +842,10 @@ int run_varn_F_case_hdf5 (
     MPI_Barrier (io_comm); /*-----------------------------------------*/
     timing = MPI_Wtime ();
 
-    err = HDF5_INQ_PUT_SIZE (ncid, &total_size);
-    ERR;
+    //err = HDF5_INQ_PUT_SIZE (ncid, &total_size);
+    //ERR;
+    stat (outfname, &file_stat);
+    total_size = file_stat.st_size;
     put_size = total_size - metadata_size;
 
     herr = hdf5_close_vars (ncid);
@@ -857,10 +874,10 @@ int run_varn_F_case_hdf5 (
     tmp = my_nreqs;
     MPI_Reduce (&tmp, &max_nreqs, 1, MPI_OFFSET, MPI_MAX, 0, io_comm);
     MPI_Reduce (&tmp, &total_nreqs, 1, MPI_OFFSET, MPI_SUM, 0, io_comm);
-    MPI_Reduce (&put_size, &tmp, 1, MPI_OFFSET, MPI_SUM, 0, io_comm);
-    put_size = tmp;
-    MPI_Reduce (&total_size, &tmp, 1, MPI_OFFSET, MPI_SUM, 0, io_comm);
-    total_size = tmp;
+    //MPI_Reduce (&put_size, &tmp, 1, MPI_OFFSET, MPI_SUM, 0, io_comm);
+    //put_size = tmp;
+    // MPI_Reduce (&total_size, &tmp, 1, MPI_OFFSET, MPI_SUM, 0, io_comm);
+    // total_size = tmp;
     MPI_Reduce (&open_timing, &max_timing, 1, MPI_DOUBLE, MPI_MAX, 0, io_comm);
     open_timing = max_timing;
     MPI_Reduce (&pre_timing, &max_timing, 1, MPI_DOUBLE, MPI_MAX, 0, io_comm);
@@ -874,9 +891,9 @@ int run_varn_F_case_hdf5 (
     MPI_Reduce (&total_timing, &max_timing, 1, MPI_DOUBLE, MPI_MAX, 0, io_comm);
     total_timing = max_timing;
 
-    MPI_Offset m_alloc = 0, max_alloc;
-    HDF5_NOP1 (&m_alloc);
-    MPI_Reduce (&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, io_comm);
+    //MPI_Offset m_alloc = 0, max_alloc;
+    //HDF5_NOP1 (&m_alloc);
+    //MPI_Reduce (&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, io_comm);
     if (rank == 0) {
         int nvars_noD = nvars;
         for (i = 0; i < 3; i++) nvars_noD -= nvars_D[i];
@@ -886,8 +903,8 @@ int run_varn_F_case_hdf5 (
         printf ("No. variables use decomposition D2 = %3d\n", nvars_D[1]);
         printf ("No. variables use decomposition D3 = %3d\n", nvars_D[2]);
         printf ("Total number of variables          = %3d\n", nvars);
-        printf ("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
-                (float)max_alloc / 1048576);
+        //printf ("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
+        //        (float)max_alloc / 1048576);
         printf ("Total write amount                 = %.2f MiB = %.2f GiB\n",
                 (double)total_size / 1048576, (double)total_size / 1073741824);
         printf ("Total number of requests           = %lld\n", total_nreqs);
@@ -1316,13 +1333,13 @@ int run_varn_F_case_rd_hdf5 (
     MPI_Reduce (&total_timing, &max_timing, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
     total_timing = max_timing;
 
-    MPI_Offset m_alloc = 0, max_alloc;
-    HDF5_NOP1 (&m_alloc);
-    MPI_Reduce (&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, comm);
+    //MPI_Offset m_alloc = 0, max_alloc;
+    //HDF5_NOP1 (&m_alloc);
+    //MPI_Reduce (&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, comm);
     if (rank == 0) {
         printf ("History output file                = %s\n", outfile);
-        printf ("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
-                (float)max_alloc / 1048576);
+        //printf ("MAX heap memory allocated by PnetCDF internally is %.2f MiB\n",
+        //        (float)max_alloc / 1048576);
         printf ("Total number of variables          = %d\n", nvars);
         printf ("Total read amount                 = %.2f MiB = %.2f GiB\n",
                 (double)total_size / 1048576, (double)total_size / 1073741824);

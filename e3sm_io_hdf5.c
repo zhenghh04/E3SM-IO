@@ -108,8 +108,9 @@ int hdf5_put_vara (
     msid = H5Screate_simple (ndim, block, block);
     CHECK_HID (msid)
 
-    H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
-
+    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
+    CHECK_HERR
+    
     herr = H5Dwrite (did, mtype, msid, dsid, dxplid, buf);
     CHECK_HERR
 
@@ -361,7 +362,7 @@ int hdf5_def_dim (hid_t fid, const char *name, MPI_Offset msize, int *did) {
     hid_t sid = -1;
     hid_t aid = -1;
     hsize_t size;
-    char aname[128] = "_NCDIM_";
+    char aname[128];
 
     size = (hsize_t)msize;
     if (size == NC_UNLIMITED) size = H5S_UNLIMITED;
@@ -369,7 +370,7 @@ int hdf5_def_dim (hid_t fid, const char *name, MPI_Offset msize, int *did) {
     sid = H5Screate (H5S_SCALAR);
     CHECK_HID (sid)
 
-    strncpy (aname, name + 7, 120);
+    sprintf("_NCDIM_%s",name);
     aid = H5Acreate2 (fid, aname, H5T_NATIVE_HSIZE, sid, H5P_DEFAULT, H5P_DEFAULT);
     CHECK_HID (aid)
 
@@ -390,9 +391,9 @@ int hdf5_inq_dimid (hid_t fid, const char *name, int *did) {
     hid_t sid = -1;
     hid_t aid;
     hsize_t size;
-    char aname[128] = "_NCDIM_";
+    char aname[128];
 
-    strncpy (aname, name + 7, 120);
+    sprintf("_NCDIM_%s",name);
     aid = H5Aopen (fid, aname, H5P_DEFAULT);
     CHECK_HID (aid)
 
