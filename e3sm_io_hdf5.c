@@ -318,13 +318,15 @@ int hdf5_def_var (hid_t fid, const char *name, nc_type nctype, int ndim, int *di
     CHECK_HID (dcplid)
 
     for (i = 0; i < ndim; i++) { dims[i] = mdims[i] = f_dims[dimids[i]]; }
-    if (dims[0] == H5S_UNLIMITED) {
+	if(ndim){
+	    	if (dims[0] == H5S_UNLIMITED) {
         dims[0] = 1;
 
         herr = H5Pset_chunk (dcplid, ndim, dims);
         CHECK_HERR
         dims[0] = 0;
     }
+	}
 
     sid = H5Screate_simple (ndim, dims, mdims);
     CHECK_HID (sid);
@@ -370,7 +372,7 @@ int hdf5_def_dim (hid_t fid, const char *name, MPI_Offset msize, int *did) {
     sid = H5Screate (H5S_SCALAR);
     CHECK_HID (sid)
 
-    sprintf("_NCDIM_%s",name);
+    sprintf(aname,"_NCDIM_%s",name);
     aid = H5Acreate2 (fid, aname, H5T_NATIVE_HSIZE, sid, H5P_DEFAULT, H5P_DEFAULT);
     CHECK_HID (aid)
 
@@ -393,7 +395,7 @@ int hdf5_inq_dimid (hid_t fid, const char *name, int *did) {
     hsize_t size;
     char aname[128];
 
-    sprintf("_NCDIM_%s",name);
+    sprintf(aname,"_NCDIM_%s",name);
     aid = H5Aopen (fid, aname, H5P_DEFAULT);
     CHECK_HID (aid)
 

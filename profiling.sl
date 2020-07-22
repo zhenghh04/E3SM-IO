@@ -3,8 +3,8 @@
 #SBATCH -N 1
 #SBATCH -C haswell
 #SBATCH -t 00:30:00
-#SBATCH -o e3sm_1_%j.txt
-#SBATCH -e e3sm_1_%j.err
+#SBATCH -o e3sm_profiling_1_%j.txt
+#SBATCH -e e3sm_profiling_1_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -24,9 +24,9 @@ CONFIG_FLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne12
 CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
 CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
-APP=e3sm_io
-#APP=e3sm_io_profile
-APIS=(pnc hdf5)
+#APP=e3sm_io
+APP=e3sm_io_profile
+APIS=(hdf5)
 OPS=(write)
 TL=6
 
