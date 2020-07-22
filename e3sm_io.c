@@ -218,8 +218,8 @@ int main (int argc, char **argv) {
         run_g_case = 1;
 
     /* use total write amount to estimate nc_ibuf_size */
-    estimated_nc_ibuf_size = dims[2][0] * dims[2][1] * sizeof (double) / num_iotasks;
-    estimated_nc_ibuf_size *= (run_f_case) ? 408 : 52;
+    estimated_nc_ibuf_size = dims[2][0] * dims[2][1] * sizeof(double) / num_iotasks;
+    estimated_nc_ibuf_size *= (run_f_case) ? 414 : 52;
     if (estimated_nc_ibuf_size > 16777216) {
         char nc_ibuf_size_str[32];
         sprintf (nc_ibuf_size_str, "%lld", estimated_nc_ibuf_size);
@@ -266,22 +266,22 @@ int main (int argc, char **argv) {
                 fflush (stdout);
 
                 if (hx == -1 || hx == 0) {
-                    MPI_Barrier (io_comm);
+                MPI_Barrier(io_comm);
 
-                    nvars    = 408;
-                    outfname = "f_case_h0_vard.nc";
-                    nerrs +=
-                        run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                         info, dims, contig_nreqs, disps, blocklens);
+                nvars = 414;
+                outfname = "f_case_h0_vard.nc";
+                nerrs += run_vard_F_case(io_comm, out_dir, outfname, nvars, num_recs,
+                                        noncontig_buf, info, dims,
+                                        contig_nreqs, disps, blocklens);
                 }
                 if (hx == -1 || hx == 1) {
-                    MPI_Barrier (io_comm);
+                MPI_Barrier(io_comm);
 
-                    nvars    = 51;
-                    outfname = "f_case_h1_vard.nc";
-                    nerrs +=
-                        run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                         info, dims, contig_nreqs, disps, blocklens);
+                nvars = 51;
+                outfname = "f_case_h1_vard.nc";
+                nerrs += run_vard_F_case(io_comm, out_dir, outfname, nvars, num_recs,
+                                        noncontig_buf, info, dims,
+                                        contig_nreqs, disps, blocklens);
                 }
             }
 #endif
@@ -308,7 +308,7 @@ int main (int argc, char **argv) {
                         /* There are two kinds of outputs for history variables.
                          * Output 1st kind history variables.
                          */
-                        nvars    = 408;
+                        nvars    = 414;
                         outfname = "f_case_h0_varn.nc";
                         nerrs += run_varn_F_case_rd_hdf5 (
                             io_comm, in_dir, outfname, nvars, num_recs, noncontig_buf, info, dims,
@@ -335,7 +335,7 @@ int main (int argc, char **argv) {
                         /* There are two kinds of outputs for history variables.
                          * Output 1st kind history variables.
                          */
-                        nvars    = 408;
+                        nvars    = 414;
                         outfname = "f_case_h0_varn.nc";
                         nerrs += run_varn_F_case_rd (io_comm, in_dir, outfname, nvars, num_recs,
                                                      noncontig_buf, info, dims, contig_nreqs, disps,
@@ -377,7 +377,7 @@ int main (int argc, char **argv) {
                         /* There are two kinds of outputs for history variables.
                          * Output 1st kind history variables.
                          */
-                        nvars    = 408;
+                        nvars    = 414;
                         outfname = "f_case_h0_varn.nc";
                         nerrs += run_varn_F_case_hdf5 (io_comm, out_dir, outfname, nvars, num_recs,
                                                        noncontig_buf, info, dims, contig_nreqs,
@@ -404,7 +404,7 @@ int main (int argc, char **argv) {
                         /* There are two kinds of outputs for history variables.
                          * Output 1st kind history variables.
                          */
-                        nvars    = 408;
+                        nvars    = 414;
                         outfname = "f_case_h0_varn.nc";
                         nerrs += run_varn_F_case (io_comm, out_dir, outfname, nvars, num_recs,
                                                   noncontig_buf, info, dims, contig_nreqs, disps,

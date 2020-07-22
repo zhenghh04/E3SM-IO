@@ -12,7 +12,7 @@ NN=${SLURM_NNODES}
 #let NP=NN*1
 let NP=NN*32
 
-export LD_LIBRARY_PATH=/global/homes/k/khl7265/.local/hdf5/1.12.0/lib:/global/homes/k/khl7265/.local/log_io_vol/master/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=/global/homes/k/khl7265/.local/hdf5/1.12.0/lib:${LD_LIBRARY_PATH}
 
 RUNS=(1 2) # Number of runs
 
@@ -27,7 +27,7 @@ CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
 #APP=e3sm_io
 APP=e3sm_io_profile
 HXS=(0 1)
-APIS=(pnc hdf5)
+APIS=(hdf5)
 OPS=(write)
 TL=6
 
@@ -45,7 +45,6 @@ for i in ${RUNS[@]}
 do
     for CONFIG in ${CONFIGS[@]}
     do
-
         for API in ${APIS[@]}
         do
             OUTDIR=${OUTDIR_ROOT}/${API}/
