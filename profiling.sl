@@ -26,7 +26,8 @@ CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRR
 CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
 #APP=e3sm_io
 APP=e3sm_io_profile
-APIS=(hdf5)
+HXS=(0 1)
+APIS=(pnc hdf5)
 OPS=(write)
 TL=6
 
@@ -44,49 +45,52 @@ for i in ${RUNS[@]}
 do
     for CONFIG in ${CONFIGS[@]}
     do
+
         for API in ${APIS[@]}
         do
             OUTDIR=${OUTDIR_ROOT}/${API}/
             echo "rm -f ${OUTDIR}/*"
             rm -f ${OUTDIR}/*
-        done
 
-        for OP in ${OPS[@]}
-        do
-            echo "========================== E3SM-IO ${API} ${OP} =========================="
-            >&2 echo "========================== E3SM-IO ${API} ${OP}=========================="
-            
-            OUTDIR=${OUTDIR_ROOT}/${API}/
+            for HX in ${HXS[@]}
+            do
+                for OP in ${OPS[@]}
+                do
+                    echo "========================== E3SM-IO ${API} ${OP} =========================="
+                    >&2 echo "========================== E3SM-IO ${API} ${OP}=========================="
+                    
+                    echo "#%$: exp: e3sm_io"
+                    echo "#%$: config: ${CONFIG}"
+                    echo "#%$: h_num: ${HX}"
+                    echo "#%$: api: ${API}"
+                    echo "#%$: operation: ${OP}"
+                    echo "#%$: number_of_nodes: ${NN}"
+                    echo "#%$: number_of_proc: ${NP}"
 
-            echo "#%$: exp: e3sm_io"
-            echo "#%$: config: ${CONFIG}"
-            echo "#%$: api: ${API}"
-            echo "#%$: operation: ${OP}"
-            echo "#%$: number_of_nodes: ${NN}"
-            echo "#%$: number_of_proc: ${NP}"
+                    STARTTIME=`date +%s.%N`
 
-            STARTTIME=`date +%s.%N`
+                    if [ "$OP" = "write" ] ; then
+                        echo "srun -n ${NP} -t ${TL} ./${APP} -k -o ${OUTDIR} -n -a ${API} -f ${HX} ${CONFIG}"
+                        srun -n ${NP} -t ${TL} ./${APP} -k -o ${OUTDIR} -n -a ${API} -f ${HX} ${CONFIG}
+                    else 
+                        echo "Reading not supproted"
+                        # echo "srun -n ${NP} -t ${TL} ./e3sm_io -k -o ${OUTDIR} -n -a ${API} ${CONFIG}"
+                        # srun -n ${NP} -t ${TL} ./e3sm_io -k -o ${OUTDIR} -n -a ${API} ${CONFIG}
+                    fi
 
-            if [ "$OP" = "write" ] ; then
-                echo "srun -n ${NP} -t ${TL} ./${APP} -k -o ${OUTDIR} -n -a ${API} ${CONFIG}"
-                srun -n ${NP} -t ${TL} ./${APP} -k -o ${OUTDIR} -n -a ${API} ${CONFIG}
-            else 
-                echo "Reading not supproted"
-                # echo "srun -n ${NP} -t ${TL} ./e3sm_io -k -o ${OUTDIR} -n -a ${API} ${CONFIG}"
-                # srun -n ${NP} -t ${TL} ./e3sm_io -k -o ${OUTDIR} -n -a ${API} ${CONFIG}
-            fi
+                    ENDTIME=`date +%s.%N`
+                    TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
 
-            ENDTIME=`date +%s.%N`
-            TIMEDIFF=`echo "$ENDTIME - $STARTTIME" | bc | awk -F"." '{print $1"."$2}'`
+                    echo "#%$: exe_time: $TIMEDIFF"
 
-            echo "#%$: exe_time: $TIMEDIFF"
+                    echo "ls -lah ${OUTDIR}"
+                    ls -lah ${OUTDIR}
+                    echo "lfs getstripe ${OUTDIR}"
+                    lfs getstripe ${OUTDIR}
 
-            echo "ls -lah ${OUTDIR}"
-            ls -lah ${OUTDIR}
-            echo "lfs getstripe ${OUTDIR}"
-            lfs getstripe ${OUTDIR}
-
-            echo '-----+-----++------------+++++++++--+---'
+                    echo '-----+-----++------------+++++++++--+---'
+                done
+            done
         done
     done
 done

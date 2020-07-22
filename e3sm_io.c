@@ -59,8 +59,8 @@ int main (int argc, char **argv) {
     extern int optind;
     char *infname, out_dir[1024], in_dir[1024], *outfname;
     int i, rank, nprocs, err, nerrs = 0, tst_vard = 0, tst_varn = 0, tst_wr = 0, tst_rd = 0,
-                              noncontig_buf = 0, api = UNDER_API_PNC;
-    int num_recs, io_stride                          = 1, num_iotasks, ioproc;
+                              noncontig_buf = 0, api = UNDER_API_PNC, hx = -1;
+    int num_recs, io_stride = 1, num_iotasks, ioproc;
     int num_decomp, nvars, run_f_case, run_g_case;
     int contig_nreqs[MAX_NUM_DECOMP], *disps[MAX_NUM_DECOMP];
     int *blocklens[MAX_NUM_DECOMP];
@@ -79,7 +79,7 @@ int main (int argc, char **argv) {
     two_buf      = 0;
 
     /* command-line arguments */
-    while ((i = getopt (argc, argv, "hkvdnmto:r:WR:s:a:")) != EOF) switch (i) {
+    while ((i = getopt (argc, argv, "hkvdnmto:r:WR:s:a:f:")) != EOF) switch (i) {
             case 'a':
                 if (strcmp (optarg, "hdf5") == 0) { api = UNDER_API_HDF5; }
                 break;
@@ -91,6 +91,9 @@ int main (int argc, char **argv) {
                 break;
             case 'r':
                 num_recs = atoi (optarg);
+                break;
+            case 'f':
+                hx = atoi (optarg);
                 break;
             case 's':
                 io_stride = atoi (optarg);
@@ -261,21 +264,25 @@ int main (int argc, char **argv) {
                     printf ("Variable written order: same as variables are defined\n\n");
                 }
                 fflush (stdout);
-                MPI_Barrier (io_comm);
 
-                nvars    = 408;
-                outfname = "f_case_h0_vard.nc";
-                nerrs +=
-                    run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                     info, dims, contig_nreqs, disps, blocklens);
+                if (hx == -1 || hx == 0) {
+                    MPI_Barrier (io_comm);
 
-                MPI_Barrier (io_comm);
+                    nvars    = 408;
+                    outfname = "f_case_h0_vard.nc";
+                    nerrs +=
+                        run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
+                                         info, dims, contig_nreqs, disps, blocklens);
+                }
+                if (hx == -1 || hx == 1) {
+                    MPI_Barrier (io_comm);
 
-                nvars    = 51;
-                outfname = "f_case_h1_vard.nc";
-                nerrs +=
-                    run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                     info, dims, contig_nreqs, disps, blocklens);
+                    nvars    = 51;
+                    outfname = "f_case_h1_vard.nc";
+                    nerrs +=
+                        run_vard_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
+                                         info, dims, contig_nreqs, disps, blocklens);
+                }
             }
 #endif
         }
@@ -295,51 +302,57 @@ int main (int argc, char **argv) {
 
 #ifdef ENABLE_HDF5
                 if (api == UNDER_API_HDF5) {
-                    MPI_Barrier (MPI_COMM_WORLD);
+                    if (hx == -1 || hx == 0) {
+                        MPI_Barrier (MPI_COMM_WORLD);
 
-                    /* There are two kinds of outputs for history variables.
-                     * Output 1st kind history variables.
-                     */
-                    nvars    = 408;
-                    outfname = "f_case_h0_varn.nc";
-                    nerrs += run_varn_F_case_rd_hdf5 (io_comm, in_dir, outfname, nvars, num_recs,
-                                                      noncontig_buf, info, dims, contig_nreqs,
-                                                      disps, blocklens, &dbl_buf_h0, &rec_buf_h0,
-                                                      txt_buf[0], int_buf[0]);
+                        /* There are two kinds of outputs for history variables.
+                         * Output 1st kind history variables.
+                         */
+                        nvars    = 408;
+                        outfname = "f_case_h0_varn.nc";
+                        nerrs += run_varn_F_case_rd_hdf5 (
+                            io_comm, in_dir, outfname, nvars, num_recs, noncontig_buf, info, dims,
+                            contig_nreqs, disps, blocklens, &dbl_buf_h0, &rec_buf_h0, txt_buf[0],
+                            int_buf[0]);
+                    }
+                    if (hx == -1 || hx == 1) {
+                        MPI_Barrier (MPI_COMM_WORLD);
 
-                    MPI_Barrier (MPI_COMM_WORLD);
-
-                    /* Output 2nd kind history variables. */
-                    nvars    = 51;
-                    outfname = "f_case_h1_varn.nc";
-                    nerrs += run_varn_F_case_rd_hdf5 (io_comm, in_dir, outfname, nvars, num_recs,
-                                                      noncontig_buf, info, dims, contig_nreqs,
-                                                      disps, blocklens, &dbl_buf_h1, &rec_buf_h1,
-                                                      txt_buf[1], int_buf[1]);
+                        /* Output 2nd kind history variables. */
+                        nvars    = 51;
+                        outfname = "f_case_h1_varn.nc";
+                        nerrs += run_varn_F_case_rd_hdf5 (
+                            io_comm, in_dir, outfname, nvars, num_recs, noncontig_buf, info, dims,
+                            contig_nreqs, disps, blocklens, &dbl_buf_h1, &rec_buf_h1, txt_buf[1],
+                            int_buf[1]);
+                    }
                 } else
 #endif
                 {
-                    MPI_Barrier (MPI_COMM_WORLD);
+                    if (hx == -1 || hx == 0) {
+                        MPI_Barrier (MPI_COMM_WORLD);
 
-                    /* There are two kinds of outputs for history variables.
-                     * Output 1st kind history variables.
-                     */
-                    nvars    = 408;
-                    outfname = "f_case_h0_varn.nc";
-                    nerrs += run_varn_F_case_rd (io_comm, in_dir, outfname, nvars, num_recs,
-                                                 noncontig_buf, info, dims, contig_nreqs, disps,
-                                                 blocklens, &dbl_buf_h0, &rec_buf_h0, txt_buf[0],
-                                                 int_buf[0]);
+                        /* There are two kinds of outputs for history variables.
+                         * Output 1st kind history variables.
+                         */
+                        nvars    = 408;
+                        outfname = "f_case_h0_varn.nc";
+                        nerrs += run_varn_F_case_rd (io_comm, in_dir, outfname, nvars, num_recs,
+                                                     noncontig_buf, info, dims, contig_nreqs, disps,
+                                                     blocklens, &dbl_buf_h0, &rec_buf_h0,
+                                                     txt_buf[0], int_buf[0]);
+                    }
+                    if (hx == -1 || hx == 1) {
+                        MPI_Barrier (MPI_COMM_WORLD);
 
-                    MPI_Barrier (MPI_COMM_WORLD);
-
-                    /* Output 2nd kind history variables. */
-                    nvars    = 51;
-                    outfname = "f_case_h1_varn.nc";
-                    nerrs += run_varn_F_case_rd (io_comm, in_dir, outfname, nvars, num_recs,
-                                                 noncontig_buf, info, dims, contig_nreqs, disps,
-                                                 blocklens, &dbl_buf_h1, &rec_buf_h1, txt_buf[1],
-                                                 int_buf[1]);
+                        /* Output 2nd kind history variables. */
+                        nvars    = 51;
+                        outfname = "f_case_h1_varn.nc";
+                        nerrs += run_varn_F_case_rd (io_comm, in_dir, outfname, nvars, num_recs,
+                                                     noncontig_buf, info, dims, contig_nreqs, disps,
+                                                     blocklens, &dbl_buf_h1, &rec_buf_h1,
+                                                     txt_buf[1], int_buf[1]);
+                    }
                 }
             }
 
@@ -358,51 +371,57 @@ int main (int argc, char **argv) {
 
 #ifdef ENABLE_HDF5
                 if (api == UNDER_API_HDF5) {
-                    MPI_Barrier (io_comm);
+                    if (hx == -1 || hx == 0) {
+                        MPI_Barrier (io_comm);
 
-                    /* There are two kinds of outputs for history variables.
-                     * Output 1st kind history variables.
-                     */
-                    nvars    = 408;
-                    outfname = "f_case_h0_varn.nc";
-                    nerrs += run_varn_F_case_hdf5 (io_comm, out_dir, outfname, nvars, num_recs,
-                                                   noncontig_buf, info, dims, contig_nreqs, disps,
-                                                   blocklens, dbl_buf_h0, rec_buf_h0, txt_buf[0],
-                                                   int_buf[0]);
+                        /* There are two kinds of outputs for history variables.
+                         * Output 1st kind history variables.
+                         */
+                        nvars    = 408;
+                        outfname = "f_case_h0_varn.nc";
+                        nerrs += run_varn_F_case_hdf5 (io_comm, out_dir, outfname, nvars, num_recs,
+                                                       noncontig_buf, info, dims, contig_nreqs,
+                                                       disps, blocklens, dbl_buf_h0, rec_buf_h0,
+                                                       txt_buf[0], int_buf[0]);
+                    }
+                    if (hx == -1 || hx == 1) {
+                        MPI_Barrier (io_comm);
 
-                    MPI_Barrier (io_comm);
-
-                    /* Output 2nd kind history variables. */
-                    nvars    = 51;
-                    outfname = "f_case_h1_varn.nc";
-                    nerrs += run_varn_F_case_hdf5 (io_comm, out_dir, outfname, nvars, num_recs,
-                                                   noncontig_buf, info, dims, contig_nreqs, disps,
-                                                   blocklens, dbl_buf_h1, rec_buf_h1, txt_buf[1],
-                                                   int_buf[1]);
+                        /* Output 2nd kind history variables. */
+                        nvars    = 51;
+                        outfname = "f_case_h1_varn.nc";
+                        nerrs += run_varn_F_case_hdf5 (io_comm, out_dir, outfname, nvars, num_recs,
+                                                       noncontig_buf, info, dims, contig_nreqs,
+                                                       disps, blocklens, dbl_buf_h1, rec_buf_h1,
+                                                       txt_buf[1], int_buf[1]);
+                    }
                 } else
 #endif
                 {
-                    MPI_Barrier (io_comm);
+                    if (hx == -1 || hx == 0) {
+                        MPI_Barrier (io_comm);
 
-                    /* There are two kinds of outputs for history variables.
-                     * Output 1st kind history variables.
-                     */
-                    nvars    = 408;
-                    outfname = "f_case_h0_varn.nc";
-                    nerrs +=
-                        run_varn_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                         info, dims, contig_nreqs, disps, blocklens, dbl_buf_h0,
-                                         rec_buf_h0, txt_buf[0], int_buf[0]);
+                        /* There are two kinds of outputs for history variables.
+                         * Output 1st kind history variables.
+                         */
+                        nvars    = 408;
+                        outfname = "f_case_h0_varn.nc";
+                        nerrs += run_varn_F_case (io_comm, out_dir, outfname, nvars, num_recs,
+                                                  noncontig_buf, info, dims, contig_nreqs, disps,
+                                                  blocklens, dbl_buf_h0, rec_buf_h0, txt_buf[0],
+                                                  int_buf[0]);
+                    }
+                    if (hx == -1 || hx == 1) {
+                        MPI_Barrier (io_comm);
 
-                    MPI_Barrier (io_comm);
-
-                    /* Output 2nd kind history variables. */
-                    nvars    = 51;
-                    outfname = "f_case_h1_varn.nc";
-                    nerrs +=
-                        run_varn_F_case (io_comm, out_dir, outfname, nvars, num_recs, noncontig_buf,
-                                         info, dims, contig_nreqs, disps, blocklens, dbl_buf_h1,
-                                         rec_buf_h1, txt_buf[1], int_buf[1]);
+                        /* Output 2nd kind history variables. */
+                        nvars    = 51;
+                        outfname = "f_case_h1_varn.nc";
+                        nerrs += run_varn_F_case (io_comm, out_dir, outfname, nvars, num_recs,
+                                                  noncontig_buf, info, dims, contig_nreqs, disps,
+                                                  blocklens, dbl_buf_h1, rec_buf_h1, txt_buf[1],
+                                                  int_buf[1]);
+                    }
                 }
             }
         }
