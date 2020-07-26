@@ -787,12 +787,6 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
     MPI_Barrier(io_comm); /*-----------------------------------------*/
     timing = MPI_Wtime();
 
-    //err = HDF5_INQ_PUT_SIZE (ncid, &total_size); ERR
-    //put_size = total_size - metadata_size;
-    stat (outfname, &file_stat);
-    total_size = file_stat.st_size;
-    put_size = total_size - metadata_size;
-
     herr = hdf5_close_vars (ncid);
     HERR;
     herr = H5Fclose (ncid);
@@ -801,6 +795,12 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
     HERR;
     hdf5_wrap_finalize ();
     close_timing += MPI_Wtime () - timing;
+
+    //err = HDF5_INQ_PUT_SIZE (ncid, &total_size); ERR
+    //put_size = total_size - metadata_size;
+    stat (outfname, &file_stat);
+    total_size = file_stat.st_size;
+    put_size = total_size - metadata_size;
 
     if (starts_D3 != NULL) {
         free(starts_D3[0]);

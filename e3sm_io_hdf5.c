@@ -110,7 +110,7 @@ int hdf5_put_vara (
 
     herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
     CHECK_HERR
-    
+
     herr = H5Dwrite (did, mtype, msid, dsid, dxplid, buf);
     CHECK_HERR
 
@@ -134,37 +134,81 @@ int hdf5_put_varn (int vid,
     int err;
     herr_t herr = 0;
     int i, j;
-    size_t esize, rsize;
+    hsize_t esize, rsize, rsize_old = 0;
     int ndim;
-    hid_t dsid = -1;
+    hid_t dsid = -1, msid = -1;
     hid_t mtype;
     char *bufp = buf;
     hid_t did;
+    hsize_t start[H5S_MAX_RANK], block[H5S_MAX_RANK];
+    hsize_t dims[H5S_MAX_RANK], mdims[H5S_MAX_RANK];
 
     did = f_dids[vid];
 
     mtype = mpi_type_to_hdf5_type (mpitype);
+    esize = (hsize_t)H5Tget_size (mtype);
+    CHECK_HID (esize)
 
     dsid = H5Dget_space (did);
     CHECK_HID (dsid)
 
-    ndim = H5Sget_simple_extent_ndims (dsid);
+    ndim = H5Sget_simple_extent_dims (dsid, dims, mdims);
     CHECK_HID (ndim)
 
-    esize = H5Tget_size (mtype);
-    CHECK_HID (esize)
+    // Extend rec dim if needed
+    if (ndim && mdims[0] == H5S_UNLIMITED) {
+        MPI_Offset max_rec = 0;
+        for (i = 0; i < cnt; i++) {
+            if (max_rec < mstarts[i][0] + mcounts[i][0]) {
+                max_rec = mstarts[i][0] + mcounts[i][0];
+            }
+        }
+        if (dims[0] < (hsize_t)max_rec) {
+            dims[0] = (hsize_t)max_rec;
 
+            H5Sclose (dsid);
+            herr = H5Dset_extent (did, dims);
+            CHECK_HERR
+            dsid = H5Dget_space (did);
+            CHECK_HID (dsid)
+        }
+    }
+
+    // Call H5DWrite
     for (i = 0; i < cnt; i++) {
-        err = hdf5_put_vara (vid, mtype, dxplid, mstarts[i], mcounts[i], bufp);
-        CHECK_ERR
-
         rsize = esize;
         for (j = 0; j < ndim; j++) { rsize *= mcounts[i][j]; }
-        bufp += rsize;
+
+        if (rsize) {
+            //err = hdf5_put_vara (vid, mtype, dxplid, mstarts[i], mcounts[i], bufp);
+            //CHECK_ERR
+
+            for (j = 0; j < ndim; j++) {
+                start[j] = (hsize_t)mstarts[i][j];
+                block[j] = (hsize_t)mcounts[i][j];
+            }
+
+            // Recreate only when size mismatch
+            if (rsize != rsize_old) {
+                if (msid >= 0) H5Sclose (msid);
+                msid = H5Screate_simple (1, &rsize, &rsize);
+                CHECK_HID (msid)
+                rsize_old = rsize;
+            }
+
+            herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
+            CHECK_HERR
+
+            herr = H5Dwrite (did, mtype, msid, dsid, dxplid, bufp);
+            CHECK_HERR
+
+            bufp += rsize;
+        }
     }
 
 fn_exit:;
     if (dsid >= 0) H5Sclose (dsid);
+    if (msid >= 0) H5Sclose (msid);
     return (int)herr;
 }
 
@@ -318,15 +362,15 @@ int hdf5_def_var (hid_t fid, const char *name, nc_type nctype, int ndim, int *di
     CHECK_HID (dcplid)
 
     for (i = 0; i < ndim; i++) { dims[i] = mdims[i] = f_dims[dimids[i]]; }
-	if(ndim){
-	    	if (dims[0] == H5S_UNLIMITED) {
-        dims[0] = 1;
+    if (ndim) {
+        if (dims[0] == H5S_UNLIMITED) {
+            dims[0] = 1;
 
-        herr = H5Pset_chunk (dcplid, ndim, dims);
-        CHECK_HERR
-        dims[0] = 0;
+            herr = H5Pset_chunk (dcplid, ndim, dims);
+            CHECK_HERR
+            dims[0] = 0;
+        }
     }
-	}
 
     sid = H5Screate_simple (ndim, dims, mdims);
     CHECK_HID (sid);
@@ -372,7 +416,7 @@ int hdf5_def_dim (hid_t fid, const char *name, MPI_Offset msize, int *did) {
     sid = H5Screate (H5S_SCALAR);
     CHECK_HID (sid)
 
-    sprintf(aname,"_NCDIM_%s",name);
+    sprintf (aname, "_NCDIM_%s", name);
     aid = H5Acreate2 (fid, aname, H5T_NATIVE_HSIZE, sid, H5P_DEFAULT, H5P_DEFAULT);
     CHECK_HID (aid)
 
@@ -395,7 +439,7 @@ int hdf5_inq_dimid (hid_t fid, const char *name, int *did) {
     hsize_t size;
     char aname[128];
 
-    sprintf(aname,"_NCDIM_%s",name);
+    sprintf (aname, "_NCDIM_%s", name);
     aid = H5Aopen (fid, aname, H5P_DEFAULT);
     CHECK_HID (aid)
 
