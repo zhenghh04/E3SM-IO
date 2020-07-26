@@ -853,6 +853,7 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
         //        (float)max_alloc / 1048576);
         printf ("Total write amount                 = %.2f MiB = %.2f GiB\n",
                 (double)total_size / 1048576, (double)total_size / 1073741824);
+        printf("#%%$: total_write_amount: %lf\n",(double)total_size / 1048576);
         printf ("Total number of requests           = %lld\n", total_nreqs);
         printf ("Max number of requests             = %lld\n", max_nreqs);
         printf ("Max Time of open + metadata define = %.4f sec\n", open_timing);
@@ -861,6 +862,12 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
         printf ("Max Time of HDF5_WAIT_ALL         = %.4f sec\n", wait_timing);
         printf ("Max Time of close                  = %.4f sec\n", close_timing);
         printf ("Max Time of TOTAL                  = %.4f sec\n", total_timing);
+        printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
+        printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
+        printf("#%%$: iput_time_max: %lf\n",post_timing);
+        printf("#%%$: wait_all_time_max: %lf\n",wait_timing);
+        printf("#%%$: close_time_max: %lf\n",close_timing);
+        printf("#%%$: total_time_max: %lf\n",total_timing);
         printf ("I/O bandwidth (open-to-close)      = %.4f MiB/sec\n",
                 (double)total_size / 1048576.0 / total_timing);
         printf ("I/O bandwidth (write-only)         = %.4f MiB/sec\n",

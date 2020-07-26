@@ -25,7 +25,7 @@ CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRR
 
 CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
 #APP=e3sm_io
-APP=e3sm_io_profile
+APP=e3sm_io_profiling
 HXS=(0 1)
 APIS=(hdf5)
 OPS=(write)
@@ -59,6 +59,7 @@ do
                     >&2 echo "========================== E3SM-IO ${API} ${OP}=========================="
                     
                     echo "#%$: exp: e3sm_io"
+                    echo "#%$: app: ${APP}"
                     echo "#%$: config: ${CONFIG}"
                     echo "#%$: h_num: ${HX}"
                     echo "#%$: api: ${API}"

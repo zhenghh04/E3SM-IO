@@ -59,6 +59,7 @@ do
                     >&2 echo "========================== E3SM-IO ${API} ${OP}=========================="
                     
                     echo "#%$: exp: e3sm_io"
+                    echo "#%$: app: ${APP}"
                     echo "#%$: config: ${CONFIG}"
                     echo "#%$: h_num: ${HX}"
                     echo "#%$: api: ${API}"
