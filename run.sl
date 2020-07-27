@@ -2,7 +2,7 @@
 #SBATCH -p debug
 #SBATCH -N 1
 #SBATCH -C haswell
-#SBATCH -t 00:30:00
+#SBATCH -t 00:10:00
 #SBATCH -o e3sm_1_%j.txt
 #SBATCH -e e3sm_1_%j.err
 #SBATCH -L SCRATCH
@@ -23,7 +23,7 @@ CONFIG_FMID=datasets/f_case_48602x72_512p.nc
 CONFIG_FLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne120_oRRS18v3_21600p.nc
 CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
+CONFIGS=(${CONFIG_FMID})
 APP=e3sm_io
 #APP=e3sm_io_profile
 HXS=(0 1)
