@@ -5,6 +5,10 @@
 
 #include "e3sm_io.h"
 
+#ifdef ENABLE_LOGVOL
+#include "logvol.h"
+#endif
+
 extern hid_t dxplid_coll;
 extern hid_t dxplid_indep;
 

@@ -24,7 +24,7 @@ CONFIG_FLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne12
 CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
 CONFIGS=(${CONFIG_FSMALL} ${CONFIG_FMID})
-APP=e3sm_io
+APPS=e3sm_io
 #APP=e3sm_io_profile
 HXS=(0 1)
 APIS=(pnc hdf5)

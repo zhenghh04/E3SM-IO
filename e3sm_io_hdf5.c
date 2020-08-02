@@ -104,19 +104,26 @@ int hdf5_put_vara (
         dsid = H5Dget_space (did);
         CHECK_HID (dsid)
     }
-
+#ifndef ENABLE_LOGVOL
     msid = H5Screate_simple (ndim, block, block);
     CHECK_HID (msid)
+#endif
 
     herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
     CHECK_HERR
-
+#ifdef ENABLE_LOGVOL
+    herr = H5Dwrite (did, mtype, H5S_CONTIG, dsid, dxplid, buf);
+    CHECK_HERR
+#else
     herr = H5Dwrite (did, mtype, msid, dsid, dxplid, buf);
     CHECK_HERR
+#endif
 
 fn_exit:;
     if (dsid >= 0) H5Sclose (dsid);
+#ifndef ENABLE_LOGVOL
     if (msid >= 0) H5Sclose (msid);
+#endif
     return (int)herr;
 }
 
@@ -180,35 +187,44 @@ int hdf5_put_varn (int vid,
         for (j = 0; j < ndim; j++) { rsize *= mcounts[i][j]; }
 
         if (rsize) {
-            //err = hdf5_put_vara (vid, mtype, dxplid, mstarts[i], mcounts[i], bufp);
-            //CHECK_ERR
+            // err = hdf5_put_vara (vid, mtype, dxplid, mstarts[i], mcounts[i], bufp);
+            // CHECK_ERR
 
             for (j = 0; j < ndim; j++) {
                 start[j] = (hsize_t)mstarts[i][j];
                 block[j] = (hsize_t)mcounts[i][j];
             }
 
+#ifndef ENABLE_LOGVOL
             // Recreate only when size mismatch
             if (rsize != rsize_old) {
                 if (msid >= 0) H5Sclose (msid);
                 msid = H5Screate_simple (1, &rsize, &rsize);
                 CHECK_HID (msid)
+
                 rsize_old = rsize;
             }
 
+#endif
+
             herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
             CHECK_HERR
-
+#ifdef ENABLE_LOGVOL
+            herr = H5Dwrite (did, mtype, H5S_CONTIG, dsid, dxplid, bufp);
+            CHECK_HERR
+#else
             herr = H5Dwrite (did, mtype, msid, dsid, dxplid, bufp);
             CHECK_HERR
-
+#endif
             bufp += rsize;
         }
     }
 
 fn_exit:;
     if (dsid >= 0) H5Sclose (dsid);
+#ifndef ENABLE_LOGVOL
     if (msid >= 0) H5Sclose (msid);
+#endif
     return (int)herr;
 }
 
