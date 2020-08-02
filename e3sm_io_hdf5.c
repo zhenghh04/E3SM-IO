@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+//hid_t dxplid_nb  = -1;
 hid_t dxplid_coll  = -1;
 hid_t dxplid_indep = -1;
 hsize_t one[H5S_MAX_RANK];
@@ -10,6 +11,10 @@ static int f_ndim;
 hsize_t f_dims[1048576];
 hid_t f_dids[1048576];
 static int f_nd;
+
+#ifdef ENABLE_LOGVOL
+    hid_t log_vlid = -1;
+#endif
 
 hid_t nc_type_to_hdf5_type (nc_type nctype) {
     switch (nctype) {
@@ -52,8 +57,19 @@ int hdf5_wrap_init () {
 
     dxplid_coll = H5Pcreate (H5P_DATASET_XFER);
     CHECK_HID (dxplid_coll)
+    herr=H5Pset_dxpl_mpio(dxplid_coll,H5FD_MPIO_COLLECTIVE); CHECK_HERR
     dxplid_indep = H5Pcreate (H5P_DATASET_XFER);
     CHECK_HID (dxplid_indep)
+    //dxplid_nb = H5Pcreate (H5P_DATASET_XFER);
+    //CHECK_HID (dxplid_nb)
+    herr= H5Pset_nonblocking(dxplid_coll, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
+     herr= H5Pset_nonblocking(dxplid_indep, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
+
+#ifdef ENABLE_LOGVOL
+    // Register LOG VOL plugin
+    log_vlid = H5VLregister_connector (&H5VL_log_g, H5P_DEFAULT);
+    CHECK_HID(log_vlid)
+#endif
 
     for (i = 0; i < H5S_MAX_RANK; i++) {
         one[i]  = 1;
@@ -75,6 +91,7 @@ void hdf5_wrap_finalize () {
 
     if (dxplid_coll >= 0) H5Pclose (dxplid_coll);
     if (dxplid_indep >= 0) H5Pclose (dxplid_indep);
+    //if (dxplid_nb >= 0) H5Pclose (dxplid_nb);
 
     MPI_Allreduce (&twrite, &twrite_all, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     MPI_Allreduce (&tsel, &tsel_all, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
@@ -232,7 +249,6 @@ int hdf5_put_varn (int vid,
 
                 rsize_old = rsize;
             }
-
 #endif
 
             ts   = MPI_Wtime ();

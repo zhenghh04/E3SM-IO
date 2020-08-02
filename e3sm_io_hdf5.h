@@ -17,6 +17,10 @@ extern hid_t f_dids[1048576];
 #define CHECK_HERR HERR
 #define CHECK_ERR  NCERR
 
+#ifdef ENABLE_LOGVOL
+    extern hid_t log_vlid;
+#endif
+
 #define NCERR                                                         \
     {                                                                 \
         if (err != 0) {                                               \

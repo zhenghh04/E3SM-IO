@@ -445,9 +445,6 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
     MPI_Offset **starts_D2=NULL, **counts_D2=NULL;
     MPI_Offset **starts_D3=NULL, **counts_D3=NULL;
     MPI_Info info_used=MPI_INFO_NULL;
-#ifdef ENABLE_LOGVOL
-    hid_t log_vlid;
-#endif
     struct stat file_stat;
 
     MPI_Barrier(io_comm); /*-----------------------------------------*/
@@ -517,11 +514,6 @@ run_varn_F_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
 
     err = hdf5_wrap_init ();
     ERR;
-
-#ifdef ENABLE_LOGVOL
-    // Register LOG VOL plugin
-    log_vlid = H5VLregister_connector (&H5VL_log_g, H5P_DEFAULT);
-#endif
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     // MPI and collective metadata is required by LOG VOL
@@ -994,13 +986,10 @@ run_varn_F_case_rd_hdf5( MPI_Comm io_comm,         /* MPI communicator that incl
     ERR;
 
     // Register LOG VOL plugin
-    // log_vlid = H5VLregister_connector(&H5VL_log_g, H5P_DEFAULT);
-
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     // MPI and collective metadata is required by LOG VOL
     H5Pset_fapl_mpio (faplid, comm, info);
     H5Pset_all_coll_metadata_ops (faplid, 1);
-    // H5Pset_vol(faplid, log_vlid, NULL);
     ncid = H5Fopen (outfname, H5F_ACC_RDONLY, faplid);
     CHECK_HID (ncid)
 
