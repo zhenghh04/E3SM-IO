@@ -5,6 +5,8 @@
 //hid_t dxplid_nb  = -1;
 hid_t dxplid_coll  = -1;
 hid_t dxplid_indep = -1;
+hid_t dxplid_coll_nb  = -1;
+hid_t dxplid_indep_nb = -1;
 hsize_t one[H5S_MAX_RANK];
 MPI_Offset mone[H5S_MAX_RANK];
 static int f_ndim;
@@ -50,7 +52,7 @@ hid_t mpi_type_to_hdf5_type (MPI_Datatype mpitype) {
     return -1;
 }
 
-double tsel, twrite, text;
+double tsel, twrite, tread, text;
 int hdf5_wrap_init () {
     herr_t herr = 0;
     int i;
@@ -58,13 +60,20 @@ int hdf5_wrap_init () {
     dxplid_coll = H5Pcreate (H5P_DATASET_XFER);
     CHECK_HID (dxplid_coll)
     herr=H5Pset_dxpl_mpio(dxplid_coll,H5FD_MPIO_COLLECTIVE); CHECK_HERR
+    dxplid_coll_nb = H5Pcreate (H5P_DATASET_XFER);
+    CHECK_HID (dxplid_coll_nb)
+    herr=H5Pset_dxpl_mpio(dxplid_coll_nb,H5FD_MPIO_COLLECTIVE); CHECK_HERR
+
     dxplid_indep = H5Pcreate (H5P_DATASET_XFER);
     CHECK_HID (dxplid_indep)
+    dxplid_indep_nb = H5Pcreate (H5P_DATASET_XFER);
+    CHECK_HID (dxplid_indep_nb)
     //dxplid_nb = H5Pcreate (H5P_DATASET_XFER);
     //CHECK_HID (dxplid_nb)
-    herr= H5Pset_nonblocking(dxplid_coll, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
-     herr= H5Pset_nonblocking(dxplid_indep, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
-
+    herr= H5Pset_nonblocking(dxplid_coll, H5VL_LOG_REQ_BLOCKING);CHECK_HERR
+    herr= H5Pset_nonblocking(dxplid_indep, H5VL_LOG_REQ_BLOCKING);CHECK_HERR
+    herr= H5Pset_nonblocking(dxplid_coll_nb, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
+    herr= H5Pset_nonblocking(dxplid_indep_nb, H5VL_LOG_REQ_NONBLOCKING);CHECK_HERR
 #ifdef ENABLE_LOGVOL
     // Register LOG VOL plugin
     log_vlid = H5VLregister_connector (&H5VL_log_g, H5P_DEFAULT);
@@ -79,7 +88,7 @@ int hdf5_wrap_init () {
     f_ndim = 0;
     f_nd   = 0;
 
-    tsel = twrite = text = 0;
+    tsel = twrite = tread = text = 0;
 
 fn_exit:;
     return (int)herr;
@@ -91,6 +100,8 @@ void hdf5_wrap_finalize () {
 
     if (dxplid_coll >= 0) H5Pclose (dxplid_coll);
     if (dxplid_indep >= 0) H5Pclose (dxplid_indep);
+    if (dxplid_coll_nb >= 0) H5Pclose (dxplid_coll_nb);
+    if (dxplid_indep_nb >= 0) H5Pclose (dxplid_indep_nb);
     //if (dxplid_nb >= 0) H5Pclose (dxplid_nb);
 
     MPI_Allreduce (&twrite, &twrite_all, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
@@ -149,6 +160,71 @@ int hdf5_put_vara (
 
     ts   = MPI_Wtime ();
     herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
+    CHECK_HERR
+    te = MPI_Wtime ();
+    tsel += te - ts;
+#ifdef ENABLE_LOGVOL
+    herr = H5Dwrite (did, mtype, H5S_CONTIG, dsid, dxplid, buf);
+    CHECK_HERR
+#else
+    herr = H5Dwrite (did, mtype, msid, dsid, dxplid, buf);
+    CHECK_HERR
+#endif
+    twrite += MPI_Wtime () - te;
+
+fn_exit:;
+    if (dsid >= 0) H5Sclose (dsid);
+#ifndef ENABLE_LOGVOL
+    if (msid >= 0) H5Sclose (msid);
+#endif
+    return (int)herr;
+}
+
+int hdf5_put_vars (
+    int vid, hid_t mtype, hid_t dxplid, MPI_Offset *mstart, MPI_Offset *mcount, MPI_Offset *mstride, void *buf) {
+    herr_t herr = 0;
+    int i;
+    int ndim = -1;
+    double ts, te;
+    hid_t dsid = -1, msid = -1;
+    hid_t did;
+    hsize_t start[H5S_MAX_RANK], block[H5S_MAX_RANK], stride[H5S_MAX_RANK];
+    hsize_t dims[H5S_MAX_RANK];
+
+    did = f_dids[vid];
+
+    dsid = H5Dget_space (did);
+    CHECK_HID (dsid)
+
+    ndim = H5Sget_simple_extent_dims (dsid, dims, NULL);
+    CHECK_HID (ndim)
+
+    for (i = 0; i < ndim; i++) {
+        start[i] = (hsize_t)mstart[i];
+        block[i] = (hsize_t)mcount[i];
+        stride[i] = (hsize_t)mstride[i];
+    }
+
+    // Extend rec dim
+    ts = MPI_Wtime ();
+    if (dims[0] < start[0] + block[0]) {
+        dims[0] = start[0] + (block[0] - 1) * stride[0] + 1;
+
+        H5Sclose (dsid);
+        herr = H5Dset_extent (did, dims);
+        CHECK_HERR
+        dsid = H5Dget_space (did);
+        CHECK_HID (dsid)
+    }
+    text = MPI_Wtime () - ts;
+
+#ifndef ENABLE_LOGVOL
+    msid = H5Screate_simple (ndim, block, block);
+    CHECK_HID (msid)
+#endif
+
+    ts   = MPI_Wtime ();
+    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, stride, one, block);
     CHECK_HERR
     te = MPI_Wtime ();
     tsel += te - ts;
@@ -280,6 +356,7 @@ int hdf5_get_vara (
     int vid, hid_t mtype, hid_t dxplid, MPI_Offset *mstart, MPI_Offset *mcount, void *buf) {
     herr_t herr = 0;
     int i;
+    double ts, te;
     int ndim   = -1;
     hid_t dsid = -1, msid = -1;
     hid_t did;
@@ -298,17 +375,81 @@ int hdf5_get_vara (
         block[i] = (hsize_t)mcount[i];
     }
 
+#ifndef ENABLE_LOGVOL
     msid = H5Screate_simple (ndim, block, block);
     CHECK_HID (msid)
+#endif
 
-    H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
-
+    ts   = MPI_Wtime ();
+    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, NULL, one, block);
+    CHECK_HERR
+    te = MPI_Wtime ();
+    tsel += te - ts;
+#ifdef ENABLE_LOGVOL
+    herr = H5Dread (did, mtype, H5S_CONTIG, dsid, dxplid, buf);
+    CHECK_HERR
+#else
     herr = H5Dread (did, mtype, msid, dsid, dxplid, buf);
     CHECK_HERR
+#endif
+    tread += MPI_Wtime () - te;
 
 fn_exit:;
     if (dsid >= 0) H5Sclose (dsid);
+#ifndef ENABLE_LOGVOL
     if (msid >= 0) H5Sclose (msid);
+#endif
+    return (int)herr;
+}
+
+int hdf5_get_vars (
+    int vid, hid_t mtype, hid_t dxplid, MPI_Offset *mstart, MPI_Offset *mcount, MPI_Offset *mstride, void *buf) {
+    herr_t herr = 0;
+    int i;
+    double ts, te;
+    int ndim   = -1;
+    hid_t dsid = -1, msid = -1;
+    hid_t did;
+    hsize_t start[H5S_MAX_RANK], block[H5S_MAX_RANK], stride[H5S_MAX_RANK];
+
+    did = f_dids[vid];
+
+    dsid = H5Dget_space (did);
+    CHECK_HID (dsid)
+
+    ndim = H5Sget_simple_extent_ndims (dsid);
+    CHECK_HID (ndim)
+
+    for (i = 0; i < ndim; i++) {
+        start[i] = (hsize_t)mstart[i];
+        block[i] = (hsize_t)mcount[i];
+        stride[i] = (hsize_t)mstride[i];
+    }
+
+#ifndef ENABLE_LOGVOL
+    msid = H5Screate_simple (ndim, block, block);
+    CHECK_HID (msid)
+#endif
+
+    ts   = MPI_Wtime ();
+    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, start, stride, one, block);
+    CHECK_HERR
+    te = MPI_Wtime ();
+    tsel += te - ts;
+#ifdef ENABLE_LOGVOL
+    herr = H5Dread (did, mtype, H5S_CONTIG, dsid, dxplid, buf);
+    CHECK_HERR
+#else
+    herr = H5Dread (did, mtype, msid, dsid, dxplid, buf);
+    CHECK_HERR
+#endif
+    tread += MPI_Wtime () - te;
+
+fn_exit:;
+    if (dsid >= 0) H5Sclose (dsid);
+#ifndef ENABLE_LOGVOL
+    if (msid >= 0) H5Sclose (msid);
+#endif
     return (int)herr;
 }
 
@@ -569,3 +710,4 @@ int hdf5_close_vars (hid_t fid) {
 fn_exit:;
     return (int)herr;
 }
+

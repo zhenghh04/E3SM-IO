@@ -472,11 +472,23 @@ int main (int argc, char **argv) {
 
                 nvars    = 52;
                 outfname = "g_case_hist_varn.nc";
+#ifdef ENABLE_HDF5
+                if (api == UNDER_API_HDF5) {
+                                 nerrs += run_varn_G_case_rd_hdf5 (
+                    io_comm, in_dir, outfname, nvars, num_recs, info, dims, contig_nreqs, disps,
+                    blocklens, &D1_fix_int_buf, &D2_fix_int_buf, &D3_fix_int_buf, &D4_fix_int_buf,
+                    &D5_fix_int_buf, &D1_rec_dbl_buf, &D3_rec_dbl_buf, &D4_rec_dbl_buf,
+                    &D5_rec_dbl_buf, &D6_rec_dbl_buf, &D1_fix_dbl_buf);
+                } else
+#endif
+{
+
                 nerrs += run_varn_G_case_rd (
                     io_comm, in_dir, outfname, nvars, num_recs, info, dims, contig_nreqs, disps,
                     blocklens, &D1_fix_int_buf, &D2_fix_int_buf, &D3_fix_int_buf, &D4_fix_int_buf,
                     &D5_fix_int_buf, &D1_rec_dbl_buf, &D3_rec_dbl_buf, &D4_rec_dbl_buf,
                     &D5_rec_dbl_buf, &D6_rec_dbl_buf, &D1_fix_dbl_buf);
+}
             }
 
             if (tst_wr) {
@@ -491,11 +503,22 @@ int main (int argc, char **argv) {
 
                 nvars    = 52;
                 outfname = "g_case_hist_varn.nc";
-                nerrs += run_varn_G_case (
+#ifdef ENABLE_HDF5
+                if (api == UNDER_API_HDF5) {
+                    nerrs += run_varn_G_case_hdf5 (
                     io_comm, out_dir, outfname, nvars, num_recs, info, dims, contig_nreqs, disps,
                     blocklens, D1_fix_int_buf, D2_fix_int_buf, D3_fix_int_buf, D4_fix_int_buf,
                     D5_fix_int_buf, D1_rec_dbl_buf, D3_rec_dbl_buf, D4_rec_dbl_buf, D5_rec_dbl_buf,
                     D6_rec_dbl_buf, D1_fix_dbl_buf);
+                } else
+#endif
+                {
+                    nerrs += run_varn_G_case (
+                    io_comm, out_dir, outfname, nvars, num_recs, info, dims, contig_nreqs, disps,
+                    blocklens, D1_fix_int_buf, D2_fix_int_buf, D3_fix_int_buf, D4_fix_int_buf,
+                    D5_fix_int_buf, D1_rec_dbl_buf, D3_rec_dbl_buf, D4_rec_dbl_buf, D5_rec_dbl_buf,
+                    D6_rec_dbl_buf, D1_fix_dbl_buf);
+                }
             }
 
             if (D1_rec_dbl_buf != NULL) { free (D1_rec_dbl_buf); }
