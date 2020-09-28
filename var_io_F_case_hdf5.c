@@ -19,7 +19,7 @@
 #include "e3sm_io_hdf5.h"
 
 #ifdef ENABLE_LOGVOL
-#include "logvol.h"
+#include "H5VL_log.h"
 #endif
 #include <sys/stat.h>
 

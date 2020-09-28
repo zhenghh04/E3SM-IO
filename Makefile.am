@@ -14,5 +14,5 @@ endif
 
 if ENABLE_LOGVOL
 e3sm_io_SOURCES += dummy.cpp
-e3sm_io_LDADD += -llogvol
+e3sm_io_LDADD += -lH5VL_log
 endif

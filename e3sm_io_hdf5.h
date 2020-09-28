@@ -6,7 +6,7 @@
 #include "e3sm_io.h"
 
 #ifdef ENABLE_LOGVOL
-#include "logvol.h"
+#include "H5VL_log.h"
 #endif
 
 extern hid_t dxplid_coll;
@@ -305,6 +305,9 @@ extern hid_t f_dids[1048576];
 
 #define HDF5_NOP1(A)    NC_NOERR
 #define HDF5_NOP2(A, B) NC_NOERR
+
+hid_t nc_type_to_hdf5_type (nc_type nctype);
+hid_t mpi_type_to_hdf5_type (MPI_Datatype mpitype);
 
 int hdf5_wrap_init ();
 void hdf5_wrap_finalize ();

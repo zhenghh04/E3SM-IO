@@ -381,11 +381,11 @@ AC_ARG_WITH([logvol],
       fi
    fi
 ])
-AC_CHECK_HEADER([logvol.h], [have_logvol=yes], [have_logvol=no])
+AC_CHECK_HEADER([H5VL_log.h], [have_logvol=yes], [have_logvol=no])
 if test "x$have_logvol" = xno ; then
       AC_MSG_WARN([
       -----------------------------------------------------------------------
-      Missing logvol-header files 'logvol.h' required to build E3SM_IO. Use
+      Missing logvol-header files 'H5VL_log.h' required to build E3SM_IO. Use
       configure command-line option --with-logvol=/path/to/implementation
       to specify the location of logvol installation. Disable logvol support.
       -----------------------------------------------------------------------])
@@ -409,9 +409,9 @@ fi
 
 if test "x$have_logvol" = xyes ; then
     if test "x$LIBS" = x ; then
-    LIBS="-llogvol"
+    LIBS="-lH5VL_log"
     else
-    LIBS="$LIBS -llogvol"
+    LIBS="$LIBS -lH5VL_log"
     fi
     AC_DEFINE([ENABLE_LOGVOL], [1], [Build logvol benchmark])
 fi

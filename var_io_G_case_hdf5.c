@@ -21,7 +21,7 @@
 #include "e3sm_io_hdf5.h"
 
 #ifdef ENABLE_LOGVOL
-#include "logvol.h"
+#include "H5VL_log.h"
 #endif
 #include <sys/stat.h>
 
@@ -452,6 +452,9 @@ run_varn_G_case_hdf5(MPI_Comm io_comm,         /* MPI communicator that includes
 
     /* set output file name */
     sprintf(outfname, "%s/%s",out_dir, outfile);
+
+    err = hdf5_wrap_init ();
+    ERR;
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     // MPI and collective metadata is required by LOG VOL
@@ -1061,6 +1064,9 @@ run_varn_G_case_rd_hdf5( MPI_Comm io_comm,         /* MPI communicator that incl
 
     /* set output file name */
     sprintf(outfname, "%s/%s",out_dir, outfile);
+
+    err = hdf5_wrap_init ();
+    ERR;
 
     // Register LOG VOL plugin
     faplid = H5Pcreate (H5P_FILE_ACCESS);
