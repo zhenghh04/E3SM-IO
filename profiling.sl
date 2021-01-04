@@ -14,6 +14,10 @@ let NP=NN*32
 
 export LD_LIBRARY_PATH=/global/homes/k/khl7265/.local/hdf5/1.12.0/lib:${LD_LIBRARY_PATH}
 
+export H5VL_LOG_METADATA_MERGE=1
+export H5VL_LOG_METADATA_ZIP=1
+export H5VL_LOG_SEL_ENCODING=1
+
 RUNS=(1 2) # Number of runs
 
 OUTDIR_ROOT=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/
@@ -69,6 +73,9 @@ do
                         echo "#%$: operation: ${OP}"
                         echo "#%$: number_of_nodes: ${NN}"
                         echo "#%$: number_of_proc: ${NP}"
+                        echo "#%$: logvol_metadata_merge: ${H5VL_LOG_METADATA_MERGE}"
+                        echo "#%$: logvol_metadata_zip: ${H5VL_LOG_METADATA_ZIP}"
+                        echo "#%$: logvol_metadata_encoding: ${H5VL_LOG_SEL_ENCODING}"
 
                         STARTTIME=`date +%s.%N`
 
