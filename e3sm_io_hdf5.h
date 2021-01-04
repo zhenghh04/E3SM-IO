@@ -4,7 +4,7 @@
 #include <pnetcdf.h>
 
 #include "e3sm_io.h"
-
+#include "config.h"
 #ifdef ENABLE_LOGVOL
 #include "H5VL_log.h"
 #endif

@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH -p debug
+#SBATCH -p regular
 #SBATCH -N 32
 #SBATCH -C haswell
-#SBATCH -t 00:10:00
-#SBATCH -o e3sm_g_32_%j.txt
-#SBATCH -e e3sm_g_32_%j.err
+#SBATCH -t 00:15:00
+#SBATCH -o e3sm_g_32_fix_mdsize_varn_%j.txt
+#SBATCH -e e3sm_g_32_fix_mdsize_varn_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -24,10 +24,10 @@ CONFIG_FLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne12
 CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
 CONFIGS=(${CONFIG_GLARGE})
-APPS=(e3sm_io_profiling)
+APPS=(e3sm_io)
 #APPS=(e3sm_io e3sm_io_profiling)
-HXS=(0 1)
-APIS=(pnc hdf5)
+HXS=(0)
+APIS=(hdf5)
 OPS=(write)
 TL=6
 

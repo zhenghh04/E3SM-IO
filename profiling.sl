@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH -p debug
-#SBATCH -N 1
+#SBATCH -p regular
+#SBATCH -N 32
 #SBATCH -C haswell
 #SBATCH -t 00:12:00
-#SBATCH -o e3sm_profiling_1_%j.txt
-#SBATCH -e e3sm_profiling_1_%j.err
+#SBATCH -o e3sm_profiling_f_120_32_%j.txt
+#SBATCH -e e3sm_profiling_f_120_32_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -23,8 +23,8 @@ CONFIG_FMID=datasets/f_case_48602x72_512p.nc
 CONFIG_FLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/FC5AV1C-H01B_ne120_oRRS18v3_21600p.nc
 CONFIG_GLARGE=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/decom/GMPAS-NYF_T62_oRRS18to6v3_9600p.nc
 
-CONFIGS=(${CONFIG_FMID})
-APPS=(e3sm_io_origin e3sm_io_csize e3sm_io_wrap e3sm_io_nb e3sm_io_pool)
+CONFIGS=(${CONFIG_FLARGE})
+APPS=(e3sm_io)
 #APPS=(e3sm_io_pool)
 HXS=(0)
 APIS=(hdf5)
