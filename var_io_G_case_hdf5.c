@@ -798,6 +798,7 @@ int run_varn_G_case_hdf5 (
         //      (float)max_alloc/1048576);
         printf ("Total write amount                 = %.2f MiB = %.2f GiB\n",
                 (double)total_size / 1048576, (double)total_size / 1073741824);
+        printf ("#%%$: total_write_amount: %lf\n", (double)total_size / 1048576);
         printf ("Total number of requests           = %lld\n", total_nreqs);
         printf ("Max number of requests             = %lld\n", max_nreqs);
         printf ("Max Time of open + metadata define = %.4f sec\n", open_timing);
@@ -1425,6 +1426,7 @@ int run_varn_G_case_rd_hdf5 (
         printf ("Total number of variables          = %d\n", nvars);
         printf ("Total read amount                 = %.2f MiB = %.2f GiB\n",
                 (double)total_size / 1048576, (double)total_size / 1073741824);
+        printf ("#%%$: total_read_amount: %lf\n", (double)total_size / 1048576);
         printf ("Total number of requests           = %lld\n", total_nreqs);
         printf ("Max number of requests             = %lld\n", max_nreqs);
         printf ("Max Time of open + metadata define = %.4f sec\n", open_timing);
