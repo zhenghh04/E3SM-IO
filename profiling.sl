@@ -3,8 +3,8 @@
 #SBATCH -N 32
 #SBATCH -C haswell
 #SBATCH -t 00:12:00
-#SBATCH -o e3sm_profiling_f_120_32_%j.txt
-#SBATCH -e e3sm_profiling_f_120_32_%j.err
+#SBATCH -o e3sm_f_120_profiling_32_%j.txt
+#SBATCH -e e3sm_f_120_profiling_32_%j.err
 #SBATCH -L SCRATCH
 #SBATCH -A m2956
 
@@ -12,7 +12,7 @@ NN=${SLURM_NNODES}
 #let NP=NN*1
 let NP=NN*32
 
-export LD_LIBRARY_PATH=/global/homes/k/khl7265/.local/hdf5/1.12.0/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=/global/homes/k/khl7265/.local/hdf5/1.12.0/lib:/global/homes/k/khl7265/.local/log_io_vol/profiling/lib:${LD_LIBRARY_PATH}
 
 export H5VL_LOG_METADATA_MERGE=1
 export H5VL_LOG_METADATA_ZIP=1
@@ -20,7 +20,7 @@ export H5VL_LOG_SEL_ENCODING=1
 
 RUNS=(1 2) # Number of runs
 
-OUTDIR_ROOT=/global/cscratch1/sd/khl7265/FS_64_8M/E3SM/
+OUTDIR_ROOT=/global/cscratch1/sd/khl7265/FS_64_1M/E3SM/
 
 CONFIG_FSMALL=datasets/f_case_866x72_16p.nc
 CONFIG_FMID=datasets/f_case_48602x72_512p.nc
