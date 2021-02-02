@@ -698,15 +698,6 @@ run_vard_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
                (double)total_size/1048576.0/total_timing);
         printf("I/O bandwidth (write-only)         = %.4f MiB/sec\n",
                (double)put_size/1048576.0/io_timing);
-        printf("#%%$: total_write_amount: %lf\n",(double)total_size / 1048576);
-        printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
-        printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
-        printf("#%%$: iput_time_max: %lf\n",0);
-        printf("#%%$: wait_all_time_max: %lf\n",io_timing);
-        printf("#%%$: close_time_max: %lf\n",close_timing);
-        printf("#%%$: total_time_max: %lf\n",total_timing);
-        printf("#%%$: bandwidth_open_to_close: %lf\n",(double)total_size / 1048576.0 / total_timing);
-        printf("#%%$: bandwidth_write: %lf\n",(double)put_size / 1048576.0 / io_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }
@@ -1253,7 +1244,6 @@ run_varn_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
                (float)max_alloc/1048576);
         printf("Total write amount                 = %.2f MiB = %.2f GiB\n",
                (double)total_size/1048576,(double)total_size/1073741824);
-        printf("#%%$: total_write_amount: %lf\n",(double)total_size / 1048576);
         printf("Total number of requests           = %lld\n",total_nreqs);
         printf("Max number of requests             = %lld\n",max_nreqs);
         printf("Max Time of open + metadata define = %.4f sec\n",open_timing);
@@ -1262,18 +1252,10 @@ run_varn_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
         printf("Max Time of ncmpi_wait_all         = %.4f sec\n",wait_timing);
         printf("Max Time of close                  = %.4f sec\n",close_timing);
         printf("Max Time of TOTAL                  = %.4f sec\n",total_timing);
-        printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
-        printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
-        printf("#%%$: iput_time_max: %lf\n",post_timing);
-        printf("#%%$: wait_all_time_max: %lf\n",wait_timing);
-        printf("#%%$: close_time_max: %lf\n",close_timing);
-        printf("#%%$: total_time_max: %lf\n",total_timing);
         printf ("I/O bandwidth (open-to-close)      = %.4f MiB/sec\n",
                 (double)total_size / 1048576.0 / total_timing);
         printf ("I/O bandwidth (write-only)         = %.4f MiB/sec\n",
                 (double)put_size / 1048576.0 / wait_timing);
-        printf("#%%$: bandwidth_open_to_close: %lf\n",(double)total_size / 1048576.0 / total_timing);
-        printf("#%%$: bandwidth_write: %lf\n",(double)put_size / 1048576.0 / wait_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }
@@ -1712,16 +1694,6 @@ run_varn_F_case_rd( MPI_Comm io_comm,         /* MPI communicator that includes 
                (double)total_size/1048576.0/total_timing);
         printf("I/O bandwidth (read-only)         = %.4f MiB/sec\n",
                (double)put_size/1048576.0/wait_timing);
-        printf("#%%$: bandwidth_open_to_close: %lf\n",(double)total_size / 1048576.0 / total_timing);
-        printf("#%%$: bandwidth_read: %lf\n",(double)put_size / 1048576.0 / wait_timing);
-        printf("#%%$: total_read_amount: %lf\n",(double)total_size / 1048576);
-        printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
-        printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
-        printf("#%%$: iput_time_max: %lf\n",0);
-        printf("#%%$: wait_all_time_max: %lf\n",wait_timing);
-        printf("#%%$: close_time_max: %lf\n",close_timing);
-        printf("#%%$: total_time_max: %lf\n",total_timing);
-        printf("#%%$: bandwidth_open_to_close: %lf\n",(double)total_size / 1048576.0 / total_timing);
         if (verbose) print_info(&info_used);
         printf("-----------------------------------------------------------\n");
     }

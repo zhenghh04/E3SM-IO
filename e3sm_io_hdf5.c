@@ -116,9 +116,9 @@ void hdf5_wrap_finalize () {
 
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
     if (rank == 0) {
-        printf ("#%%$: H5Dwrite_time_max: %lf\n", twrite_all);
-        printf ("#%%$: H5Sselect_hyperslab_time_max: %lf\n", tsel_all);
-        printf ("#%%$: H5Dset_extent_time_max: %lf\n", text_all);
+        printf ("H5Dwrite_time_max: %lf\n", twrite_all);
+        printf ("H5Sselect_hyperslab_time_max: %lf\n", tsel_all);
+        printf ("H5Dset_extent_time_max: %lf\n", text_all);
     }
 }
 
