@@ -72,6 +72,8 @@ int hdf5_wrap_init () {
     CHECK_HID (dxplid_indep_nb)
     // dxplid_nb = H5Pcreate (H5P_DATASET_XFER);
     // CHECK_HID (dxplid_nb)
+
+#ifdef ENABLE_LOGVOL
     herr = H5Pset_nonblocking (dxplid_coll, H5VL_LOG_REQ_BLOCKING);
     CHECK_HERR
     herr = H5Pset_nonblocking (dxplid_indep, H5VL_LOG_REQ_BLOCKING);
@@ -80,7 +82,7 @@ int hdf5_wrap_init () {
     CHECK_HERR
     herr = H5Pset_nonblocking (dxplid_indep_nb, H5VL_LOG_REQ_NONBLOCKING);
     CHECK_HERR
-#ifdef ENABLE_LOGVOL
+
     // Register LOG VOL plugin
     log_vlid = H5VLregister_connector (&H5VL_log_g, H5P_DEFAULT);
     CHECK_HID (log_vlid)
@@ -259,7 +261,11 @@ fn_exit:;
 int hdf5_put_var1 (int vid, hid_t mtype, hid_t dxplid, MPI_Offset *mstart, void *buf) {
     return hdf5_put_vara (vid, mtype, dxplid, mstart, mone, buf);
 }
+
+#ifdef ENABLE_LOGVOL
 #define USE_LOGVOL_VARN
+#endif
+
 #ifdef USE_LOGVOL_VARN
 int hdf5_put_varn (int vid,
                    MPI_Datatype mpitype,
