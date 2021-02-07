@@ -701,7 +701,7 @@ run_vard_F_case(MPI_Comm io_comm,         /* MPI communicator that includes all 
         printf("#%%$: total_write_amount: %lf\n",(double)total_size / 1048576);
         printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
         printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
-        printf("#%%$: iput_time_max: %lf\n",0);
+        printf("#%%$: iput_time_max: %lf\n", 0.0f);
         printf("#%%$: wait_all_time_max: %lf\n",io_timing);
         printf("#%%$: close_time_max: %lf\n",close_timing);
         printf("#%%$: total_time_max: %lf\n",total_timing);
@@ -1717,7 +1717,7 @@ run_varn_F_case_rd( MPI_Comm io_comm,         /* MPI communicator that includes 
         printf("#%%$: total_read_amount: %lf\n",(double)total_size / 1048576);
         printf("#%%$: open_and_def_time_max: %lf\n",open_timing);
         printf("#%%$: io_preparing_time_max: %lf\n",pre_timing);
-        printf("#%%$: iput_time_max: %lf\n",0);
+        printf("#%%$: iput_time_max: %lf\n", 0.0f);
         printf("#%%$: wait_all_time_max: %lf\n",wait_timing);
         printf("#%%$: close_time_max: %lf\n",close_timing);
         printf("#%%$: total_time_max: %lf\n",total_timing);
