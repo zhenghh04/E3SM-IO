@@ -99,7 +99,6 @@ int main (int argc, char **argv) {
                 io_stride = atoi (optarg);
                 break;
             case 'R':
-                strcpy (in_dir, optarg);
                 tst_rd = 1;
                 break;
             case 'W':
