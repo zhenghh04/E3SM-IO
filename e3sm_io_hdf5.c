@@ -284,7 +284,7 @@ int hdf5_put_varn (int vid,
     hid_t mtype;
     char *bufp = buf;
     hid_t did;
-    hsize_t start[H5S_MAX_RANK], block[H5S_MAX_RANK];
+    hsize_t **starts = NULL, **counts;
     hsize_t dims[H5S_MAX_RANK], mdims[H5S_MAX_RANK];
 
     did = f_dids[vid];
@@ -320,15 +320,37 @@ int hdf5_put_varn (int vid,
     text += MPI_Wtime () - ts;
 
     // Call H5Dwriten
-    te   = MPI_Wtime ();
-    //herr = H5Dwrite (did, mtype, H5S_CONTIG, dsid, dxplid, bufp);
-    //CHECK_HERR
-    herr = H5Dwriten (did, mtype, cnt, mstarts, mcounts, dxplid, buf);
+    te = MPI_Wtime ();
+
+    // Convert starts and counts;
+    starts    = (hsize_t **)malloc (sizeof (hsize_t *) * cnt * 2);
+    counts    = starts + cnt;
+    starts[0] = (hsize_t *)malloc (sizeof (hsize_t ) * cnt * ndim * 2);
+    counts[0] = starts[0] + cnt * ndim;
+    for (i = 1; i < cnt; i++) {
+        starts[i] = starts[i - 1] + ndim;
+        counts[i] = counts[i - 1] + ndim;
+    }
+    for (i = 1; i < cnt; i++) {
+        for (j = 0; j < ndim; j++) {
+            starts[i][j] = (hsize_t)mstarts[i][j];
+            counts[i][j] = (hsize_t)mcounts[i][j];
+        }
+    }
+    ts = MPI_Wtime ();
+    tsel += ts - te;
+
+    herr = H5Dwrite_n (did, mtype, cnt, starts, counts, dxplid, buf);
     CHECK_HERR
-    twrite += MPI_Wtime () - te;
+    twrite += MPI_Wtime () - ts;
 
 fn_exit:;
     if (dsid >= 0) H5Sclose (dsid);
+
+    if (starts) {
+        free (starts[0]);
+        free (starts);
+    }
 
     return (int)herr;
 }
