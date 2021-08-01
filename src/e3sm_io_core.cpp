@@ -214,10 +214,9 @@ extern "C" int e3sm_io_core (e3sm_io_config *cfg, e3sm_io_decom *decom) {
 #endif
             tcase = new e3sm_io_case_G();
     } else if (cfg->run_case == I) {
-#if 0 && defined(ENABLE_ADIOS2)
-        /* TODO */
+#ifdef ENABLE_ADIOS2
         if (cfg->api == adios)
-            tcase = new e3sm_io_case_G_scorpio();
+            tcase = new e3sm_io_case_I_scorpio();
         else
 #endif
             tcase = new e3sm_io_case_I();

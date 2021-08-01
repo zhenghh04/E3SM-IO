@@ -330,3 +330,17 @@ run_varn_G_case_scorpio(e3sm_io_config &cfg,
                         double *D6_rec_dbl_bufp,  /* D6 rec double buffer */
                         double *D1_fix_dbl_bufp); /* D1 fix double buffer */
 
+extern int 
+def_I_case_scorpio( e3sm_io_config   &cfg,
+                    e3sm_io_decom    &decom,
+                    e3sm_io_driver   &driver,
+                    int               ncid,         /* file ID */
+                    int              *v_decomp_ids, /* variable decomp map IDs */
+                    io_buffers       *wr_buf,
+                    e3sm_io_scorpio_var *varids, /* variable IDs */
+                    int *scorpiovars);
+
+extern int 
+var_wr_I_case_scorpio(  e3sm_io_config &cfg,
+                        e3sm_io_decom  &decom,
+                        e3sm_io_driver &driver);
