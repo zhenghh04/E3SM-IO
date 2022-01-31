@@ -128,6 +128,11 @@ NetCDF file format.
   available in folder `../datasets` with file named `i_case_f19_g16_16p.nc`.
 
 ---
+## dat2h5
+**dat2h5** functions the same as dat2nc, but it outputs an HDF5 file instead of 
+a NetCDF file.
+
+---
 ## datstat
 **datstat** reads a decomposition file in its original text format and report
 statistics of the decomposition.
