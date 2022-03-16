@@ -333,7 +333,7 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
       int tt = cfg.compute*1000; 
       msleep(tt);
 #endif
-        if (cfg.api == hdf5 && cfg.strategy == canonical) {
+        if ((cfg.api == hdf5 && cfg.strategy != blob) || cfg.api == netcdf4) {
             err = driver.expand_rec_size (ncid, rec_no + 1);
             CHECK_ERR
         }
@@ -453,12 +453,12 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
     MPI_Barrier(comm); /*----------------------------------------------------*/
     timing = MPI_Wtime();
 
+    /* close file */
+    FILE_CLOSE
+    
     /* free up allocated heap memory for write buffers */
     wr_buf_free();
     if (vars != NULL) free(vars);
-
-    /* close file */
-    FILE_CLOSE
 
     cmeta->close_time = MPI_Wtime() - timing;
 
@@ -478,8 +478,12 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
     check_malloc(&cfg, &driver);
 
     /* note inquiring file size may be expensive on some machines */
-    if (cfg.verbose && global_rank == 0)
+
+    if (cfg.verbose){
+        if ((global_rank == 0) || ((cfg.strategy == blob) && (sub_rank == 0)))
         driver.inq_file_size(cmeta->outfile, &cmeta->file_size);
+        else cmeta->file_size = 0;
+    }
 
 err_out:
     if (err < 0 && ncid >= 0) driver.close(ncid);

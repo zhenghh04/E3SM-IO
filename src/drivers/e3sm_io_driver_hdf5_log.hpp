@@ -19,9 +19,7 @@
 
 #include <e3sm_io_driver.hpp>
 
-class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {
-    hid_t log_vlid;
-        
+class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {      
     // Config
     bool use_logvol_varn  = true;
     bool merge_varn       = false;
@@ -31,7 +29,8 @@ class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {
     ~e3sm_io_driver_hdf5_log ();
     int create (std::string path, MPI_Comm comm, MPI_Info info, int *fid) override;
     int open (std::string path, MPI_Comm comm, MPI_Info info, int *fid) override;
-   
+    int inq_file_size (std::string path, MPI_Offset *size) override;
+
     int put_vara (int fid,
                   int vid,
                   MPI_Datatype itype,

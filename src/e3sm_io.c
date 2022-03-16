@@ -101,6 +101,7 @@ static void usage (char *argv0) {
                  name otherwise).\n\
        [-a api]  I/O library name\n\
            pnetcdf:   PnetCDF library (default)\n\
+           netcdf4:   NetCDF-4 library\n\
            hdf5:      HDF5 library\n\
            hdf5_log:  HDF5 library with Log-based VOL\n\
            adios:     ADIOS library using BP3 format\n\
@@ -124,6 +125,7 @@ static void usage (char *argv0) {
 /*----< main() >-------------------------------------------------------------*/
 int main (int argc, char **argv) {
     int i, err, nrecs=1, ffreq;
+    char *env;  // HDF5_VOL_CONNECTOR environment variable
     double timing[3], max_t[3];
     e3sm_io_config cfg;
     e3sm_io_decom decom;
@@ -210,6 +212,8 @@ int main (int argc, char **argv) {
                     cfg.api = hdf5_md;
                 else if (strcmp (optarg, "hdf5_log") == 0)
                     cfg.api = hdf5_log;
+                else if (strcmp (optarg, "netcdf4") == 0)
+                    cfg.api = netcdf4;
                 else if (strcmp (optarg, "adios") == 0)
                     cfg.api = adios;
                 else
@@ -300,73 +304,95 @@ int main (int argc, char **argv) {
         ERR_OUT ("Empty input file path")
 
     /* check yet to support APIs and I/O strategies */
-    if (cfg.api == undef_api) cfg.api = pnetcdf;
-
-    if (cfg.api == pnetcdf) {
-        if (cfg.strategy == undef_io)
+    if (cfg.strategy == undef_io) {
+        if (cfg.api == hdf5_log) {
+            cfg.strategy = log;
+        }
+        else {
             cfg.strategy = canonical;
-        else if (cfg.strategy == log)
-            ERR_OUT ("PnetCDF with log I/O strategy is not supported yet")
-    }
-
-    if (cfg.api == hdf5) {
-#ifndef ENABLE_HDF5
-        ERR_OUT("HDF5 is not enabled at configure time")
-#endif
-        if (cfg.strategy == undef_io)
-            cfg.strategy = canonical;
-
-        if (cfg.strategy == canonical){
-            char *env;
-            // Block the use of log-based VOL
-            env = getenv ("HDF5_VOL_CONNECTOR");
-            if (env && (strncmp (env, "LOG", 3) == 0)) {
-                ERR_OUT ("HDF5 with canonical strategy is not compatible with log-based VOL")    
-            }
-        } else if (cfg.strategy == log) {
-            char *env;
-            // Make sure to use log-based VOL
-            env = getenv ("HDF5_VOL_CONNECTOR");
-            if (!env || (strncmp (env, "LOG", 3) != 0)) {
-                ERR_OUT ("HDF5 with log strategy must use log-based VOL")    
-            }
         }
     }
-
-    if (cfg.api == hdf5_md) {
-#ifndef HDF5_HAVE_DWRITE_MULTI
-        ERR_OUT("HDF5 does not support multi-dataset APIs")
+    env = getenv ("HDF5_VOL_CONNECTOR");
+    switch (cfg.api) {
+        case undef_api:;
+            cfg.api = pnetcdf;
+        case pnetcdf:;
+            if (cfg.strategy == log)
+                ERR_OUT ("PnetCDF with log I/O strategy is not supported yet")
+            break;
+        case netcdf4:;
+#ifdef ENABLE_NETCDF4
+            switch (cfg.strategy) {
+                case canonical:;
+                    if (env && (strncmp (env, "LOG", 3) == 0)) {
+                        ERR_OUT ("The VOL set in HDF5_VOL_CONNECTOR (%s) is not compatible with NetCDF 4 canonical I/O strategy")    
+                    }
+                    break;
+                case log:;
+                    if (!env || (strncmp (env, "LOG", 3) != 0)) {
+                        ERR_OUT ("HDF5_VOL_CONNECTOR must be set to \"LOG\" (log-based VOL) for NetCDF 4 with log I/O strategy")    
+                    }
+                    break;
+                default:;
+                    ERR_OUT ("NetCDF 4 only supports canonical and log strategies")
+            }
+#else
+            ERR_OUT ("NetCDF 4 was not enabled in this E3SM I/O build")
 #endif
-        if (cfg.strategy == undef_io)
-            cfg.strategy = canonical;
-        else if (cfg.strategy == log)
-            ERR_OUT ("HDF5 multi-dataset with log I/O strategy is not supported yet")
-        else if (cfg.strategy == blob)
-            ERR_OUT ("HDF5 multi-dataset with blob I/O strategy is not supported yet")
-    }
-
-    if (cfg.api == hdf5_log) {
-#ifndef ENABLE_LOGVOL
-        ERR_OUT("HDF5 Log VOL is not enabled at configure time")
+            break;
+        case hdf5_md:;
+#ifdef HDF5_HAVE_DWRITE_MULTI
+            if (cfg.strategy != canonical){
+                ERR_OUT ("HDF5 multi-dataset only support canonical strategy")
+            }
+#else
+            ERR_OUT("HDF5 used to build E3SM I/O does not support multi-dataset APIs")
 #endif
-        if (cfg.strategy == undef_io)
-            cfg.strategy = log;
-        else if (cfg.strategy == canonical)
-            ERR_OUT ("HDF5 log-based VOL with canonical I/O strategy is not supported yet")
-        else if (cfg.strategy == blob)
-            ERR_OUT ("HDF5 log-based VOL with blob I/O strategy is not supported yet")
-    }
-
-    if (cfg.api == adios) {
-#ifndef ENABLE_ADIOS2
-        ERR_OUT("ADIOS is not enabled at configure time")
+            // fall through
+        case hdf5:;
+#ifdef ENABLE_HDF5
+            switch (cfg.strategy) {
+                case blob:;
+                case canonical:;
+                    if (env && (strncmp (env, "LOG", 3) == 0)) {
+                        ERR_OUT ("The VOL set in HDF5_VOL_CONNECTOR (%s) is not compatible with HDF5 canonical I/O strategy")      
+                    }
+                    break;
+                case log:;
+                    if (env && (strncmp (env, "LOG", 3) != 0)) {
+                        ERR_OUT ("HDF5_VOL_CONNECTOR must be set to \"LOG\" (log-based VOL) for HDF5 with log I/O strategy")    
+                    }
+                    break;
+                default:;
+                    ERR_OUT ("NetCDF 4 only supports canonical and log strategies")
+            }
+#else
+            ERR_OUT ("HDF5 was not enabled in this E3SM I/O build")
 #endif
-        if (cfg.strategy == undef_io)
-            cfg.strategy = blob;
-        else if (cfg.strategy == canonical)
-            ERR_OUT ("ADIOS with canonical I/O strategy is not supported yet")
-        else if (cfg.strategy == log)
-            ERR_OUT ("ADIOS with log I/O strategy is not supported yet")
+            break;
+        case hdf5_log:;
+#ifdef ENABLE_LOGVOL
+            if (cfg.strategy != log){
+                ERR_OUT ("HDF5-logvol only support log strategy")
+            }
+            if (env && (strncmp (env, "LOG", 3) != 0)) {
+                ERR_OUT ("HDF5_VOL_CONNECTOR must be set to \"LOG\" (log-based VOL) for HDF5-logvol with log I/O strategy")    
+            }
+#else
+            ERR_OUT ("Log-based VOL support was not enabled in this E3SM I/O build")
+#endif
+            break;
+        case adios:;
+#ifdef ENABLE_ADIOS2
+            if (cfg.strategy != blob){
+                ERR_OUT ("ADIOS only support blob strategy")
+            }
+#else
+            ERR_OUT ("ADIOS was not enabled in this E3SM I/O build")
+#endif
+            break;
+        default:
+            break;
     }
 
     /* input decomposition file contains number of write requests and their
@@ -381,7 +407,13 @@ int main (int argc, char **argv) {
     timing[1] = MPI_Wtime();
 
     /* read request information from decomposition file */
-    err = read_decomp(&cfg, &decom);
+#ifdef ENABLE_PNC
+    err = read_decomp_pnc(&cfg, &decom);
+#elif defined(ENABLE_NETCDF4)
+    err = read_decomp_nc4(&cfg, &decom);
+#else
+    #error Both PnetCDF and NetCDF 4 disabled
+#endif
     CHECK_ERR
 
     /* determine run case */
