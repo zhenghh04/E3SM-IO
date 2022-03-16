@@ -124,7 +124,7 @@ typedef struct e3sm_io_config {
     MPI_Info info;
     int num_iotasks;
     int num_group;
-
+    
     char in_path[E3SM_IO_MAX_PATH];
     char out_path[E3SM_IO_MAX_PATH];
     char cfg_path[E3SM_IO_MAX_PATH];
@@ -132,7 +132,7 @@ typedef struct e3sm_io_config {
     int wr;
     int rd;
     int nvars;  /* number of climate variables */
-
+    double compute; 
     e3sm_io_strategy strategy;
     e3sm_io_api api;
     e3sm_io_filter filter;

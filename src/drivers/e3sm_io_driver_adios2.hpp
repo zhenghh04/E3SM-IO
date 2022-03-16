@@ -16,7 +16,6 @@
 #include <mpi.h>
 //
 #include <e3sm_io.h>
-
 #include <e3sm_io_driver.hpp>
 
 inline adios2_type mpi_type_to_adios2_type (MPI_Datatype type) {
@@ -96,6 +95,9 @@ class e3sm_io_driver_adios2 : public e3sm_io_driver {
     int close (int fid);
     int inq_file_info (int fid, MPI_Info *info);
     int inq_file_size (std::string path, MPI_Offset *size);
+#ifdef ENABLE_CACHE_VOL  
+    int inq_file_id (int fid, void *hd);
+#endif  
     int inq_put_size (MPI_Offset *size);
     int inq_get_size (MPI_Offset *size);
     int inq_malloc_size (MPI_Offset *size);

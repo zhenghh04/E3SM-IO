@@ -27,6 +27,28 @@
 #include <e3sm_io_driver_adios2.hpp>
 #endif
 
+#ifdef ENABLE_CACHE_VOL
+#include "cache_new_h5api.h"
+#endif
+
+#ifdef ENABLE_CACHE_VOL
+int msleep(long miliseconds) {
+  struct timespec req, rem;
+
+  if (miliseconds > 999) {
+    req.tv_sec = (int)(miliseconds / 1000); /* Must be Non-Negative */
+    req.tv_nsec = (miliseconds - ((long)req.tv_sec * 1000)) *
+                  1000000; /* Must be in range of 0 to 999999999 */
+  } else {
+    req.tv_sec = 0; /* Must be Non-Negative */
+    req.tv_nsec =
+        miliseconds * 1000000; /* Must be in range of 0 to 999999999 */
+  }
+  return nanosleep(&req, &rem);
+}
+#endif
+
+
 #define VAR_ITYPE REC_ITYPE
 
 #define FILE_CREATE(filename) {                                           \
@@ -307,6 +329,10 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
     fix_dbl_buf_ptr = wr_buf.fix_dbl_buf;
 
     for (rec_no=0; rec_no<cmeta->nrecs; rec_no++) {
+#ifdef ENABLE_CACHE_VOL
+      int tt = cfg.compute*1000; 
+      msleep(tt);
+#endif
         if (cfg.api == hdf5 && cfg.strategy == canonical) {
             err = driver.expand_rec_size (ncid, rec_no + 1);
             CHECK_ERR
@@ -337,7 +363,13 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
                 }
             }
         }
-
+#ifdef ENABLE_CACHE_VOL
+	hid_t fd;
+	if (cfg.api == hdf5) {
+	  driver.inq_file_id(ncid, &fd);
+	  H5Fcache_async_op_pause(fd);
+	}
+#endif
         /* write all climate variables */
         for (j=num_decomp_vars; j<nvars; j++) {
             int          dp    = vars[j].decomp_id;
@@ -401,6 +433,10 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
          * their internal buffers and only flushed at file close. Calling
          * driver.wait() takes no effect.
          */
+#ifdef ENABLE_CACHE_VOL
+	if (cfg.api == hdf5)
+	  H5Fcache_async_op_start(fd);
+#endif
         if ((rec_no + 1) % cmeta->ffreq == 0 || (rec_no + 1) == cmeta->nrecs) {
             cmeta->post_time += MPI_Wtime() - timing;
 

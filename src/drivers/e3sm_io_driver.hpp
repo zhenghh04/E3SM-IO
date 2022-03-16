@@ -3,7 +3,6 @@
 #include <string>
 //
 #include "e3sm_io.h"
-
 #define E3SM_IO_DRIVER_MAX_RANK 32
 
 typedef enum e3sm_io_op_mode { coll, indep, nb, nbe } e3sm_io_op_mode;
@@ -22,6 +21,9 @@ class e3sm_io_driver {
     virtual int close (int fid)                                                   = 0;
     virtual int inq_file_size (std::string path, MPI_Offset *size)                = 0;
     virtual int inq_file_info (int fid, MPI_Info *info)                           = 0;
+#ifdef ENABLE_CACHE_VOL
+  virtual int inq_file_id(int fid, void *hd)                                      = 0;
+#endif
     virtual int inq_put_size (MPI_Offset *size)                          = 0;
     virtual int inq_get_size (MPI_Offset *size)                          = 0;
     virtual int inq_malloc_size (MPI_Offset *size)                                = 0;

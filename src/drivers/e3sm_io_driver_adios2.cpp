@@ -242,6 +242,12 @@ int e3sm_io_driver_adios2::inq_file_info (int fid, MPI_Info *info) {
     *info = MPI_INFO_NULL;
     return 0;
 }
+#ifdef ENABLE_CACHE_VOL
+int e3sm_io_driver_adios2::inq_file_id(int fid, void *hd) {
+  hd = NULL; 
+  return 0; 
+}
+#endif
 
 int e3sm_io_driver_adios2::inq_put_size (MPI_Offset *size) {
     int err = 0;

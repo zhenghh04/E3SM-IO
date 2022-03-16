@@ -34,7 +34,7 @@
 #include <mpi.h>
 //
 #include <e3sm_io_err.h>
-
+#include <iostream>
 #define CHECK_AERR                                                    \
     {                                                                 \
         if (aerr != adios2_error_none) {                              \

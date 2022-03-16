@@ -443,6 +443,60 @@ AC_ARG_WITH([logvol],
 ])
 AM_CONDITIONAL(ENABLE_LOGVOL, [test "x$have_logvol" = xyes])
 
+# Check for Cache VOL
+have_cachevol=no
+AC_ARG_WITH([cachevol],
+   [AS_HELP_STRING([--with-cachevol@<:@=INC,LIB | =DIR@:>@],
+                   [Enable HDF5 Cache VOL feature and provide the VOL installation path(s):
+    --with-cachevol=INC,LIB for include and lib paths separated by a comma.
+    --with-cachevol=DIR for the path containing include/ and lib/ subdirectories.
+    @<:@default: disabled@:>@
+   ])], [
+   case $withval in
+     *,*)
+        cachevol_inc="`echo $withval |cut -f1 -d,`"
+        cachevol_lib="`echo $withval |cut -f2 -d, -s`"
+        ;;
+     *)
+        if test -n "$withval"; then
+          cachevol_inc="$withval/include"
+          cachevol_lib="$withval/lib"
+        fi
+        ;;
+   esac
+   if test "x$cachevol_inc" != x ; then
+      if test "x$CPPFLAGS" = x ; then
+         CPPFLAGS="-I$logvol_inc"
+      elif ! echo "${CPPFLAGS}" | ${EGREP} -q -w -- "-I$cachevol_inc" ; then
+         # append only if not already appear in CPPFLAGS
+         CPPFLAGS="$CPPFLAGS -I$cachevol_inc"
+      fi
+   fi
+   if test "x$cachevol_lib" != x ; then
+      if test "x$LDFLAGS" = x ; then
+         LDFLAGS="-L$cachevol_lib"
+      elif ! echo "${LDFLAGS}" | ${EGREP} -q -w -- "-L$cachevol_lib" ; then
+         # append only if not already appear in LDFLAGS
+         LDFLAGS="$LDFLAGS -L$cachevol_lib"
+      fi
+   fi
+   AC_CHECK_HEADER([cache_new_h5api.h], [have_cachevol=yes], [have_cachevol=no])
+   if test "x$have_cachevol" = xno ; then
+      AC_MSG_WARN([
+      -----------------------------------------------------------------------
+      Missing cachevol-header files 'cache_new_h5api.h' required to build E3SM_IO. Use
+      configure command-line option --with-cachevol=/path/to/implementation
+      to specify the location of cachevol installation. Disable cachevol support.
+      -----------------------------------------------------------------------])
+   fi
+   if test "x$have_cachevol" = xyes ; then
+      AC_SUBST(CACHEVOL_LIB_PATH, [$cachevol_lib])
+   fi
+])
+AM_CONDITIONAL(ENABLE_CACHE_VOL, [test "x$have_cachevol" = xyes])
+
+
+
 # Check for ADIOS2
 have_adios2=no
 AC_ARG_WITH([adios2],
@@ -558,6 +612,17 @@ if test "x$have_logvol" = xyes ; then
     AC_DEFINE([ENABLE_LOGVOL], [1], [Build logvol benchmark])
 fi
 
+
+
+if test "x$have_cachevol" = xyes ; then
+    if test "x$LIBS" = x ; then
+    LIBS="-lcache_new_h5api"
+    else
+    LIBS="$LIBS -lcache_new_h5api"
+    fi
+    AC_DEFINE([ENABLE_CACHE_VOL], [1], [Build cachevol benchmark])
+fi
+
 if test "x$have_adios2" = xyes ; then
     if test "x$LIBS" = x ; then
     LIBS="${adios2_lflags}"
@@ -584,6 +649,7 @@ echo \
    Features:  Internal debug mode         - ${debug}
               HDF5 support                - ${have_hdf5}
               HDF5 log-based VOL support  - ${have_logvol}
+	      HDF5 Cache VOL support      - ${have_cachevol}
               HDF5 multi-dataset support  - ${have_multi_dset}
               ADIOS-2 support             - ${have_adios2}
 

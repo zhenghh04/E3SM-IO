@@ -104,6 +104,7 @@ static void usage (char *argv0) {
            hdf5:      HDF5 library\n\
            hdf5_log:  HDF5 library with Log-based VOL\n\
            adios:     ADIOS library using BP3 format\n\
+       [-t compute] Emmunated compute time in unit of second \n\
        [-x strategy] I/O strategy\n\
            canonical: Store variables in the canonical layout (default).\n\
            log:       Store variables in the log-based storage layout.\n\
@@ -126,9 +127,12 @@ int main (int argc, char **argv) {
     double timing[3], max_t[3];
     e3sm_io_config cfg;
     e3sm_io_decom decom;
-
+#ifdef ENABLE_CACHE_VOL
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
     MPI_Init (&argc, &argv);
-
+#endif
     timing[0] = MPI_Wtime();
 
     MPI_Comm_rank (MPI_COMM_WORLD, &(cfg.rank));
@@ -145,6 +149,9 @@ int main (int argc, char **argv) {
     cfg.wr             = 0;
     cfg.rd             = 0;
     cfg.nvars          = 0;
+#ifdef ENABLE_CACHE_VOL    
+    cfg.compute        = 0;
+#endif
     cfg.strategy       = undef_io;
     cfg.api            = undef_api;
     cfg.chunksize      = 0;
@@ -183,6 +190,11 @@ int main (int argc, char **argv) {
             case 'r':
                 nrecs = atoi (optarg);
                 break;
+#ifdef ENABLE_CACHE_VOL		
+            case 't':
+	      cfg.compute = atof(optarg);
+	      break;
+#endif	      
             case 'y':
                 ffreq = atoi (optarg);
                 break;

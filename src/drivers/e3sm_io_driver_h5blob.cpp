@@ -307,6 +307,12 @@ int e3sm_io_driver_h5blob::inq_file_size (std::string path, MPI_Offset *size) {
 err_out:
     return err;
 }
+#ifdef ENABLE_CACHE_VOL
+int e3sm_io_driver_h5blob::inq_file_id (int fid, void *fd) {
+  fd = NULL; 
+  return 0; 
+}
+#endif
 
 int e3sm_io_driver_h5blob::inq_put_size (MPI_Offset *size) {
     *size = this->amount_WR;

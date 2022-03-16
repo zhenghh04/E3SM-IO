@@ -121,7 +121,7 @@ int e3sm_io_driver_hdf5::create (std::string path, MPI_Comm comm, MPI_Info info,
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     CHECK_HID (faplid)
-    herr = H5Pset_fapl_mpio (faplid, comm, info);
+    herr = H5Pset_mpi_params (faplid, comm, info);
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
     CHECK_HERR
@@ -172,6 +172,7 @@ int e3sm_io_driver_hdf5::open (std::string path, MPI_Comm comm, MPI_Info info, i
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     CHECK_HID (faplid)
     herr = H5Pset_fapl_mpio (faplid, comm, info);
+      //herr = H5Pset_mpi_params (faplid, comm, info);
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
     CHECK_HERR
@@ -231,12 +232,13 @@ int e3sm_io_driver_hdf5::inq_file_info (int fid, MPI_Info *info) {
     herr_t herr;
     hdf5_file *fp = this->files[fid];
     hid_t pid;
+    MPI_Comm comm; 
 
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
 
     pid = H5Fget_access_plist (fp->id);
     CHECK_HID (pid);
-    herr = H5Pget_fapl_mpio (pid, NULL, info);
+    herr = H5Pget_mpi_params (pid, &comm, info);
     CHECK_HERR
 
 err_out:;
@@ -256,6 +258,21 @@ int e3sm_io_driver_hdf5::inq_file_size (std::string path, MPI_Offset *size) {
 err_out:;
     return err;
 }
+#ifdef ENABLE_CACHE_VOL
+int e3sm_io_driver_hdf5::inq_file_id(int fid, void *fd) {
+  int err = 0;
+  hdf5_file *fp = this->files[fid];
+  E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
+  hid_t *p = (hid_t *) fd; 
+  *p = fp->id;
+  CHECK_ERR
+
+err_out:;
+    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
+    return err;
+}
+#endif
+
 int e3sm_io_driver_hdf5::inq_put_size (MPI_Offset *size) {
     *size = this->amount_WR;
     return 0;
