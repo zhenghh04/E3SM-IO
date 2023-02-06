@@ -51,111 +51,114 @@ int msleep(long miliseconds) {
 
 #define VAR_ITYPE REC_ITYPE
 
-#define FILE_CREATE(filename) {                                           \
-    err = driver.create(filename, comm, cfg.info, &ncid);                 \
-    CHECK_ERR                                                             \
-}
-#define FILE_CLOSE {                                                      \
-    err = driver.close(ncid);                                             \
-    CHECK_ERR                                                             \
-}
-#define ENDDEF {                                                          \
-    err = driver.enddef(ncid);                                            \
-    CHECK_ERR                                                             \
-}
-#define INQ_DIM_LEN(name, size) {                                         \
-    int dimid;                                                            \
-    err = driver.inq_dim(ncid, name, &dimid);                             \
-    CHECK_ERR                                                             \
-    err = driver.inq_dimlen(ncid, dimid, &size);                          \
-    CHECK_ERR                                                             \
-}
-#define INQ_PUT_SIZE(size) {                                              \
-    err = driver.inq_put_size(&size);                                     \
-    CHECK_ERR                                                             \
-}
-#define INQ_FILE_INFO(info) {                                             \
-    err = driver.inq_file_info(ncid, &info);                              \
-    CHECK_ERR                                                             \
-}
-#define IPUT_VARA_NOADV(itype, buf) {                                     \
-    err = driver.put_vara(ncid, varid, itype, start, count, buf, nb);     \
-    CHECK_VAR_ERR(varid)                                                  \
-    my_nreqs++;                                                           \
-    varid++;                                                              \
-}
-#define IPUT_VARA(varp, itype, adv, buf) {                                \
-    if (cfg.api == adios)                                                 \
-        err = scorpio_write_var(driver, rec_no, ncid, varp, itype, buf,   \
-                                nb);                                      \
-    else                                                                  \
-        err = driver.put_vara(ncid, varp.vid, itype, start, count,        \
-                              buf, nb);                                   \
-    CHECK_VAR_ERR(varp.vid)                                               \
-    buf += (adv);                                                         \
-    my_nreqs++;                                                           \
-}
-#define IPUT_VAR(varp, itype, adv, buf) {                                 \
-    if (cfg.api == adios)                                                 \
-        err = scorpio_write_var(driver, -1, ncid, varp, itype, buf, nb);  \
-    else                                                                  \
-        err = driver.put_vara(ncid, varp.vid, itype, NULL, NULL,          \
-                              buf, nb);                                   \
-    CHECK_VAR_ERR(varp.vid)                                               \
-    buf += (adv);                                                         \
-    my_nreqs++;                                                           \
-}
-#define WAIT_ALL_REQS {                                                   \
-    err = driver.wait(ncid);                                              \
-    CHECK_ERR                                                             \
-    nflushes++;                                                           \
+#define FILE_CREATE(filename) {                                               \
+    err = driver.create(filename, comm, cfg.info, &ncid);                     \
+    CHECK_ERR                                                                 \
 }
 
-#define FIX_VAR_IPUT(varp, dp, itype, buf) {                              \
-    if (((cfg.strategy == canonical) || (cfg.strategy == log))) {         \
-        err = driver.put_varn(ncid, varp.vid, itype,                      \
-                              decom.contig_nreqs[dp], decom.w_startx[dp], \
-                              decom.w_countx[dp], buf, nb);               \
-        my_nreqs += decom.contig_nreqs[dp];                               \
-        buf += decom.count[dp] + gap;                                     \
-    }                                                                     \
-    else if (cfg.api == adios) {                                          \
-        err = scorpio_write_var(driver, -1, ncid, varp, itype, buf, nb);  \
-        my_nreqs++;                                                       \
-        buf += decom.raw_nreqs[dp] + gap;                                 \
-    }                                                                     \
-    else {                                                                \
-        err = driver.put_vara(ncid, varp.vid, itype, &decom.start[dp],    \
-                              &decom.count[dp], buf, nb);                 \
-        my_nreqs++;                                                       \
-        buf += decom.count[dp] + gap;                                     \
-    }                                                                     \
-    CHECK_VAR_ERR(varp.vid)                                               \
-    nvars_D[dp]++;                                                        \
+#define FILE_CLOSE {                                                          \
+    err = driver.close(ncid);                                                 \
+    CHECK_ERR                                                                 \
 }
 
-#define REC_VAR_IPUT(varp, dp, itype, buf) {                              \
-    if (((cfg.strategy == canonical) || (cfg.strategy == log))) {         \
-        err = driver.put_varn(ncid, varp.vid, itype,                      \
-                              decom.contig_nreqs[dp], decom.w_starts[dp], \
-                              decom.w_counts[dp], buf, nb);               \
-        my_nreqs += decom.contig_nreqs[dp];                               \
-        buf += decom.count[dp] + gap;                                     \
-    }                                                                     \
-    else if (cfg.api == adios) {                                          \
-        err = scorpio_write_var(driver, rec_no, ncid, varp, itype, buf,   \
-                                nb);                                      \
-        my_nreqs++;                                                       \
-        buf += decom.raw_nreqs[dp] + gap;                                 \
-    }                                                                     \
-    else {                                                                \
-        err = driver.put_vara(ncid, varp.vid, itype, starts[dp],          \
-                              counts[dp], buf, nb);                       \
-        my_nreqs++;                                                       \
-        buf += decom.count[dp] + gap;                                     \
-    }                                                                     \
-    CHECK_VAR_ERR(varp.vid)                                               \
-    if (rec_no == 0) nvars_D[dp]++;                                       \
+#define ENDDEF {                                                              \
+    err = driver.enddef(ncid);                                                \
+    CHECK_ERR                                                                 \
+}
+
+#define INQ_DIM_LEN(name, size) {                                             \
+    int dimid;                                                                \
+    err = driver.inq_dim(ncid, name, &dimid);                                 \
+    CHECK_ERR                                                                 \
+    err = driver.inq_dimlen(ncid, dimid, &size);                              \
+    CHECK_ERR                                                                 \
+}
+
+#define INQ_PUT_SIZE(size) {                                                  \
+    err = driver.inq_put_size(&size);                                         \
+    CHECK_ERR                                                                 \
+}
+
+#define INQ_FILE_INFO(info) {                                                 \
+    err = driver.inq_file_info(ncid, &info);                                  \
+    CHECK_ERR                                                                 \
+}
+
+#define IPUT_VARA_NOADV(varp, itype, buf) {                                   \
+    err = driver.put_vara(ncid, varp.vid, itype, start, count, buf, nb);      \
+    CHECK_VAR_ERR(varp._name)                                                 \
+    my_nreqs++;                                                               \
+}
+
+#define IPUT_VARA(varp, itype, adv, buf) {                                    \
+    if (cfg.api == adios)                                                     \
+        err = scorpio_write_var(driver, rec_no, ncid, varp, itype, buf, nb);  \
+    else                                                                      \
+        err = driver.put_vara(ncid, varp.vid, itype, start, count, buf, nb);  \
+    CHECK_VAR_ERR(varp._name)                                                 \
+    buf += (adv);                                                             \
+    my_nreqs++;                                                               \
+}
+
+#define IPUT_VAR(varp, itype, adv, buf) {                                     \
+    if (cfg.api == adios)                                                     \
+        err = scorpio_write_var(driver, -1, ncid, varp, itype, buf, nb);      \
+    else                                                                      \
+        err = driver.put_vara(ncid, varp.vid, itype, NULL, NULL, buf, nb);    \
+    CHECK_VAR_ERR(varp._name)                                                 \
+    buf += (adv);                                                             \
+    my_nreqs++;                                                               \
+}
+#define WAIT_ALL_REQS {                                                       \
+    err = driver.wait(ncid);                                                  \
+    CHECK_ERR                                                                 \
+    nflushes++;                                                               \
+}
+
+#define FIX_VAR_IPUT(varp, dp, itype, buf) {                                  \
+/* printf("FIX varp.vid=%d ndims=%d dp=%d nreqs=%d itype=%d name=%s\n",varp.vid,varp.ndims,dp, decom.contig_nreqs[dp],itype,varp._name); */ \
+    if (((cfg.strategy == canonical) || (cfg.strategy == log))) {             \
+        err = driver.put_varn(ncid, varp.vid, itype, decom.contig_nreqs[dp],  \
+                              decom.w_startx[dp], decom.w_countx[dp], buf,nb);\
+        my_nreqs += decom.contig_nreqs[dp];                                   \
+        buf += decom.count[dp] + gap;                                         \
+    }                                                                         \
+    else if (cfg.api == adios) {                                              \
+        err = scorpio_write_var(driver, -1, ncid, varp, itype, buf, nb);      \
+        my_nreqs++;                                                           \
+        buf += decom.raw_nreqs[dp] + gap;                                     \
+    }                                                                         \
+    else {                                                                    \
+        err = driver.put_vara(ncid, varp.vid, itype, &decom.start[dp],        \
+                              &decom.count[dp], buf, nb);                     \
+        my_nreqs++;                                                           \
+        buf += decom.count[dp] + gap;                                         \
+    }                                                                         \
+    CHECK_VAR_ERR(varp._name)                                                 \
+    nvars_D[dp]++;                                                            \
+}
+
+#define REC_VAR_IPUT(varp, dp, itype, buf) {                                  \
+/* printf("REC varp.vid=%d ndims=%d dp=%d nreqs=%d itype=%d name=%s\n",varp.vid,varp.ndims,dp, decom.contig_nreqs[dp],itype,varp._name); */ \
+    if (((cfg.strategy == canonical) || (cfg.strategy == log))) {             \
+        err = driver.put_varn(ncid, varp.vid, itype, decom.contig_nreqs[dp],  \
+                              decom.w_starts[dp], decom.w_counts[dp], buf,nb);\
+        my_nreqs += decom.contig_nreqs[dp];                                   \
+        buf += decom.count[dp] + gap;                                         \
+    }                                                                         \
+    else if (cfg.api == adios) {                                              \
+        err = scorpio_write_var(driver, rec_no, ncid, varp, itype, buf, nb);  \
+        my_nreqs++;                                                           \
+        buf += decom.raw_nreqs[dp] + gap;                                     \
+    }                                                                         \
+    else {                                                                    \
+        err = driver.put_vara(ncid, varp.vid, itype, starts[dp], counts[dp],  \
+                              buf, nb);                                       \
+        my_nreqs++;                                                           \
+        buf += decom.count[dp] + gap;                                         \
+    }                                                                         \
+    CHECK_VAR_ERR(varp._name)                                                 \
+    if (rec_no == 0) nvars_D[dp]++;                                           \
 }
 
 /*----< var_wr_case() >------------------------------------------------------*/
@@ -216,7 +219,7 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
      */
     if (cfg.strategy == blob) {
         if (cfg.api == adios)
-            num_decomp_vars = decom.num_decomp + 1;
+            num_decomp_vars = (2 * decom.num_decomp) + 3;
         else
             num_decomp_vars = decom.num_decomp * NVARS_DECOMP;
     }
@@ -274,22 +277,36 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
 #ifdef ENABLE_ADIOS2
     /* write decomposition maps */
     if (cfg.api == adios) {
+        /* /__pio__/decomp/<decomp_id> */
         for (j=0; j<decom.num_decomp; j++) {
             err = driver.put_varl(ncid, vars[j].vid, MPI_LONG_LONG,
                                   decom.raw_offsets[j], nb);
             CHECK_ERR
         }
-        /* nproc, number of processes, is only written by rank 0 */
-        if (cfg.rank == 0) {
-            err = driver.put_varl(ncid, vars[j].vid, MPI_INT, &cfg.np, nb);
+        /* /__pio__/track/num_decomp_block_writers/<decomp_id> */
+        int num_decomp_block_writers = 1;
+        for (j=decom.num_decomp; j<2*decom.num_decomp; j++) {
+            err = driver.put_varl(ncid, vars[j].vid, MPI_INT,
+                                  &num_decomp_block_writers, nb);
             CHECK_ERR
         }
+        /* nproc, number of processes, is only written by rank 0 */
+        if (cfg.rank == 0) {
+            err = driver.put_varl(ncid, vars[2*decom.num_decomp].vid, MPI_INT, &cfg.np, nb);
+            CHECK_ERR
+        }
+        /* /__pio__/info/block_nprocs */
+        int block_nprocs = 1;
+        err = driver.put_varl(ncid, vars[2*decom.num_decomp+1].vid, MPI_INT, &block_nprocs, nb);
+        CHECK_ERR
+        /* /__pio__/info/block_list */
+        err = driver.put_varl(ncid, vars[2*decom.num_decomp+2].vid, MPI_INT, &global_rank, nb);
+        CHECK_ERR
     } else
 #endif
     if (cfg.strategy == blob) {
-        int varid=0;
-
         /* write decomposition variables, they are defined first in file */
+        i = 0;
         for (j=0; j<decom.num_decomp; j++) {
             start[0] = sub_rank;
             count[0] = 1;
@@ -298,21 +315,26 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
 
             /* write to D*.nreqs, 1D array */
             contig_nreqs[j] = decom.contig_nreqs[j];
-            IPUT_VARA_NOADV(MPI_INT, contig_nreqs+j)
+            IPUT_VARA_NOADV(vars[i], MPI_INT, contig_nreqs+j)
+            i++;
 
             /* write to D*.blob_start, 1D array */
             blob_start[j] = decom.start[j];
-            IPUT_VARA_NOADV(MPI_LONG_LONG, blob_start+j)
+            IPUT_VARA_NOADV(vars[i], MPI_LONG_LONG, blob_start+j)
+            i++;
 
             /* write to D*.blob_count, 1D array */
             blob_count[j] = decom.count[j];
-            IPUT_VARA_NOADV(MPI_LONG_LONG, blob_count+j);
+            IPUT_VARA_NOADV(vars[i], MPI_LONG_LONG, blob_count+j);
+            i++;
 
             /* write to D*.offsets, 2D array */
-            IPUT_VARA_NOADV(MPI_INT, decom.disps[j])
+            IPUT_VARA_NOADV(vars[i], MPI_INT, decom.disps[j])
+            i++;
 
             /* write to D*.lengths, 2D array */
-            IPUT_VARA_NOADV(MPI_INT, decom.blocklens[j])
+            IPUT_VARA_NOADV(vars[i], MPI_INT, decom.blocklens[j])
+            i++;
 
             /* these 4 are used for record variables in blob I/O */
             starts[j][0] = 0;
@@ -329,11 +351,12 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
     fix_dbl_buf_ptr = wr_buf.fix_dbl_buf;
 
     for (rec_no=0; rec_no<cmeta->nrecs; rec_no++) {
-#ifdef ENABLE_CACHE_VOL
-      int tt = cfg.compute*1000; 
-      msleep(tt);
-#endif
-        if ((cfg.api == hdf5 && cfg.strategy != blob) || cfg.api == netcdf4) {
+        if (cfg.comp_time > 0) {
+            sleep ((unsigned int)(cfg.comp_time));
+        }
+
+        if (((cfg.api == hdf5 || cfg.api == hdf5_log || cfg.api == hdf5_md)
+             && cfg.strategy != blob) || cfg.api == netcdf4) {
             err = driver.expand_rec_size (ncid, rec_no + 1);
             CHECK_ERR
         }
@@ -455,10 +478,15 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
 
     /* close file */
     FILE_CLOSE
-    
+
     /* free up allocated heap memory for write buffers */
     wr_buf_free();
-    if (vars != NULL) free(vars);
+    if (vars != NULL) {
+        for (i=0; i<nvars; i++)
+            if (vars[i]._name != NULL)
+                free(vars[i]._name);
+        free(vars);
+    }
 
     cmeta->close_time = MPI_Wtime() - timing;
 
@@ -472,7 +500,7 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
     cmeta->my_nreqs        = my_nreqs;
     cmeta->metadata_WR     = metadata_size;
     cmeta->amount_WR       = total_size;
-    cmeta->end2end_time    = MPI_Wtime() - cmeta->end2end_time;
+    cmeta->end2end_time    = MPI_Wtime () - cmeta->end2end_time;
 
     /* check if there is any PnetCDF internal malloc residue */
     check_malloc(&cfg, &driver);

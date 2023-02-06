@@ -19,8 +19,8 @@
 
 #ifdef ENABLE_NETCDF4
 #include <netcdf.h>
+#include <netcdf_par.h>
 #endif
-
 #ifdef ENABLE_PNC
 #include <pnetcdf.h>
 #endif
@@ -58,6 +58,8 @@
 
 #define NC_NOERR        0   /**< No Error */
 #define NC_GLOBAL 	-1
+#define NC_UNLIMITED 0L
+#define _FillValue      "_FillValue"
 
 typedef int nc_type;
 #endif
@@ -109,10 +111,12 @@ typedef struct {
     int nvars;        /* number of climate variables */
     int nrecs;        /* number of time records */
     int ffreq;        /* I/O flush frequency */
+    int num_attrs;    /* number of attributes */
     int num_flushes;  /* number of flush called */
-    int num_decomp_vars;
-    int nvars_D[MAX_NUM_DECOMP];
+    int num_decomp_vars;         /* no. climate variables decomposed */
+    int nvars_D[MAX_NUM_DECOMP]; /* no. climate variables per decomposition */
     MPI_Offset metadata_WR;
+    MPI_Offset metadata_RD;
     MPI_Offset amount_WR;
     MPI_Offset amount_RD;
     MPI_Offset my_nreqs;
@@ -135,11 +139,11 @@ typedef struct e3sm_io_config {
     MPI_Comm io_comm;
     MPI_Info info;
     int num_iotasks;
-    int num_group;
-    
+    int num_subfiles;
+
     char in_path[E3SM_IO_MAX_PATH];
     char out_path[E3SM_IO_MAX_PATH];
-    char cfg_path[E3SM_IO_MAX_PATH];
+    char decomp_path[E3SM_IO_MAX_PATH];
     int hx;
     int wr;
     int rd;
@@ -154,14 +158,15 @@ typedef struct e3sm_io_config {
     history hist;
     int verbose;      /* verbose mode to print additional messages on screen */
     int keep_outfile; /* whether to keep the output files when exits */
+    int fill_mode;    /* fill missing elements in decomposition maps */
 
     int two_buf;
     int non_contig_buf;
     int io_stride;
+    int comp_time;   /* Emulate computation time (sleep) for a time step */
     int profiling;
 
-    /* below 3 are used for PnetCDF blob I/O subfiling */
-    int      num_subfiles; /* number of subfiles */
+    /* below are used for PnetCDF blob I/O subfiling */
     int      subfile_ID;   /* unique file identifier for subfiles */
     MPI_Comm sub_comm;     /* communicator for a subfile */
     int      sub_rank;     /* rank in sub_comm */
@@ -176,6 +181,11 @@ typedef struct e3sm_io_config {
     case_meta I_case_h0;
     case_meta I_case_h1;
 
+    int   env_log;
+    int   env_log_passthru;
+    char *env_log_info;
+    int   env_cache;
+    int   env_async;
 } e3sm_io_config;
 
 
@@ -237,6 +247,7 @@ typedef struct e3sm_io_decom {
 #ifdef __cplusplus
 extern "C" {
 #endif
+int read_decomp(e3sm_io_config *cfg, e3sm_io_decom *decom);
 #ifdef ENABLE_PNC
 extern int read_decomp_pnc(e3sm_io_config *cfg, e3sm_io_decom *decom);
 #endif
@@ -248,6 +259,7 @@ extern void print_info (MPI_Info *info_used);
 extern int e3sm_io_core (e3sm_io_config *cfg, e3sm_io_decom *decom);
 extern int e3sm_io_xlen_nc_type(nc_type xtype, int *size);
 extern int report_timing_WR(e3sm_io_config *cfg, e3sm_io_decom *decom);
+extern int report_timing_RD(e3sm_io_config *cfg, e3sm_io_decom *decom);
 #ifdef __cplusplus
 }
 #endif

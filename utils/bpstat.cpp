@@ -20,7 +20,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
@@ -28,7 +27,16 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-//
+#include <sys/types.h>
+
+#ifdef HAVE_FTS_H
+#include <fts.h>
+#elif defined(HAVE_FILESYSTEM)
+#include <filesystem>
+#else
+#error Neither fts.h nor filesystem.hpp is found.
+#endif
+
 #include <adios2.h>
 #include <adios2_c.h>
 #include <mpi.h>
@@ -72,16 +80,24 @@ inline size_t adios2_type_size (adios2_type type) {
     switch (type) {
         case adios2_type_int32_t:
             return 4;
-        case adios2_type_int64_t:
+        case adios2_type_uint32_t:
             return 4;
+        case adios2_type_int64_t:
+            return 8;
+        case adios2_type_uint64_t:
+            return 8;
         case adios2_type_float:
             return 4;
         case adios2_type_double:
             return 8;
-        case adios2_type_uint8_t:
-            return 1;
         case adios2_type_int8_t:
             return 1;
+        case adios2_type_uint8_t:
+            return 1;
+        case adios2_type_int16_t:
+            return 2;
+        case adios2_type_uint16_t:
+            return 2;
         case adios2_type_string:
             return 1;
         default:
@@ -93,16 +109,16 @@ inline size_t adios2_type_size (adios2_type type) {
 
 static void usage (char *argv0) {
     char *help =(char*)
-        "Usage: %s [OPTION]... FILE \n"
-        "       -v               Verbose mode\n"
-        "       -h               Print help\n"
-        "       FILE             Name of BP file to analysis\n";
+    "Usage: %s [OPTION]... FILE \n"
+    "       -v    Verbose mode\n"
+    "       -h    Print help\n"
+    "       path  Name of BP file or folder to be analyzed\n";
     fprintf (stderr, help, argv0);
 }
 
 int bpstat_core (std::string inpath, config &cfg, bpstat &stat) {
     int err = 0;
-    size_t i;
+    size_t i, ndim;
     adios2_error aerr;
     // size_t nstep;
     size_t nvar, natt;
@@ -130,7 +146,7 @@ int bpstat_core (std::string inpath, config &cfg, bpstat &stat) {
     CHECK_APTR (adp)
     iop = adios2_declare_io (adp, "bpstat");
     CHECK_APTR (iop)
-    aerr = adios2_set_engine (iop, "BP3");
+    aerr = adios2_set_engine (iop, "BP5");
     CHECK_AERR
 
     ep = adios2_open (iop, inpath.c_str (), adios2_mode_read);
@@ -156,19 +172,43 @@ int bpstat_core (std::string inpath, config &cfg, bpstat &stat) {
         CHECK_AERR
         esize = adios2_type_size (type);
 
-        // There is no ADIOS2 API for querying number of blocks
-        // Try until we got error
-        nelem = 0;
-        for (i = 0;; i++) {
-            stat.msize += 8 + 8; // Block offset and size
+        aerr = adios2_variable_ndims (&ndim, *vp);
+        CHECK_AERR
 
-            aerr = adios2_set_block_selection (*vp, i);
-            if (aerr != adios2_error_none) { break; }
+        if (ndim == 0) /* scalar */
+            nelem = 1;
+        else {
+#if 0 && HAVE_ADIOS2_VARINFO
+            size_t step=0;
+            adios2_varinfo *block_info = adios2_inquire_blockinfo(ep, *vp, step);
+            assert(block_info != NULL);
 
-            aerr = adios2_selection_size (&bsize, *vp);
-            if (aerr != adios2_error_none) { break; }
+            bsize = 0;
+            for (i=0; i<ndim; i++) /* calculate block size */
+                bsize *= block_info->BlocksInfo->Count[i];
+            if (cfg.verbose)
+                printf("var %s: nblocks=%zd block_size=%zd\n",name,block_info->nblocks,bsize);
 
-            nelem += bsize;
+            stat.msize += block_info->nblocks * (8 + 8); // Block offset and size
+            nelem = bsize * block_info->nblocks;
+
+            adios2_free_blockinfo(block_info);
+#else
+            // There is no ADIOS2 API for querying number of blocks
+            // Try until we got error
+            nelem = 0;
+            for (i = 0;; i++) {
+                stat.msize += 8 + 8; // Block offset and size
+
+                aerr = adios2_set_block_selection (*vp, i);
+                if (aerr != adios2_error_none) { break; }
+
+                aerr = adios2_selection_size (&bsize, *vp);
+                if (aerr != adios2_error_none) { break; }
+
+                nelem += bsize;
+            }
+#endif
         }
 
         stat.vsize += nelem * esize;
@@ -228,6 +268,10 @@ int bpstat_core (std::string inpath, config &cfg, bpstat &stat) {
     CHECK_AERR
     adios2_finalize (adp);
 
+    // Apps are responsible to free returned array of adios2_inquire_all_variables and adios2_inquire_all_attributes
+    free(aps);
+    free(vps);
+
     // Discarded C++ version due to lack of universal (untyped) varaible inquery API
     /*
     try {
@@ -268,36 +312,9 @@ err_out:;
     return err;
 }
 
-inline int get_n_sbufiles (config &cfg, std::string inpath) {
-    int ret = -1;
-    int fno;
-    std::filesystem::path fname, subfname;
-
-    if (std::filesystem::is_directory (inpath + ".dir")) {
-        for (auto &f : std::filesystem::directory_iterator (inpath + ".dir")) {
-            fname    = std::filesystem::path (inpath).filename ();
-            subfname = f.path ().filename ();
-
-            if (cfg.verbose) { std::cout << "Iterating " << subfname << std::endl; }
-
-            fno = atoi (subfname.extension ().c_str () + 1);
-            if (fname == subfname.replace_extension ()) {  // replace_extension is in place, must
-                                                           // retrieve the value before its gone
-                if (ret < fno) { ret = fno; }
-            }
-        }
-        ret++;  // #subfile = largest subfile num + 1
-    } else if (std::filesystem::is_regular_file (inpath)) {
-        ret = 0;  // Single file
-    }
-
-    return ret;
-}
-
 int main (int argc, char *argv[]) {
     int err = 0, nerrs = 0;
     int i;
-    int nsub;
     config cfg;
     bpstat stat;
     bpstat stat_all;
@@ -317,47 +334,32 @@ int main (int argc, char *argv[]) {
             case 'h':
             default:
                 usage (argv[0]);
+                MPI_Finalize();
                 return 1;
         }
     }
 
     inpath = std::string (argv[optind]);
-    if (cfg.rank == 0) {  // Rank 0 scan folder
-        nsub = get_n_sbufiles (cfg, inpath);
-        err  = MPI_Bcast (&nsub, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    } else {
-        err = MPI_Bcast (&nsub, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (access(inpath.c_str(), F_OK) != 0){
+        ERR_OUT("Input file does not exist")
     }
+
+    err = bpstat_core (inpath, cfg, stat);
+    if (err != 0) { nerrs++; }
+
+    stat_all.nvar = stat.nvar;
+    stat_all.natt = stat.natt;
+    err = MPI_Reduce(&stat.asize, &stat_all.asize, 1, MPI_UNSIGNED_LONG_LONG,
+                     MPI_SUM, 0, MPI_COMM_WORLD);
+    CHECK_MPIERR
+    err = MPI_Reduce(&stat.vsize, &stat_all.vsize, 1, MPI_UNSIGNED_LONG_LONG,
+                     MPI_SUM, 0, MPI_COMM_WORLD);
     CHECK_MPIERR
 
-    if (nsub == 0) {  // Single file, rank 0 parse
-        if (cfg.rank == 0) {
-            err = bpstat_core (inpath, cfg, stat_all);
-            if (err != 0) { nerrs++; }
-        }
-    } else if (nsub > 0) {
-        for (i = cfg.rank; i < nsub; i += cfg.np) {
-            err = bpstat_core (inpath + ".dir/" +
-                                   std::filesystem::path (inpath).filename ().string () + "." +
-                                   std::to_string (i),
-                               cfg, stat);
-            if (err != 0) { nerrs++; }
-        }
-
-        stat_all.nvar = stat.nvar;
-        stat_all.natt = stat.natt;
-        err = MPI_Reduce (&(stat.asize), &(stat_all.asize), 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0,
-                          MPI_COMM_WORLD);
-        CHECK_MPIERR
-        err = MPI_Reduce (&(stat.vsize), &(stat_all.vsize), 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0,
-                          MPI_COMM_WORLD);
-        CHECK_MPIERR
-    } else {
-        if (cfg.rank == 0) { std::cout << "Error, cannot open " << inpath << "." << std::endl; }
-    }
-
     if (cfg.rank == 0) {
-        std::cout << "Num subfiles: " << nsub << std::endl;
+        // Is there a way to query number of subfiles?
+        // std::cout << "Num subfiles: " << nsub << std::endl;
         std::cout << "Num variables: " << stat_all.nvar << std::endl;
         std::cout << "Total variable size: " << stat_all.vsize << std::endl;
         std::cout << "Num attributes: " << stat_all.natt << std::endl;
@@ -377,5 +379,5 @@ err_out:;
         std::cout << "Filed to parse " << nerrs << " files." << std::endl;
     }
     MPI_Finalize ();
-    return 0;
+    return (nerrs > 0);
 }

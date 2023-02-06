@@ -24,9 +24,15 @@
 #include <e3sm_io_err.h>
 
 #include <e3sm_io_driver_hdf5.hpp>
-#include <e3sm_io_driver_hdf5_int.hpp>
 #include <e3sm_io_driver_hdf5_log.hpp>
 #include <e3sm_io_profile.hpp>
+
+#if (defined HDF5_HAVE_H5SBLOCK) && (defined LOGVOL_GE_1003000)
+#define MSID_CONTIG H5S_BLOCK
+#else
+#define MSID_CONTIG H5S_CONTIG
+#endif
+
 
 e3sm_io_driver_hdf5_log::e3sm_io_driver_hdf5_log (e3sm_io_config *cfg) : e3sm_io_driver_hdf5 (cfg) {
     int err     = 0;
@@ -35,17 +41,45 @@ e3sm_io_driver_hdf5_log::e3sm_io_driver_hdf5_log (e3sm_io_config *cfg) : e3sm_io
 
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
 
-	this->dxplid_coll = H5Pcreate (H5P_DATASET_XFER);
-	CHECK_HID (this->dxplid_coll)
-	herr = H5Pset_dxpl_mpio (this->dxplid_coll, H5FD_MPIO_COLLECTIVE);
-	CHECK_HERR
-	this->dxplid_coll_nb = H5Pcreate (H5P_DATASET_XFER);
-	CHECK_HID (this->dxplid_coll_nb)
-	herr = H5Pset_dxpl_mpio (this->dxplid_coll_nb, H5FD_MPIO_COLLECTIVE);
-	CHECK_HERR
-	this->dxplid_indep_nb = H5Pcreate (H5P_DATASET_XFER);
-	CHECK_HID (this->dxplid_indep_nb)
+    if (cfg->num_subfiles != 0) {
+#ifdef LOGVOL_HAVE_GET_NSUBFILES
+        this->num_subfiles = cfg->num_subfiles;
+#else
+        int rank;
+        err = MPI_Comm_rank(cfg->io_comm, &rank);
+        CHECK_MPIERR
+        if (rank == 0) {
+            printf("\n");
+            printf("Warning: this version of Log-base VOL %s does not support\n",
+                   H5VL_LOG_VERSION);
+            printf("Warning: setting number of subfiles through the command-line\n");
+            printf("Warning: argument. It only supports through setting\n");
+            printf("Warning: environment variable H5VL_LOG_NSUBFILES.\n\n");
+        }
+#endif
+    }
 
+    this->dxplid_coll = H5Pcreate (H5P_DATASET_XFER);
+    CHECK_HID (this->dxplid_coll)
+    herr = H5Pset_dxpl_mpio (this->dxplid_coll, H5FD_MPIO_COLLECTIVE);
+    CHECK_HERR
+    this->dxplid_coll_nb = H5Pcreate (H5P_DATASET_XFER);
+    CHECK_HID (this->dxplid_coll_nb)
+    herr = H5Pset_dxpl_mpio (this->dxplid_coll_nb, H5FD_MPIO_COLLECTIVE);
+    CHECK_HERR
+    this->dxplid_indep_nb = H5Pcreate (H5P_DATASET_XFER);
+    CHECK_HID (this->dxplid_indep_nb)
+
+#ifdef LOGVOL_HAVE_H5PSET_BUFFERED
+    herr = H5Pset_buffered (this->dxplid_coll, true);
+    CHECK_HERR
+    herr = H5Pset_buffered (this->dxplid_indep, true);
+    CHECK_HERR
+    herr = H5Pset_buffered (this->dxplid_coll_nb, false);
+    CHECK_HERR
+    herr = H5Pset_buffered (this->dxplid_indep_nb, false);
+    CHECK_HERR
+#else
     herr = H5Pset_nonblocking (this->dxplid_coll, H5VL_LOG_REQ_BLOCKING);
     CHECK_HERR
     herr = H5Pset_nonblocking (this->dxplid_indep, H5VL_LOG_REQ_BLOCKING);
@@ -54,7 +88,7 @@ e3sm_io_driver_hdf5_log::e3sm_io_driver_hdf5_log (e3sm_io_config *cfg) : e3sm_io
     CHECK_HERR
     herr = H5Pset_nonblocking (this->dxplid_indep_nb, H5VL_LOG_REQ_NONBLOCKING);
     CHECK_HERR
-
+#endif
     env = getenv ("E3SM_IO_HDF5_USE_LOGVOL_WRITEN");
     if (env) {
         if (std::string (env) == "0") { this->use_logvol_varn = false; }
@@ -68,10 +102,19 @@ err_out:;
 e3sm_io_driver_hdf5_log::~e3sm_io_driver_hdf5_log () {
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
 
-    if (dxplid_coll >= 0) H5Pclose (dxplid_coll);
+    if (dxplid_coll >= 0) {
+        H5Pclose (dxplid_coll);
+        dxplid_coll = -1;
+    }
     //if (dxplid_indep >= 0) H5Pclose (dxplid_indep);
-    if (dxplid_coll_nb >= 0) H5Pclose (dxplid_coll_nb);
-    if (dxplid_indep_nb >= 0) H5Pclose (dxplid_indep_nb);
+    if (dxplid_coll_nb >= 0) {
+        H5Pclose (dxplid_coll_nb);
+        dxplid_coll_nb = -1;
+    }
+    if (dxplid_indep_nb >= 0) {
+        H5Pclose (dxplid_indep_nb);
+        dxplid_indep_nb = -1;
+    }
 
     // if (dxplid_nb >= 0) H5Pclose (dxplid_nb);
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
@@ -80,7 +123,7 @@ e3sm_io_driver_hdf5_log::~e3sm_io_driver_hdf5_log () {
 int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info info, int *fid) {
     int err = 0;
     herr_t herr;
-    hid_t faplid;
+    hid_t faplid = -1, fcplid = -1;
     H5AC_cache_config_t mdcc;
     hdf5_file *fp;
 
@@ -100,8 +143,27 @@ int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info i
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
     CHECK_HERR
-    herr = H5Pset_vol (faplid, this->log_vlid, NULL);
-    CHECK_HERR
+
+    /* Set to use Log VOL connector only if the env HDF5_VOL_CONNECTOR has
+     * not been set to use Log VOL yet.
+     */
+    if (this->log_vlid >= 0) {
+        if (cfg->env_log_info != NULL) {
+            /* use VOL connector info string from env HDF5_VOL_CONNECTOR */
+            void *log_info;
+            herr = H5VLconnector_str_to_info(cfg->env_log_info, this->log_vlid, &log_info);
+            CHECK_HERR
+            herr = H5Pset_vol(faplid, this->log_vlid, log_info);
+            CHECK_HERR
+            herr = H5VLfree_connector_info(this->log_vlid, log_info);
+            CHECK_HERR
+        }
+        else {
+            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            CHECK_HERR
+        }
+    }
+
     // Enlarge metadata cache
     mdcc.version = H5AC__CURR_CACHE_CONFIG_VERSION;
     herr         = H5Pget_mdc_config (faplid, &mdcc);
@@ -113,14 +175,30 @@ int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info i
     herr                  = H5Pset_mdc_config (faplid, &mdcc);
     CHECK_HERR
 
-    fp->id = H5Fcreate (path.c_str (), H5F_ACC_TRUNC, H5P_DEFAULT, faplid);
+    fcplid = H5Pcreate (H5P_FILE_CREATE);
+#ifdef LOGVOL_HAVE_GET_NSUBFILES
+    if (this->num_subfiles != 0) {
+        herr = H5Pset_subfiling(fcplid, this->num_subfiles);
+        CHECK_HERR
+    }
+#endif
+
+    fp->id = H5Fcreate (path.c_str (), H5F_ACC_TRUNC, fcplid, faplid);
     CHECK_HID (fp->id)
+
+#ifdef LOGVOL_HAVE_GET_NSUBFILES
+    if (this->num_subfiles != 0) {
+        herr = H5Pget_subfiling(fcplid, &this->num_subfiles);
+        CHECK_HERR
+    }
+#endif
 
     *fid = this->files.size ();
     this->files.push_back (fp);
 
 err_out:;
     if (faplid >= 0) { H5Pclose (faplid); }
+    if (fcplid >= 0) { H5Pclose (fcplid); }
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
     return err;
@@ -149,8 +227,27 @@ int e3sm_io_driver_hdf5_log::open (std::string path, MPI_Comm comm, MPI_Info inf
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
     CHECK_HERR
-    herr = H5Pset_vol (faplid, this->log_vlid, NULL);
-    CHECK_HERR
+
+    /* Set to use Log VOL connector only if the env HDF5_VOL_CONNECTOR has
+     * not been set to use Log VOL yet.
+     */
+    if (this->log_vlid >= 0) {
+        if (cfg->env_log_info != NULL) {
+            /* use VOL connector info string from env HDF5_VOL_CONNECTOR */
+            void *log_info;
+            herr = H5VLconnector_str_to_info(cfg->env_log_info, this->log_vlid, &log_info);
+            CHECK_HERR
+            herr = H5Pset_vol(faplid, this->log_vlid, log_info);
+            CHECK_HERR
+            herr = H5VLfree_connector_info(this->log_vlid, log_info);
+            CHECK_HERR
+        }
+        else {
+            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            CHECK_HERR
+        }
+    }
+
     // Enlarge metadata cache
     mdcc.version = H5AC__CURR_CACHE_CONFIG_VERSION;
     herr         = H5Pget_mdc_config (faplid, &mdcc);
@@ -262,6 +359,7 @@ int e3sm_io_driver_hdf5_log::put_vara (int fid,
     }
 
     // Extend rec dim
+    /*
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_EXT_DIM)
     if (ndim && (dims[0] < hstart[0] + hblock[0])) {
         dims[0] = hstart[0] + hblock[0];
@@ -274,6 +372,7 @@ int e3sm_io_driver_hdf5_log::put_vara (int fid,
         CHECK_HID (dsid)
     }
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_EXT_DIM)
+    */
 
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_SEL)
     if (ndim > 0) {
@@ -303,10 +402,10 @@ int e3sm_io_driver_hdf5_log::put_vara (int fid,
             throw "Unrecognized mode";
     }
 
-    h5_itype = mpi_type_to_hdf5_type (itype);
+    h5_itype = e3sm_io_type_mpi2hdf5 (itype);
 
     // Call H5Dwrite
-    herr = H5Dwrite (did, h5_itype, H5S_CONTIG, dsid, dxplid, buf);
+    herr = H5Dwrite (did, h5_itype, MSID_CONTIG, dsid, dxplid, buf);
     CHECK_HERR
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_WR)
@@ -320,104 +419,6 @@ err_out:;
     if (tid >= 0) H5Tclose (tid);
     if (dsid >= 0) H5Sclose (dsid);
 
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
-    return err;
-}
-
-int e3sm_io_driver_hdf5_log::put_vars (int fid,
-                                       int vid,
-                                       MPI_Datatype itype,
-                                       MPI_Offset *start,
-                                       MPI_Offset *count,
-                                       MPI_Offset *stride,
-                                       void *buf,
-                                       e3sm_io_op_mode mode) {
-    int err = 0;
-    herr_t herr;
-    hdf5_file *fp = this->files[fid];
-    int i;
-    int ndim   = -1;
-    hid_t dsid = -1;
-    hid_t did, h5_itype;
-    hid_t dxplid;
-    hsize_t hstart[E3SM_IO_DRIVER_MAX_RANK], hblock[E3SM_IO_DRIVER_MAX_RANK],
-        hstride[E3SM_IO_DRIVER_MAX_RANK];
-    hsize_t dims[E3SM_IO_DRIVER_MAX_RANK];
-    hid_t tid = -1;
-    MPI_Offset putsize;
-
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
-
-    did = fp->dids[vid];
-
-    dsid = H5Dget_space (did);
-    CHECK_HID (dsid)
-
-    ndim = H5Sget_simple_extent_dims (dsid, dims, NULL);
-    CHECK_HID (ndim)
-
-    for (i = 0; i < ndim; i++) {
-        hstart[i]  = (hsize_t)start[i];
-        hblock[i]  = (hsize_t)count[i];
-        hstride[i] = (hsize_t)stride[i];
-    }
-
-    // Extend rec dim
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_EXT_DIM)
-    if (ndim && (dims[0] < hstart[0] + (hblock[0] - 1) * hstride[0] + 1)) {
-        dims[0] = hstart[0] + (hblock[0] - 1) * hstride[0] + 1;
-        if (fp->recsize < (MPI_Offset) (dims[0])) { fp->recsize = dims[0]; }
-
-        H5Sclose (dsid);
-        herr = H5Dset_extent (did, dims);
-        CHECK_HERR
-        dsid = H5Dget_space (did);
-        CHECK_HID (dsid)
-    }
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_EXT_DIM)
-
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_SEL)
-    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, hstart, hstride, this->one, hblock);
-    CHECK_HERR
-
-    E3SM_IO_TIMER_SWAP (E3SM_IO_TIMER_HDF5_SEL, E3SM_IO_TIMER_HDF5_WR)
-    switch (mode) {
-        case nb: {
-            dxplid = this->dxplid_indep_nb;
-            break;
-        }
-        case nbe: {
-            dxplid = this->dxplid_indep;
-            break;
-        }
-        case indep: {
-            dxplid = this->dxplid_indep;
-            break;
-        }
-        case coll: {
-            dxplid = this->dxplid_coll;
-            break;
-        }
-        default:
-            throw "Unrecognized mode";
-    }
-
-    h5_itype = mpi_type_to_hdf5_type (itype);
-
-    // Call H5Dwrite
-    herr = H5Dwrite (did, h5_itype, H5S_CONTIG, dsid, dxplid, buf);
-    CHECK_HERR
-
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_WR)
-
-    tid     = H5Dget_type (did);
-    putsize = H5Tget_size (tid);
-    for (i = 0; i < ndim; i++) { putsize *= hblock[i]; }
-    this->amount_WR += putsize;
-
-err_out:;
-    if (tid >= 0) H5Tclose (tid);
-    if (dsid >= 0) H5Sclose (dsid);
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
     return err;
 }
@@ -451,7 +452,7 @@ int e3sm_io_driver_hdf5_log::put_varn (int fid,
 
     did = fp->dids[vid];
 
-    mtype = mpi_type_to_hdf5_type (itype);
+    mtype = e3sm_io_type_mpi2hdf5 (itype);
     esize = (hsize_t)H5Tget_size (mtype);
     if (esize <= 0) { ERR_OUT ("Unknown memory type") }
 
@@ -462,6 +463,7 @@ int e3sm_io_driver_hdf5_log::put_varn (int fid,
     CHECK_HID (ndim)
 
     // Extend rec dim if needed
+    /*
     E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_EXT_DIM)
     if (ndim && mdims[0] == H5S_UNLIMITED) {
         MPI_Offset max_rec = 0;
@@ -480,6 +482,7 @@ int e3sm_io_driver_hdf5_log::put_varn (int fid,
         }
     }
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_EXT_DIM)
+    */
 
     switch (mode) {
         case nb: {
@@ -541,7 +544,7 @@ int e3sm_io_driver_hdf5_log::put_varn (int fid,
 
                 E3SM_IO_TIMER_SWAP (E3SM_IO_TIMER_HDF5_SEL, E3SM_IO_TIMER_HDF5_WR)
 
-                herr = H5Dwrite (did, mtype, H5S_CONTIG, dsid, dxplid, bufp);
+                herr = H5Dwrite (did, mtype, MSID_CONTIG, dsid, dxplid, bufp);
                 CHECK_HERR
 
                 E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_WR)
@@ -584,7 +587,7 @@ int e3sm_io_driver_hdf5_log::get_vara (int fid,
     hdf5_file *fp = this->files[fid];
     int i;
     int ndim   = -1;
-    hid_t dsid = -1, H5S_CONTIG = -1;
+    hid_t dsid = -1;
     hid_t did, h5_itype;
     hid_t dxplid;
     hsize_t hstart[E3SM_IO_DRIVER_MAX_RANK], hblock[E3SM_IO_DRIVER_MAX_RANK];
@@ -647,94 +650,10 @@ int e3sm_io_driver_hdf5_log::get_vara (int fid,
             throw "Unrecognized mode";
     }
 
-    h5_itype = mpi_type_to_hdf5_type (itype);
+    h5_itype = e3sm_io_type_mpi2hdf5 (itype);
 
     // Call H5Dread
-    herr = H5Dread (did, h5_itype, H5S_CONTIG, dsid, dxplid, buf);
-    CHECK_HERR
-
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_RD)
-
-    tid     = H5Dget_type (did);
-    getsize = H5Tget_size (tid);
-    for (i = 0; i < ndim; i++) { getsize *= hblock[i]; }
-    fp->getsize += getsize;
-
-err_out:;
-    if (tid >= 0) H5Sclose (tid);
-    if (dsid >= 0) H5Sclose (dsid);
-
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
-    return err;
-}
-int e3sm_io_driver_hdf5_log::get_vars (int fid,
-                                       int vid,
-                                       MPI_Datatype itype,
-                                       MPI_Offset *start,
-                                       MPI_Offset *count,
-                                       MPI_Offset *stride,
-                                       void *buf,
-                                       e3sm_io_op_mode mode) {
-    int err = 0;
-    herr_t herr;
-    hdf5_file *fp = this->files[fid];
-    int i;
-    int ndim   = -1;
-    hid_t dsid = -1, H5S_CONTIG = -1;
-    hid_t did, h5_itype;
-    hid_t dxplid;
-    hsize_t hstart[E3SM_IO_DRIVER_MAX_RANK], hblock[E3SM_IO_DRIVER_MAX_RANK],
-        hstride[E3SM_IO_DRIVER_MAX_RANK];
-    hsize_t dims[E3SM_IO_DRIVER_MAX_RANK];
-    hid_t tid = -1;
-    MPI_Offset getsize;
-
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
-
-    did = fp->dids[vid];
-
-    dsid = H5Dget_space (did);
-    CHECK_HID (dsid)
-
-    ndim = H5Sget_simple_extent_dims (dsid, dims, NULL);
-    CHECK_HID (ndim)
-
-    for (i = 0; i < ndim; i++) {
-        hstart[i]  = (hsize_t)start[i];
-        hblock[i]  = (hsize_t)count[i];
-        hstride[i] = (hsize_t)stride[i];
-    }
-
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5_SEL)
-    herr = H5Sselect_hyperslab (dsid, H5S_SELECT_SET, hstart, hstride, this->one, hblock);
-    CHECK_HERR
-
-    E3SM_IO_TIMER_SWAP (E3SM_IO_TIMER_HDF5_SEL, E3SM_IO_TIMER_HDF5_RD)
-    switch (mode) {
-        case nb: {
-            dxplid = this->dxplid_indep_nb;
-            break;
-        }
-        case nbe: {
-            throw "bput not supported for read";
-            break;
-        }
-        case indep: {
-            dxplid = this->dxplid_indep;
-            break;
-        }
-        case coll: {
-            dxplid = this->dxplid_coll;
-            break;
-        }
-        default:
-            throw "Unrecognized mode";
-    }
-
-    h5_itype = mpi_type_to_hdf5_type (itype);
-
-    // Call H5Dread
-    herr = H5Dread (did, h5_itype, H5S_CONTIG, dsid, dxplid, buf);
+    herr = H5Dread (did, h5_itype, MSID_CONTIG, dsid, dxplid, buf);
     CHECK_HERR
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_RD)
@@ -782,7 +701,7 @@ int e3sm_io_driver_hdf5_log::get_varn (int fid,
 
     did = fp->dids[vid];
 
-    mtype = mpi_type_to_hdf5_type (itype);
+    mtype = e3sm_io_type_mpi2hdf5 (itype);
     esize = (hsize_t)H5Tget_size (mtype);
     if (esize <= 0) { ERR_OUT ("Unknown memory type") }
 
@@ -851,7 +770,7 @@ int e3sm_io_driver_hdf5_log::get_varn (int fid,
                 CHECK_HERR
 
                 E3SM_IO_TIMER_SWAP (E3SM_IO_TIMER_HDF5_SEL, E3SM_IO_TIMER_HDF5_RD)
-                herr = H5Dread (did, mtype, H5S_CONTIG, dsid, dxplid, bufp);
+                herr = H5Dread (did, mtype, MSID_CONTIG, dsid, dxplid, bufp);
                 CHECK_HERR
                 E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_RD)
 

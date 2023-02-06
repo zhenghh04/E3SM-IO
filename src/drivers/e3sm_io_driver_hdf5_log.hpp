@@ -23,6 +23,7 @@ class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {
     // Config
     bool use_logvol_varn  = true;
     bool merge_varn       = false;
+    int num_subfiles      = 0;
 
    public:
     e3sm_io_driver_hdf5_log (e3sm_io_config *cfg);
@@ -38,14 +39,6 @@ class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {
                   MPI_Offset *count,
                   void *buf,
                   e3sm_io_op_mode mode) override;
-    int put_vars (int fid,
-                  int vid,
-                  MPI_Datatype itype,
-                  MPI_Offset *start,
-                  MPI_Offset *count,
-                  MPI_Offset *stride,
-                  void *buf,
-                  e3sm_io_op_mode mode) override;
     int put_varn (int fid,
                   int vid,
                   MPI_Datatype itype,
@@ -59,14 +52,6 @@ class e3sm_io_driver_hdf5_log : public e3sm_io_driver_hdf5 {
                   MPI_Datatype itype,
                   MPI_Offset *start,
                   MPI_Offset *count,
-                  void *buf,
-                  e3sm_io_op_mode mode) override;
-    int get_vars (int fid,
-                  int vid,
-                  MPI_Datatype itype,
-                  MPI_Offset *start,
-                  MPI_Offset *count,
-                  MPI_Offset *stride,
                   void *buf,
                   e3sm_io_op_mode mode) override;
     int get_varn (int fid,

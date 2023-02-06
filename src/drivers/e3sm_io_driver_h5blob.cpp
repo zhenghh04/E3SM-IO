@@ -19,7 +19,7 @@
 
 #include <e3sm_io.h>
 #include <e3sm_io_err.h>
-#include <e3sm_io_driver_hdf5_int.hpp>
+#include <e3sm_io_driver_hdf5.hpp>
 #include <e3sm_io_driver_h5blob.hpp>
 
 e3sm_io_driver_h5blob::e3sm_io_driver_h5blob (e3sm_io_config *cfg) : e3sm_io_driver (cfg) {
@@ -282,6 +282,14 @@ int e3sm_io_driver_h5blob::inq_file_info (int fid, MPI_Info *info) {
     h5blob_file *fp = this->files[fid];
     hid_t pid;
 
+    if (cfg->env_async == 1) {
+        /* Async VOL is currently having problem on H5Fget_access_plist()
+         * See https://github.com/hpc-io/vol-cache/issues/15
+         */
+        *info = MPI_INFO_NULL;
+        return 0;
+    }
+
     /* HDF5 currently has no function to obtain MPI info used by the system.
      * This inquire function just returns the I/O hints set by the user.
      */
@@ -367,9 +375,19 @@ err_out:
     return err;
 }
 
-int e3sm_io_driver_h5blob::inq_var (int fid, std::string name, int *did) {
+int e3sm_io_driver_h5blob::inq_varid (int fid, const char *name, int *did) {
     int err = 0;
 
+    ERR_OUT ("HDF5 blob I/O does not implement inq_varid yet")
+
+err_out:
+    return err;
+}
+
+int e3sm_io_driver_h5blob::inq_var (int fid, int varid, char *name, nc_type *xtypep,
+                                    int *ndimsp, int *dimids, int *nattsp)
+{
+    int err=0;
     ERR_OUT ("HDF5 blob I/O does not implement inq_var yet")
 
 err_out:
@@ -452,6 +470,15 @@ int e3sm_io_driver_h5blob::get_att(int          fid,
 {
     return blob_ncmpio_get_att(this->files[fid]->header, varid, name.c_str(),
                                buf);
+}
+
+int e3sm_io_driver_h5blob::inq_att (int fid, int vid, std::string name, MPI_Offset *size){
+    int err=0;
+    
+    ERR_OUT ("HDF5 blob does not support inq_att")
+
+err_out:;
+	return err;
 }
 
 int e3sm_io_driver_h5blob::put_varl (
@@ -580,18 +607,6 @@ int e3sm_io_driver_h5blob::put_vara(int              fid,
     return 0;
 }
 
-int e3sm_io_driver_h5blob::put_vars (int fid,
-                                   int vid,
-                                   MPI_Datatype itype,
-                                   MPI_Offset *start,
-                                   MPI_Offset *count,
-                                   MPI_Offset *stride,
-                                   void *buf,
-                                   e3sm_io_op_mode mode) {
-    throw "HDF5 blob I/O does not support put_vars yet";
-    return -1;
-}
-
 int e3sm_io_driver_h5blob::put_varn (int fid,
                                    int vid,
                                    MPI_Datatype itype,
@@ -612,18 +627,6 @@ int e3sm_io_driver_h5blob::get_vara (int fid,
                                    void *buf,
                                    e3sm_io_op_mode mode) {
     throw "HDF5 blob I/O does not support get_vara yet";
-    return -1;
-}
-
-int e3sm_io_driver_h5blob::get_vars (int fid,
-                                   int vid,
-                                   MPI_Datatype itype,
-                                   MPI_Offset *start,
-                                   MPI_Offset *count,
-                                   MPI_Offset *stride,
-                                   void *buf,
-                                   e3sm_io_op_mode mode ) {
-    throw "HDF5 blob I/O does not support get_vars yet";
     return -1;
 }
 

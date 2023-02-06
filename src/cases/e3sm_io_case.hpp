@@ -21,24 +21,28 @@ typedef struct {
     size_t  gap;
 
     /* buffers for fixed-size variables */
-    size_t  fix_txt_buflen; char   *fix_txt_buf;
-    size_t  fix_int_buflen; int    *fix_int_buf;
-    size_t  fix_flt_buflen; float  *fix_flt_buf;
-    size_t  fix_dbl_buflen; double *fix_dbl_buf;
+    size_t  fix_txt_buflen; char      *fix_txt_buf;
+    size_t  fix_int_buflen; int       *fix_int_buf;
+    size_t  fix_flt_buflen; float     *fix_flt_buf;
+    size_t  fix_dbl_buflen; double    *fix_dbl_buf;
+    size_t  fix_lld_buflen; long long *fix_lld_buf;
 
     /* buffers for record variables */
-    size_t  rec_txt_buflen; char   *rec_txt_buf;
-    size_t  rec_int_buflen; int    *rec_int_buf;
-    size_t  rec_flt_buflen; float  *rec_flt_buf;
-    size_t  rec_dbl_buflen; double *rec_dbl_buf;
+    size_t  rec_txt_buflen; char      *rec_txt_buf;
+    size_t  rec_int_buflen; int       *rec_int_buf;
+    size_t  rec_flt_buflen; float     *rec_flt_buf;
+    size_t  rec_dbl_buflen; double    *rec_dbl_buf;
+    size_t  rec_lld_buflen; long long *rec_lld_buf;
 } io_buffers;
 
 typedef struct {
     int vid;         /* variable ID, returned from the driver */
 
-    char *name;      /* name of variable */
+    char *_name;     /* name of variable */
+    int fill_id;     /* fill value variable ID returned from adios driver */
     int frame_id;    /* frame variable ID returned from adios driver */
     int decom_id;    /* decomposition map variable ID returned from adios driver */
+    int num_data_block_writers; /* number of data block_writers returned from adios driver */
     int piodecomid;  /* map IDs used on Scorpio starting at 512 */
     int ndims;                  /* number of dimensions */
     MPI_Offset dims[MAX_NDIMS]; /* dimension sizes */
@@ -80,6 +84,11 @@ class e3sm_io_case {
                         e3sm_io_decom  &decom,
                         e3sm_io_driver &driver,
                         case_meta      *cmeta);
+        
+        int var_rd_case(e3sm_io_config &cfg,
+                        e3sm_io_decom  &decom,
+                        e3sm_io_driver &driver,
+                        case_meta      *cmeta);
 
         int  def_F_case(e3sm_io_config &cfg,
                         e3sm_io_decom  &decom,
@@ -92,6 +101,21 @@ class e3sm_io_case {
                         int             ncid);
 
         int  def_I_case(e3sm_io_config &cfg,
+                        e3sm_io_decom  &decom,
+                        e3sm_io_driver &driver,
+                        int             ncid);
+
+        int  inq_F_case(e3sm_io_config &cfg,
+                        e3sm_io_decom  &decom,
+                        e3sm_io_driver &driver,
+                        int             ncid);
+
+        int  inq_G_case(e3sm_io_config &cfg,
+                        e3sm_io_decom  &decom,
+                        e3sm_io_driver &driver,
+                        int             ncid);
+
+        int  inq_I_case(e3sm_io_config &cfg,
                         e3sm_io_decom  &decom,
                         e3sm_io_driver &driver,
                         int             ncid);
@@ -109,11 +133,49 @@ class e3sm_io_case {
         int def_var_decomp(e3sm_io_config &cfg,
                            e3sm_io_decom  &decom,
                            e3sm_io_driver &driver,
+                           case_meta      *cmeta,
                            int ncid,
                            int dim_time,
                            int dim_nblobs,
                            int dim_max_nreqs[MAX_NUM_DECOMP],
                            int g_dimids[MAX_NUM_DECOMP][MAX_NDIMS]);
+
+        int inq_var_decomp(e3sm_io_config &cfg,
+                           e3sm_io_decom  &decom,
+                           e3sm_io_driver &driver,
+                           case_meta      *cmeta,
+                           int ncid,
+                           int dim_time,
+                           int dim_nblobs,
+                           int dim_max_nreqs[MAX_NUM_DECOMP],
+                           int g_dimids[MAX_NUM_DECOMP][MAX_NDIMS]);
+
+        int def_var(e3sm_io_config             &cfg,
+                    e3sm_io_decom              &decom,
+                    e3sm_io_driver             &driver,
+                    case_meta                  *cmeta,
+                    int                         ncid,
+                    std::string                 name,
+                    std::map<int, std::string> &dnames,
+                    int                         xtype,
+                    int                         nDims,
+                    int                         dim_time,
+                    int                        *dimids,
+                    MPI_Datatype                itype,
+                    int                         decomid,
+                    var_meta                   *varp);
+
+        int inq_var(e3sm_io_config             &cfg,
+                    e3sm_io_decom              &decom,
+                    e3sm_io_driver             &driver,
+                    case_meta                  *cmeta,
+                    int                         ncid,
+                    const char                 *name,
+                    int                         dim_time,
+                    int                        *dimids,
+                    MPI_Datatype                itype,
+                    int                         decomid,
+                    var_meta                   *varp);
 
     public:
          e3sm_io_case();
@@ -207,10 +269,8 @@ int scorpio_write_var(e3sm_io_driver &driver,
 
 /*---- MACROS used by header define functions -------------------------------*/
 
-#define CHECK_VAR_ERR(varid) {                                                \
+#define CHECK_VAR_ERR(var_name) {                                             \
     if (err != 0) {                                                           \
-        char var_name[64];                                                    \
-        driver.inq_var_name(ncid, varid, var_name);                           \
         printf("Error in %s:%d: %s() var %s\n",                               \
                __FILE__, __LINE__, __func__, var_name);                       \
         goto err_out;                                                         \
@@ -225,39 +285,46 @@ int scorpio_write_var(e3sm_io_driver &driver,
     err = driver.put_att(ncid, NC_GLOBAL, prefix+name, NC_CHAR, strlen(buf),  \
                          buf);                                                \
     CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_GATTR_INT(name, val) {                                            \
     int buf = val;                                                            \
     err = driver.put_att(ncid, NC_GLOBAL, prefix+name, NC_INT, 1, &buf);      \
     CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_GATTR_DBL(name, val) {                                            \
     double buf = val;                                                         \
     err = driver.put_att(ncid, NC_GLOBAL, prefix+name, NC_DOUBLE, 1, &buf);   \
     CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_TXT(name, buf) {                                             \
     err = driver.put_att(ncid, varp->vid, name, NC_CHAR, strlen(buf), buf);   \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_INT1(name, val) {                                            \
     int buf = val;                                                            \
     err = driver.put_att(ncid, varp->vid, name, NC_INT, 1, &buf);             \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_INT(name, num, buf) {                                        \
     err = driver.put_att(ncid, varp->vid, name, NC_INT, num, buf);            \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_FLT1(name, val) {                                            \
     float buf = val;                                                          \
     err = driver.put_att(ncid, varp->vid, name, NC_FLOAT, 1, &buf);           \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_DBL1(name, val) {                                            \
     double buf = val;                                                         \
     err = driver.put_att(ncid, varp->vid, name, NC_DOUBLE, 1, &buf);          \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
 }
 #define PUT_ATTR_FILL(val) {                                                  \
     if (varp->xType == NC_FLOAT) {                                            \
@@ -272,22 +339,34 @@ int scorpio_write_var(e3sm_io_driver &driver,
         double buf = (double)val;                                             \
         err = driver.put_att(ncid,varp->vid,_FillValue,varp->xType, 1, &buf); \
     }                                                                         \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
 #define PUT_ATTR_INT64(name, num, buf) {                                      \
     err = driver.put_att(ncid, varp->vid, name, NC_INT64, num, buf);          \
-    CHECK_VAR_ERR(varp->vid)                                                  \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
 }
-#define DEF_VAR(name, xtype, ndims, dimids, itype, decomid) {                 \
-    /* ndims and dimids are canonical dimensions */                           \
+#define DEF_VAR(name, xtype, nDims, dimids, itype, decomid) {                 \
+    varp++;                                                                   \
+    err = e3sm_io_case::def_var(cfg, decom, driver, cmeta, ncid, name,        \
+                                dnames, xtype,  nDims, dim_time, dimids,      \
+                                itype, decomid, varp);                        \
+    if (err != 0) goto err_out;                                               \
+}
+#if 0
+#define DEF_VAR(name, xtype, nDims, dimids, itype, decomid) {                 \
+    /* nDims and dimids are canonical dimensions */                           \
     int _i, *_dimids = dimids;                                                \
     varp++;                                                                   \
+    varp->_name     = strdup(name);                                           \
+    varp->ndims     = nDims;   /* number of dimensions */                     \
     varp->iType     = itype;   /* internal data type of write buffer */       \
     varp->xType     = xtype;   /* external data type of variable in file */   \
     varp->decomp_id = decomid; /* decomposition map ID */                     \
-    varp->isRecVar  = (ndims != 0 && *_dimids == dim_time);                   \
+    varp->isRecVar  = (nDims != 0 && *_dimids == dim_time);                   \
     /* calculate variable size */                                             \
-    for (varp->vlen=1, _i=0; _i<ndims; _i++) {                                \
+    for (varp->vlen=1, _i=0; _i<nDims; _i++) {                                \
         err = driver.inq_dimlen(ncid, _dimids[_i], &varp->dims[_i]);          \
         CHECK_ERR                                                             \
         if (_i == 0 && varp->isRecVar) varp->dims[_i] = 1;                    \
@@ -296,7 +375,7 @@ int scorpio_write_var(e3sm_io_driver &driver,
     /* define a new variable */                                               \
     if (cfg.api == adios) {                                                   \
         err = scorpio_define_var(cfg, decom, driver, dnames, decomid, ncid,   \
-                                 name, xtype, ndims, dimids, varp);           \
+                                 name, xtype, nDims, dimids, varp);           \
         if (decomid >= 0) varp->vlen = decom.raw_nreqs[decomid];              \
     } else if (cfg.strategy == blob && decomid >= 0) {                        \
         /* use blob dimensions to define blob variables */                    \
@@ -312,35 +391,169 @@ int scorpio_write_var(e3sm_io_driver &driver,
         /* save the canonical dimensions as attributes */                     \
         ival = decomid + 1;                                                   \
         PUT_ATTR_INT("decomposition_ID", 1, &ival)                            \
-        PUT_ATTR_INT("global_dimids", ndims, dimids)                          \
+        PUT_ATTR_INT("global_dimids", nDims, dimids)                          \
         varp->vlen = decom.count[decomid];                                    \
     } else { /* cfg.strategy == canonical or log or decomid == -1 */          \
-        err = driver.def_var(ncid, name, xtype, ndims, dimids, &varp->vid);   \
+        err = driver.def_var(ncid, name, xtype, nDims, dimids, &varp->vid);   \
         if (decomid >= 0) varp->vlen = decom.count[decomid];                  \
     }                                                                         \
     if (err != 0) {                                                           \
-        printf("Error in %s line %d: def_var %s\n", __FILE__, __LINE__,       \
-               name);                                                         \
+        printf("Error in %s line %d: def_var %s\n", __FILE__, __LINE__,name); \
         goto err_out;                                                         \
     }                                                                         \
     /* increment I/O buffer sizes */                                          \
     if (varp->isRecVar) {                                                     \
         if (varp->iType == MPI_DOUBLE)                                        \
-            wr_buf.rec_dbl_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.rec_dbl_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_INT)                                      \
-            wr_buf.rec_int_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.rec_int_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_CHAR)                                     \
-            wr_buf.rec_txt_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.rec_txt_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_FLOAT)                                    \
-            wr_buf.rec_flt_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.rec_flt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_LONG_LONG)                                \
+            wr_buf.rec_lld_buflen += varp->vlen + wr_buf.gap;                 \
+        else assert(0)                                                        \
     } else {                                                                  \
         if (varp->iType == MPI_DOUBLE)                                        \
-            wr_buf.fix_dbl_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.fix_dbl_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_INT)                                      \
-            wr_buf.fix_int_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.fix_int_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_CHAR)                                     \
-            wr_buf.fix_txt_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.fix_txt_buflen   += varp->vlen + wr_buf.gap;               \
         else if (varp->iType == MPI_FLOAT)                                    \
-            wr_buf.fix_flt_buflen += varp->vlen + wr_buf.gap;                 \
+            wr_buf.fix_flt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_LONG_LONG)                                \
+            wr_buf.fix_lld_buflen += varp->vlen + wr_buf.gap;                 \
+        else assert(0)                                                        \
     }                                                                         \
 }
+#endif
+#define INQ_DIM(name, num, dimid) {                                           \
+    err = driver.inq_dim(ncid, name, dimid);                                  \
+    CHECK_ERR                                                                 \
+    if (cfg.api == adios) dnames[*dimid] = name;                              \
+}
+#define GET_GATTR_TXT(name, buf) {                                            \
+    err = driver.get_att(ncid, NC_GLOBAL, prefix+name, buf);                  \
+    CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_GATTR_INT(name, val) {                                            \
+    err = driver.get_att(ncid, NC_GLOBAL, prefix+name,  val);                 \
+    CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_GATTR_DBL(name, val) {                                            \
+    double buf = val;                                                         \
+    err = driver.get_att(ncid, NC_GLOBAL, prefix+name, &buf);                 \
+    CHECK_ERR                                                                 \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_TXT(name, dbuf) {                                            \
+    err = driver.get_att(ncid, varp->vid, name, dbuf);                        \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_INT1(name, val) {                                            \
+    err = driver.get_att(ncid, varp->vid, name, val);                         \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_INT(name, num, dbuf) {                                       \
+    err = driver.get_att(ncid, varp->vid, name, dbuf);                        \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_FLT1(name, val) {                                            \
+    err = driver.get_att(ncid, varp->vid, name, val);                         \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_DBL1(name, val) {                                            \
+    err = driver.get_att(ncid, varp->vid, name, val);                         \
+    CHECK_VAR_ERR(varp->_name)                                                \
+}
+#define GET_ATTR_FILL(val) {                                                  \
+    if (varp->xType == NC_FLOAT) {                                            \
+        err = driver.get_att(ncid,varp->vid,_FillValue,&val);                 \
+    }                                                                         \
+    else if (varp->xType == NC_INT) {                                         \
+        int buf;                                                              \
+        err = driver.get_att(ncid,varp->vid,_FillValue,&buf);                 \
+        val = (float)buf;                                                     \
+    }                                                                         \
+    else if (varp->xType == NC_DOUBLE) {                                      \
+        double buf;                                                           \
+        err = driver.get_att(ncid,varp->vid,_FillValue,&buf);                 \
+        val = (float)buf;                                                     \
+    }                                                                         \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define GET_ATTR_INT64(name, num, dbuf) {                                     \
+    err = driver.get_att(ncid, varp->vid, name, dbuf);                        \
+    CHECK_VAR_ERR(varp->_name)                                                \
+    cmeta->num_attrs++;                                                       \
+}
+#define INQ_VAR(name, xtype, nDims, dimids, itype, decomid) {                 \
+    varp++;                                                                   \
+    err = e3sm_io_case::inq_var(cfg, decom, driver, cmeta, ncid, (char*)name, \
+                                dim_time, dimids, itype, decomid, varp);      \
+    if (err != 0) goto err_out;                                               \
+}
+#if 0
+#define INQ_VAR(name, xtype, nDims, dimids, itype, decomid) {                 \
+    /* nDims and dimids are canonical dimensions */                           \
+    int _i, *_dimids = dimids;                                                \
+    varp++;                                                                   \
+    varp->_name     = strdup(name);                                           \
+    varp->ndims     = nDims;   /* number of dimensions */                     \
+    varp->iType     = itype;   /* internal data type of write buffer */       \
+    varp->xType     = xtype;   /* external data type of variable in file */   \
+    varp->decomp_id = decomid; /* decomposition map ID */                     \
+    varp->isRecVar  = (nDims != 0 && *_dimids == dim_time);                   \
+    /* calculate variable size */                                             \
+    for (varp->vlen=1, _i=0; _i<nDims; _i++) {                                \
+        err = driver.inq_dimlen(ncid, _dimids[_i], &varp->dims[_i]);          \
+        CHECK_ERR                                                             \
+        if (_i == 0 && varp->isRecVar) varp->dims[_i] = 1;                    \
+        varp->vlen *= varp->dims[_i];                                         \
+    }                                                                         \
+    /* define a new variable */                                               \
+    err = driver.inq_var(ncid, name, &varp->vid);                             \
+    if (decomid >= 0) varp->vlen = decom.count[decomid];                      \
+                                                                              \
+    if (err != 0) {                                                           \
+        printf("Error in %s line %d: def_var %s\n", __FILE__, __LINE__,name); \
+        goto err_out;                                                         \
+    }                                                                         \
+    /* increment I/O buffer sizes */                                          \
+    if (varp->isRecVar) {                                                     \
+        if (varp->iType == MPI_DOUBLE)                                        \
+            wr_buf.rec_dbl_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_INT)                                      \
+            wr_buf.rec_int_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_CHAR)                                     \
+            wr_buf.rec_txt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_FLOAT)                                    \
+            wr_buf.rec_flt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_LONG_LONG)                                \
+            wr_buf.rec_lld_buflen += varp->vlen + wr_buf.gap;                 \
+        else assert(0)                                                        \
+    } else {                                                                  \
+        if (varp->iType == MPI_DOUBLE)                                        \
+            wr_buf.fix_dbl_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_INT)                                      \
+            wr_buf.fix_int_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_CHAR)                                     \
+            wr_buf.fix_txt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_FLOAT)                                    \
+            wr_buf.fix_flt_buflen   += varp->vlen + wr_buf.gap;               \
+        else if (varp->iType == MPI_LONG_LONG)                                \
+            wr_buf.fix_lld_buflen += varp->vlen + wr_buf.gap;                 \
+        else assert(0)                                                        \
+    }                                                                         \
+}
+#endif
+

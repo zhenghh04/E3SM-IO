@@ -25,6 +25,7 @@ static
 int add_gattrs(e3sm_io_config &cfg,
                e3sm_io_decom  &decom,
                e3sm_io_driver &driver,
+               case_meta      *cmeta,
                int             ncid)
 {
     std::string prefix("");
@@ -34,7 +35,7 @@ int add_gattrs(e3sm_io_config &cfg,
     if (cfg.strategy == blob) {
         if (cfg.api == adios) {
             PUT_GATTR_INT("/__pio__/fillmode", 256)
-            prefix = "pio_global/";
+            prefix = "/__pio__/global/";
         }
         else {
             MPI_Comm_size(cfg.io_comm, &nprocs);
@@ -79,6 +80,7 @@ err_out:
 int e3sm_io_case::def_var_decomp(e3sm_io_config &cfg,
                                  e3sm_io_decom  &decom,
                                  e3sm_io_driver &driver,
+                                 case_meta      *cmeta,
                                  int ncid,
                                  int dim_time,
                                  int dim_nblobs,
@@ -87,37 +89,46 @@ int e3sm_io_case::def_var_decomp(e3sm_io_config &cfg,
 {
     char name[512];
     int i, j, err=0, dimids[2];
+    var_meta *varp;
 
     if (cfg.api == adios ) {
+        MPI_Offset one = 1;
         for (j=0; j<decom.num_decomp; j++) {
             int ival, piodims[MAX_NUM_DECOMP];
+
+            varp = vars + j;
             sprintf (name, "/__pio__/decomp/%d", (j + 512));
             err = driver.def_local_var(ncid, name, NC_INT64, 1,
-                                       decom.raw_nreqs+j, &vars[j].vid);
+                                       decom.raw_nreqs+j, &varp->vid);
             CHECK_ERR
 
             for (i=0; i<decom.ndims[j]; i++)
                 piodims[i] = (int)decom.dims[j][i];
 
-            err = driver.put_att(ncid, vars[j].vid, "dimlen", NC_INT,
-                                 decom.ndims[j], piodims);
-            CHECK_ERR
-            err = driver.put_att(ncid, vars[j].vid, "ndims", NC_INT, 1,
-                                 decom.ndims+j);
-            CHECK_ERR
-
+            PUT_ATTR_INT("dimlen", decom.ndims[j], piodims)
+            PUT_ATTR_INT("ndims", 1, decom.ndims+j)
             ival = 6;
-            err = driver.put_att(ncid, vars[j].vid, "piotype", NC_INT, 1,
-                                 &ival);
+            PUT_ATTR_INT("piotype", 1, &ival)
+
+            varp = vars + decom.num_decomp + j;
+            sprintf (name, "/__pio__/track/num_decomp_block_writers/%d", (j + 512));
+            err = driver.def_local_var(ncid, name, NC_INT, 1,
+                                       &one, &varp->vid);
             CHECK_ERR
         }
         err = driver.def_local_var(ncid, "/__pio__/info/nproc", NC_INT, 0,
-                                   NULL, &vars[j].vid);
+                                   NULL, &vars[2*decom.num_decomp].vid);
+        CHECK_ERR
+        err = driver.def_local_var(ncid, "/__pio__/info/block_nprocs", NC_INT, 0,
+                                   NULL, &vars[2*decom.num_decomp+1].vid);
+        CHECK_ERR
+        err = driver.def_local_var(ncid, "/__pio__/info/block_list", NC_INT, 1,
+                                   &one, &vars[2*decom.num_decomp+2].vid);
         CHECK_ERR
     }
     else {
         std::map<int, std::string> dnames;
-        var_meta *varp = vars - 1;
+        varp = vars - 1;
 
         for (i=0; i<decom.num_decomp; i++) {
             dimids[0] = dim_nblobs;
@@ -137,6 +148,40 @@ int e3sm_io_case::def_var_decomp(e3sm_io_config &cfg,
             PUT_ATTR_TXT("global_dims", name)
 #endif
 
+            /* For PnetCDF blob I/O, it uses variable-centric blob layout
+             * strategy where there are are nprocs (or nblobs) blobs in the
+             * file space occupied by each variable. Thus, given N variables
+             * defined and each is partitioned among nprocs processes, there
+             * will be N*nprocs blobs in the NetCDF file. A blob contains all
+             * of a process's write requests to a variable.
+             *
+             * For HDF5 blob I/O, it uses process-centric blob layout strategy
+             * where there are nprocs blobs in the entire file. A blob contains
+             * all of a process's write requests to all variables.
+             */
+
+            /* For PnetCDF blob I/O, the starting file offset of a variable's
+             * blob is calculated by
+             *     variable's begin + D*.blob_start * variable's type size.
+             * A variable's begin and type are stored in the NetCDF file
+             * header.
+             *
+             * For HDF5 blob I/O, the calculation is more complicated, because
+             * the write amount of a process to a variable can be different
+             * from another process. The starting offset of a variable in a
+             * blob is calculated by
+             * 1. calculating the file starting offset of the blob. This
+             *    requires to sum up the sizes of all blobs before it.
+             * 2. calculating the starting offset of a variable inside the
+             *    blob. This requires to to sum up the write amounts to all
+             *    variables defined before it.
+             * A less complicated approach is to additionally save the offsets
+             * of all variables inside all blobs. This requires additional
+             * N*nprocs integers. This is not implemented yet.
+             *
+             * Note NC_INT64 type is used here, but it can be NC_INT because
+             * none of E3SM variables is larger than 4B elements.
+             */
             sprintf(name, "D%d.blob_start", i+1);
             DEF_VAR(name, NC_INT64, 1, dimids, MPI_INT, -1)
             PUT_ATTR_TXT("description", "Starting array indices of individual blobs stored in a variable")
@@ -145,6 +190,19 @@ int e3sm_io_case::def_var_decomp(e3sm_io_config &cfg,
             DEF_VAR(name, NC_INT64, 1, dimids, MPI_LONG_LONG, -1)
             PUT_ATTR_TXT("description", "Number of contiguous array elements in individual blobs stored in a variable")
 
+            /* For PnetCDF blob I/O, the file offset of a write request to a
+             * variable inside a blob is calculated by
+             *     the variable blob's file offset calculated above +
+             *     D*.offsets[blob_id][request_number] * variable's type size
+             * A variable's begin and type are stored in NetCDF file header.
+             *
+             * For HDF5 blob I/O, the calculation is similar, i.e.
+             *     the variable's file offset calculated above +
+             *     D*.offsets[blob_id][request_number] * variable's type size
+             *
+             * Note NC_INT type is used here because none of E3SM variables is
+             * larger than 4B elements. In general, it can be NC_INT64.
+             */
             sprintf(name, "D%d.offsets", i+1);
             DEF_VAR(name, NC_INT, 2, dimids, MPI_INT, -1)
             PUT_ATTR_TXT("description", "Starting indices of flattened canonical noncontiguous requests of individual blobs")
@@ -172,9 +230,19 @@ int e3sm_io_case::def_F_case(e3sm_io_config &cfg,
     float fillv = 1.e+20f, missv = 1.e+20f;
     std::map<int, std::string> dnames;
     var_meta *varp;
+    case_meta *cmeta;
+
+    if (cfg.run_case == F) {
+        if (cfg.hist == h0) cmeta = &cfg.F_case_h0;
+        else                cmeta = &cfg.F_case_h1;
+    } else if (cfg.run_case == I) {
+        if (cfg.hist == h0) cmeta = &cfg.I_case_h0;
+        else                cmeta = &cfg.I_case_h1;
+    } else if (cfg.run_case == G)
+        cmeta = &cfg.G_case;
 
     /* add global attributes */
-    err = add_gattrs(cfg, decom, driver, ncid);
+    err = add_gattrs(cfg, decom, driver, cmeta, ncid);
     CHECK_ERR
 
     /* define dimensions */
@@ -230,12 +298,12 @@ int e3sm_io_case::def_F_case(e3sm_io_config &cfg,
     nvars_decomp = 0;
     if (cfg.strategy == blob) {
         if (cfg.api == adios)
-            nvars_decomp = decom.num_decomp + 1;
+            nvars_decomp = (2 * decom.num_decomp) + 3;
         else
             nvars_decomp = NVARS_DECOMP * decom.num_decomp;
 
-        err = def_var_decomp(cfg, decom, driver, ncid, dim_time, dim_nblobs,
-                             dim_max_nreqs, g_dimids);
+        err = def_var_decomp(cfg, decom, driver, cmeta, ncid, dim_time,
+                             dim_nblobs, dim_max_nreqs, g_dimids);
         CHECK_ERR
     }
 
@@ -3841,12 +3909,6 @@ else {
 }
 
     assert(varp - vars + 1 == cfg.nvars + nvars_decomp);
-
-    if (cfg.api == adios) {
-        for (i=nvars_decomp; i<cfg.nvars+nvars_decomp; i++)
-            if (vars[i].name != NULL)
-                free(vars[i].name);
-    }
 
 err_out:
     return err;

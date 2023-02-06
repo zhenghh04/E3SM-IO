@@ -38,7 +38,7 @@
 
 /*----< add_decomp() >------------------------------------------------------------*/
 static int add_decomp (const char *infname) {
-    int err;
+    int err = 0;
     int ret;
     int i, j;
     int ver, np, ndim;
@@ -118,9 +118,9 @@ err_out:
 
 static void usage (char *argv0) {
     char *help =(char*)
-        "Usage: %s [OPTION]...\n"
-        "       -h               Print help\n"
-        "       -d input_file    decomposition file to analyze\n";
+    "Usage: %s [OPTION]...\n"
+    "       -h             Print help\n"
+    "       -d input_file  decomposition map .dat file to be analyzed\n";
     fprintf (stderr, help, argv0);
 }
 

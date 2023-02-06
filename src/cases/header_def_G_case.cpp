@@ -25,6 +25,7 @@ static
 int add_gattrs(e3sm_io_config &cfg,
                e3sm_io_decom  &decom,
                e3sm_io_driver &driver,
+               case_meta      *cmeta,
                int             ncid)
 {
     std::string prefix("");
@@ -34,7 +35,7 @@ int add_gattrs(e3sm_io_config &cfg,
     if (cfg.strategy == blob) {
         if (cfg.api == adios) {
             PUT_GATTR_INT("/__pio__/fillmode", 256)
-            prefix = "pio_global/";
+            prefix = "/__pio__/global/";
         }
         else {
             MPI_Comm_size(cfg.io_comm, &nprocs);
@@ -811,9 +812,20 @@ int e3sm_io_case::def_G_case(e3sm_io_config   &cfg,
     int g_dimids[MAX_NUM_DECOMP][4];
     std::map<int, std::string> dnames;
     var_meta *varp;
+    case_meta *cmeta;
+
+    if (cfg.run_case == F) {
+        if (cfg.hist == h0) cmeta = &cfg.F_case_h0;
+        else                cmeta = &cfg.F_case_h1;
+    } else if (cfg.run_case == I) {
+        if (cfg.hist == h0) cmeta = &cfg.I_case_h0;
+        else                cmeta = &cfg.I_case_h1;
+    } else if (cfg.run_case == G)
+        cmeta = &cfg.G_case;
+
 
     /* add global attributes */
-    err = add_gattrs(cfg, decom, driver, ncid);
+    err = add_gattrs(cfg, decom, driver, cmeta, ncid);
     CHECK_ERR
 
     /* define dimensions */
@@ -879,12 +891,12 @@ int e3sm_io_case::def_G_case(e3sm_io_config   &cfg,
     nvars_decomp = 0;
     if (cfg.strategy == blob) {
         if (cfg.api == adios)
-            nvars_decomp = decom.num_decomp + 1;
+            nvars_decomp = (2 * decom.num_decomp) + 3;
         else
             nvars_decomp = NVARS_DECOMP * decom.num_decomp;
 
-        err = def_var_decomp(cfg, decom, driver, ncid, dim_time, dim_nblobs,
-                             dim_max_nreqs, g_dimids);
+        err = def_var_decomp(cfg, decom, driver, cmeta, ncid, dim_time,
+                             dim_nblobs, dim_max_nreqs, g_dimids);
         CHECK_ERR
     }
 
@@ -1263,12 +1275,6 @@ int e3sm_io_case::def_G_case(e3sm_io_config   &cfg,
     PUT_ATTR_TXT("units", "grams salt per kilogram seawater")
 
     assert(varp - vars + 1 == cfg.nvars + nvars_decomp);
-
-    if (cfg.api == adios) {
-        for (i=nvars_decomp; i<cfg.nvars+nvars_decomp; i++)
-            if (vars[i].name != NULL)
-                free(vars[i].name);
-    }
 
 err_out:
     return err;

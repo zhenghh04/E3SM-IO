@@ -200,7 +200,7 @@ int set_decomp(int        ncid,
         err = ncmpi_inq_attlen(ncid, varid, "global_dimids", &tmp);
         CHECK_VAR_ERR(ncid, varid)
         dp->ndims = tmp;
-        int dimids[2];
+        int dimids[3]; /* number of fix-sized dimensions is <= 3 */
         err = ncmpi_get_att(ncid, varid, "global_dimids", dimids);
         CHECK_VAR_ERR(ncid, varid)
         for (j=0; j<dp->ndims; j++) {
@@ -257,18 +257,18 @@ int set_decomp(int        ncid,
         dp->w_startx = dp->w_counts + nreqs;
         dp->w_countx = dp->w_startx + nreqs;
 
-        dp->w_starts[0] = (MPI_Offset*) malloc(nreqs * 3 * 4 * sizeof(MPI_Offset));
-        dp->w_counts[0] = dp->w_starts[0] + nreqs * 3;
-        dp->w_startx[0] = dp->w_counts[0] + nreqs * 3;
-        dp->w_countx[0] = dp->w_startx[0] + nreqs * 3;
+        dp->w_starts[0] = (MPI_Offset*) malloc(nreqs * 4 * 4 * sizeof(MPI_Offset));
+        dp->w_counts[0] = dp->w_starts[0] + nreqs * 4;
+        dp->w_startx[0] = dp->w_counts[0] + nreqs * 4;
+        dp->w_countx[0] = dp->w_startx[0] + nreqs * 4;
         for (j=1; j<nreqs; j++) {
-            dp->w_starts[j] = dp->w_starts[j-1] + 3;
-            dp->w_counts[j] = dp->w_counts[j-1] + 3;
-            dp->w_startx[j] = dp->w_startx[j-1] + 3;
-            dp->w_countx[j] = dp->w_countx[j-1] + 3;
+            dp->w_starts[j] = dp->w_starts[j-1] + 4;
+            dp->w_counts[j] = dp->w_counts[j-1] + 4;
+            dp->w_startx[j] = dp->w_startx[j-1] + 4;
+            dp->w_countx[j] = dp->w_countx[j-1] + 4;
         }
 
-        /* no fixed-size variables are 2 or more dimensional */
+        /* no fixed-size variables are 4 or more dimensional */
         for (j=0; j<nreqs; j++) {
             dp->w_starts[j][0] = 0;
             dp->w_counts[j][0] = 1;
@@ -288,6 +288,23 @@ int set_decomp(int        ncid,
                 dp->w_countx[j][0] = dp->w_counts[j][1];
                 dp->w_countx[j][1] = dp->w_counts[j][2];
             }
+            else if (dp->ndims == 3) { /* 3D */
+                MPI_Offset tmp = dp->offsets[j];
+                dp->w_starts[j][1] = tmp / (dp->dims[1] * dp->dims[2]);
+                tmp %= dp->dims[1] * dp->dims[2];
+                dp->w_starts[j][2] = tmp / dp->dims[2];
+                dp->w_starts[j][3] = tmp % dp->dims[2];
+                dp->w_counts[j][1] = 1;
+                dp->w_counts[j][2] = 1;
+                dp->w_counts[j][3] = dp->lengths[j];
+                dp->w_startx[j][0] = dp->w_starts[j][1];
+                dp->w_startx[j][1] = dp->w_starts[j][2];
+                dp->w_startx[j][2] = dp->w_starts[j][3];
+                dp->w_countx[j][0] = dp->w_counts[j][1];
+                dp->w_countx[j][1] = dp->w_counts[j][2];
+                dp->w_countx[j][2] = dp->w_counts[j][3];
+             }
+             else assert(0);
             /* each length[j] is no bigger than last dims[] */
         }
     }
@@ -389,6 +406,7 @@ static
 int set_vars(int        in_ncid,
              int        out_ncid,
              int        nvars,
+             int        num_decomp,
              io_decomp *decomp,
              io_var    *var)
 {
@@ -399,31 +417,52 @@ int set_vars(int        in_ncid,
     err = ncmpi_inq_unlimdim(in_ncid, &rec_dim);
     CHECK_NC_ERR
 
+#define NUM_DECOMP_AUX_VARS 5
+#ifdef NUM_DECOMP_AUX_VARS
+    /* first nvars_decomp variables are decomposition variables:
+     * D*.nreqs, D*.blob_start, D*.blob_count, D*.offsets, D*.lengths
+     */
+    nvars_decomp = num_decomp * NUM_DECOMP_AUX_VARS;
+#endif
+
     /* copy over variable definition and attributes */
     for (i=0; i<nvars; i++) {
-        int dimids[3], nattrs;
+        int dimids[4], nattrs;
         MPI_Offset tmp;
+
+        var[i].varid  = -1; /* decomposition variable */
+        var[i].is_rec = 0;
+        var[i].dec_id = -1;
+
+#ifdef NUM_DECOMP_AUX_VARS
+        if (i < nvars_decomp) {
+            /* inquire xtype of variable i */
+            err = ncmpi_inq_vartype(in_ncid, i, &xtype);
+            CHECK_VAR_ERR(in_ncid, i)
+            var[i].vlen = xlen_nc_type(xtype);
+            continue;
+        }
+#endif
 
         /* inquire metadata of variable i */
         err = ncmpi_inq_var(in_ncid, i, name, &xtype, &var[i].ndims, dimids,
                             &nattrs);
         CHECK_VAR_ERR(in_ncid, i)
 
-        var[i].varid  = -1;
-        var[i].is_rec = 0;
-        var[i].dec_id = -1;
-        var[i].vlen   = xlen_nc_type(xtype);
+        var[i].vlen = xlen_nc_type(xtype);
 
+#ifndef NUM_DECOMP_AUX_VARS
         /* skip copying decomposition variables */
         int name_len = strlen(name);
-        if ((name[0] == 'D' && strcmp(name+name_len-6, ".nreqs"     ) == 0) ||
-            (name[0] == 'D' && strcmp(name+name_len-11,".blob_start") == 0) ||
-            (name[0] == 'D' && strcmp(name+name_len-11,".blob_count") == 0) ||
-            (name[0] == 'D' && strcmp(name+name_len-8, ".offsets"   ) == 0) ||
-            (name[0] == 'D' && strcmp(name+name_len-8, ".lengths"   ) == 0)) {
+        if ((name[0] == 'D' && name_len > 6 && strcmp(name+name_len-6, ".nreqs"     ) == 0) ||
+            (name[0] == 'D' && name_len > 11 && strcmp(name+name_len-11,".blob_start") == 0) ||
+            (name[0] == 'D' && name_len > 11 && strcmp(name+name_len-11,".blob_count") == 0) ||
+            (name[0] == 'D' && name_len > 8 && strcmp(name+name_len-8, ".offsets"   ) == 0) ||
+            (name[0] == 'D' && name_len > 6 && strcmp(name+name_len-8, ".lengths"   ) == 0)) {
             nvars_decomp++;
             continue;
         }
+#endif
 
         /* inquire global_dimids (global dimension IDs) */
         err = ncmpi_inq_attlen(in_ncid, i, "global_dimids", &tmp);
@@ -528,11 +567,11 @@ void print_info (MPI_Info *info_used) {
 /*----< usage() >------------------------------------------------------------*/
 static void usage (char *argv0) {
     char *help =
-        "Usage: %s [OPTION]... FILE\n"
-        "    [-h] Print help\n"
-        "    [-v] Verbose mode\n"
-        "    [-i file] Base name of input subfiles\n"
-        "    [-o file] Output file name\n";
+    "Usage: %s [OPTION]... FILE\n"
+    "    [-h] Print help\n"
+    "    [-v] Verbose mode\n"
+    "    -i file  Base name of input subfiles\n"
+    "    -o file  Output file name\n";
     fprintf (stderr, help, argv0);
 }
 
@@ -548,7 +587,9 @@ int main (int argc, char **argv)
     io_var *var=NULL;
     MPI_Offset start[3], count[3], num_recs=0;
     MPI_Info r_info=MPI_INFO_NULL, w_info=MPI_INFO_NULL;
-    double open_t, def_t, read_t, write_t, close_t, total_t, mark_t;
+    double open_t, def_t, close_t, total_t, mark_t, mark_t2;
+    double read_post_t=0, read_wait_t=0, read_t;
+    double write_post_t=0, write_wait_t=0, write_t;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -587,14 +628,20 @@ int main (int argc, char **argv)
     if (out_file[0] == '\0')
         strcpy(out_file, in_file_base);
 
+    /* check output file and it should not exist */
+    int file_exist= 0;
+    if (world_rank == 0 && access(out_file, F_OK) == 0)
+        file_exist = 1;
+    MPI_Bcast(&file_exist, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (file_exist) {
+        if (world_rank == 0)
+            fprintf(stderr,"Error: output file already exists (%s)\n",out_file);
+        MPI_Finalize();
+        exit(1);
+    }
+
     MPI_Barrier(MPI_COMM_WORLD); /*----------------------------------------*/
     total_t = open_t = MPI_Wtime();
-
-    /* check output file and it should not exist */
-    if (world_rank == 0 && access(out_file, F_OK) == 0) {
-        fprintf(stderr,"Error: output file should not exist %s\n",out_file);
-        MPI_Abort(MPI_COMM_WORLD, -1);
-    }
 
     /* TODO: check the number of subfiles, N */
     /*       if the number of subfiles > nprocs
@@ -627,16 +674,10 @@ int main (int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    /* disable collective read for reading blob subfiles */
-    MPI_Info_create(&r_info);
-    MPI_Info_set(r_info, "romio_cb_read", "disable");
-    MPI_Info_set(r_info, "romio_no_indep_rw", "false");
-
     /* open input subfiles using sub_comm */
-    err = ncmpi_open(sub_comm, in_file, NC_NOWRITE, r_info, &in_ncid);
+    err = ncmpi_open(sub_comm, in_file, NC_NOWRITE, MPI_INFO_NULL, &in_ncid);
     CHECK_NC_ERR
 
-    MPI_Info_free(&r_info);
     /* inquire the MPI-IO hints actually used */
     err = ncmpi_inq_file_info(in_ncid, &r_info);
     CHECK_NC_ERR
@@ -676,7 +717,7 @@ int main (int argc, char **argv)
     CHECK_NC_ERR
 
     if (global_nprocs != world_nprocs && world_rank == 0)
-        printf("Warning: no. processes (%d) is not equal to the one creating subfiles (%d)\n",
+        printf("Warning: no. processes (%d) is not equal to the one used when creating the files (%d)\n",
                world_nprocs, global_nprocs);
 
     /* inquire number of subfiles */
@@ -714,7 +755,7 @@ int main (int argc, char **argv)
     /* read variable metadata from input file, define variables in output file,
      * and copy over their attributes
      */
-    err = set_vars(in_ncid, out_ncid, nvars, decomp, var);
+    err = set_vars(in_ncid, out_ncid, nvars, num_decomp, decomp, var);
     if (err != 0) goto err_out;
     err = ncmpi_enddef(out_ncid);
     CHECK_NC_ERR
@@ -734,6 +775,7 @@ int main (int argc, char **argv)
     num_igets = num_iputs = 0;
 
     /* read fixed-size variables */
+    mark_t2 = MPI_Wtime();
     buf_ptr = buf;
     for (i=0; i<nvars; i++) {
         if (var[i].varid == -1 || var[i].is_rec) continue;
@@ -757,14 +799,18 @@ int main (int argc, char **argv)
         buf_ptr += var[i].vlen;
         num_igets++;
     }
+    read_post_t += MPI_Wtime() - mark_t2;
 
+    mark_t2 = MPI_Wtime();
     err = ncmpi_wait_all(in_ncid, NC_REQ_ALL, NULL, NULL);
     CHECK_NC_ERR
+    read_wait_t += MPI_Wtime() - mark_t2;
 
     read_t += MPI_Wtime() - mark_t;
     mark_t  = MPI_Wtime();
 
     /* write fixed-size variables */
+    mark_t2 = MPI_Wtime();
     buf_ptr = buf;
     for (i=0; i<nvars; i++) {
         if (var[i].varid == -1 || var[i].is_rec) continue;
@@ -788,9 +834,12 @@ int main (int argc, char **argv)
         buf_ptr += var[i].vlen;
         num_iputs++;
     }
+    write_post_t += MPI_Wtime() - mark_t2;
 
+    mark_t2 = MPI_Wtime();
     err = ncmpi_wait_all(out_ncid, NC_REQ_ALL, NULL, NULL);
     CHECK_NC_ERR
+    write_wait_t += MPI_Wtime() - mark_t2;
 
     write_t += MPI_Wtime() - mark_t;
 
@@ -803,6 +852,7 @@ int main (int argc, char **argv)
         count[0] = 1;
 
         /* read from input file */
+        mark_t2 = MPI_Wtime();
         buf_ptr = buf;
         for (i=0; i<nvars; i++) {
             if (var[i].varid == -1 || var[i].is_rec == 0) continue;
@@ -827,14 +877,18 @@ int main (int argc, char **argv)
             buf_ptr += var[i].vlen;
             num_igets++;
         }
+        read_post_t += MPI_Wtime() - mark_t2;
 
+        mark_t2 = MPI_Wtime();
         err = ncmpi_wait_all(in_ncid, NC_REQ_ALL, NULL, NULL);
         CHECK_NC_ERR
+        read_wait_t += MPI_Wtime() - mark_t2;
 
         read_t += MPI_Wtime() - mark_t;
         mark_t  = MPI_Wtime();
 
         /* write to output file */
+        mark_t2 = MPI_Wtime();
         buf_ptr = buf;
         for (i=0; i<nvars; i++) {
             if (var[i].varid == -1 || var[i].is_rec == 0) continue;
@@ -865,8 +919,12 @@ int main (int argc, char **argv)
             num_iputs++;
         }
 
+        write_post_t += MPI_Wtime() - mark_t2;
+
+        mark_t2 = MPI_Wtime();
         err = ncmpi_wait_all(out_ncid, NC_REQ_ALL, NULL, NULL);
         CHECK_NC_ERR
+        write_wait_t += MPI_Wtime() - mark_t2;
 
         write_t += MPI_Wtime() - mark_t;
     }
@@ -908,7 +966,7 @@ int main (int argc, char **argv)
     MPI_Offset m_alloc, max_alloc;
 
     err = ncmpi_inq_malloc_size(&m_alloc);
-    CHECK_NC_ERR
+    if (err == NC_ENOTENABLED) m_alloc = 0;
 
     off_buf[0] = read_amnt;
     off_buf[1] = write_amnt;
@@ -924,18 +982,23 @@ int main (int argc, char **argv)
                 m_alloc);
     }
     err = ncmpi_inq_malloc_max_size(&m_alloc);
-    CHECK_NC_ERR
+    if (err == NC_ENOTENABLED) m_alloc = 0;
     MPI_Reduce(&m_alloc, &max_alloc, 1, MPI_OFFSET, MPI_MAX, 0, MPI_COMM_WORLD);
+    if (err == NC_ENOTENABLED) err = NC_NOERR;
 
     /* find the max timings amount all processes */
-    double timings[6], max_time[6];
+    double timings[10], max_time[10];
     timings[0] = open_t;
     timings[1] = def_t;
     timings[2] = read_t;
     timings[3] = write_t;
     timings[4] = close_t;
     timings[5] = total_t;
-    MPI_Reduce(timings, max_time, 6, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    timings[6] = read_post_t;
+    timings[7] = read_wait_t;
+    timings[8] = write_post_t;
+    timings[9] = write_wait_t;
+    MPI_Reduce(timings, max_time, 10, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (world_rank == 0) {
         printf("Input subfile base name            = %s\n", in_file_base);
@@ -943,22 +1006,30 @@ int main (int argc, char **argv)
         printf("No. decompositions                 = %3d\n", num_decomp);
         printf("No. variables                      = %3d\n", nvars);
         printf("No. records (time steps)           = %3lld\n", num_recs);
+        printf("-----------------------------------------------------------\n");
         printf("Max Time of file open/create       = %.4f sec\n", max_time[0]);
         printf("Max Time of define variables       = %.4f sec\n", max_time[1]);
+        printf("-----------------------------------------------\n");
+        printf("Max Time of read post              = %.4f sec\n", max_time[6]);
+        printf("Max Time of read wait              = %.4f sec\n", max_time[7]);
         printf("Max Time of read                   = %.4f sec\n", max_time[2]);
+        printf("-----------------------------------------------\n");
+        printf("Max Time of write post             = %.4f sec\n", max_time[8]);
+        printf("Max Time of write wait             = %.4f sec\n", max_time[9]);
         printf("Max Time of write                  = %.4f sec\n", max_time[3]);
+        printf("-----------------------------------------------\n");
         printf("Max Time of close                  = %.4f sec\n", max_time[4]);
         printf("Max end-to-end time                = %.4f sec\n", max_time[5]);
         printf("-----------------------------------------------------------\n");
         printf("Total read  amount                 = %.2f MiB = %.2f GiB\n",
                (double)read_amnt / 1048576, (double)read_amnt / 1073741824);
-        printf("Read  bandwidth                    = %.4f MiB/sec\n",
+        printf("Read  bandwidth                    = %.2f MiB/sec\n",
                (double)read_amnt / 1048576 / max_time[2]);
         printf("Total write amount                 = %.2f MiB = %.2f GiB\n",
                (double)write_amnt / 1048576, (double)write_amnt / 1073741824);
-        printf("Write bandwidth                    = %.4f MiB/sec\n",
+        printf("Write bandwidth                    = %.2f MiB/sec\n",
                (double)write_amnt / 1048576 / max_time[3]);
-        if (verbose)
+        if (verbose && max_alloc > 0)
             printf("MAX heap memory used by PnetCDF internally is %.2f MiB\n",
                    (float)max_alloc / 1048576);
         printf("-----------------------------------------------------------\n");

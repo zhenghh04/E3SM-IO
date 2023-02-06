@@ -11,6 +11,7 @@
 #endif
 //
 #include <sys/stat.h>
+#include <string.h> /* strdup() */
 //
 #include <e3sm_io.h>
 #include <e3sm_io_err.h>
@@ -87,8 +88,13 @@ err_out:
 int e3sm_io_driver_pnc::open (std::string path, MPI_Comm comm, MPI_Info info, int *fid) {
     int err;
     MPI_Offset size;
+    MPI_Offset put_buffer_size_limit;
 
     err = ncmpi_open (comm, path.c_str (), NC_64BIT_DATA, info, fid);
+    CHECK_NCERR
+
+    put_buffer_size_limit = 10485760;
+    err = ncmpi_buffer_attach (*fid, put_buffer_size_limit);
     CHECK_NCERR
 
     err = ncmpi_inq_get_size(*fid, &size); CHECK_NCERR
@@ -254,13 +260,17 @@ err_out:
     return err;
 }
 
-int e3sm_io_driver_pnc::inq_var (int fid, std::string name, int *varid) {
+int e3sm_io_driver_pnc::inq_varid (int fid, const char *name, int *varid) {
+
+    // inq_var is used to check whether a variable exist so error is expected
+    return ncmpi_inq_varid (fid, name, varid);
+}
+
+int e3sm_io_driver_pnc::inq_var (int fid, int varid, char *name, nc_type *xtypep,
+                                 int *ndimsp, int *dimids, int *nattsp)
+{
     int err;
-
-    err = ncmpi_inq_varid (fid, name.c_str (), varid);
-    CHECK_NCERR
-
-err_out:
+    err = ncmpi_inq_var(fid, varid, name, xtypep, ndimsp, dimids, nattsp);
     return err;
 }
 
@@ -309,6 +319,10 @@ int e3sm_io_driver_pnc::inq_dim (int fid, std::string name, int *dimid) {
     MPI_Offset size;
 
     err = ncmpi_inq_dimid (fid, name.c_str (), dimid);
+    if (err == NC_EBADDIM){
+        err = -1;
+        goto err_out;
+    }
     CHECK_NCERR
 
     if (cfg->chunksize == 0) return err;
@@ -414,6 +428,16 @@ err_out:
     return err;
 }
 
+int e3sm_io_driver_pnc::inq_att (int fid, int vid, std::string name, MPI_Offset *size){
+    int err;
+
+    err = ncmpi_inq_attlen (fid, vid, name.c_str (), size);
+    CHECK_NCERR
+
+err_out:
+    return err;
+}
+
 int e3sm_io_driver_pnc::put_varl (
     int fid, int vid, MPI_Datatype itype, void *buf, e3sm_io_op_mode mode) {
     int err = 0;
@@ -491,47 +515,6 @@ int e3sm_io_driver_pnc::put_vara (int fid,
             default:
                 throw "Unrecognized mode";
         }
-    }
-    CHECK_NCERR
-
-    if (mode == coll || mode == indep) {
-        err = ncmpi_inq_put_size (fid, &size); CHECK_NCERR
-        this->amount_WR += size - prev_WR;
-    }
-
-err_out:
-    return err;
-}
-int e3sm_io_driver_pnc::put_vars (int fid,
-                                  int vid,
-                                  MPI_Datatype itype,
-                                  MPI_Offset *start,
-                                  MPI_Offset *count,
-                                  MPI_Offset *stride,
-                                  void *buf,
-                                  e3sm_io_op_mode mode) {
-    int err=NC_NOERR;
-    MPI_Offset size, prev_WR;
-
-    if (mode == coll || mode == indep) {
-        err = ncmpi_inq_put_size(fid, &prev_WR); CHECK_NCERR
-    }
-
-    switch (mode) {
-        case nb:
-            err = ncmpi_iput_vars (fid, vid, start, count, stride, buf, -1, itype, NULL);
-            break;
-        case nbe:
-            err = ncmpi_bput_vars (fid, vid, start, count, stride, buf, -1, itype, NULL);
-            break;
-        case coll:
-            err = ncmpi_put_vars_all (fid, vid, start, count, stride, buf, -1, itype);
-            break;
-        case indep:
-            err = ncmpi_put_vars (fid, vid, start, count, stride, buf, -1, itype);
-            break;
-        default:
-            throw "Unrecognized mode";
     }
     CHECK_NCERR
 
@@ -644,45 +627,6 @@ int e3sm_io_driver_pnc::get_vara (int fid,
             default:
                 throw "Unrecognized mode";
         }
-    }
-    CHECK_NCERR
-
-    if (mode == coll || mode == indep) {
-        err = ncmpi_inq_get_size (fid, &size); CHECK_NCERR
-        this->amount_RD += size - prev_RD;
-    }
-
-err_out:
-    return err;
-}
-
-int e3sm_io_driver_pnc::get_vars (int fid,
-                                  int vid,
-                                  MPI_Datatype itype,
-                                  MPI_Offset *start,
-                                  MPI_Offset *count,
-                                  MPI_Offset *stride,
-                                  void *buf,
-                                  e3sm_io_op_mode mode) {
-    int err=NC_NOERR;
-    MPI_Offset size, prev_RD;
-
-    if (mode == coll || mode == indep) {
-        err = ncmpi_inq_get_size(fid, &prev_RD); CHECK_NCERR
-    }
-
-    switch (mode) {
-        case nb:
-            err = ncmpi_iget_vars (fid, vid, start, count, stride, buf, -1, itype, NULL);
-            break;
-        case coll:
-            err = ncmpi_get_vars_all (fid, vid, start, count, stride, buf, -1, itype);
-            break;
-        case indep:
-            err = ncmpi_get_vars (fid, vid, start, count, stride, buf, -1, itype);
-            break;
-        default:
-            throw "Unrecognized mode";
     }
     CHECK_NCERR
 

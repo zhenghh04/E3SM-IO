@@ -10,7 +10,7 @@
   describe the data decomposition and layout, including the number of MPI
   processes used to create the file, decomposition maps, and flags indicating
   the map used by a variable.
-  See [src/cases/header_def_F_case.cpp](src/cases/header_def_F_case.cpp).
+  See [src/cases/header_def_F_case.cpp](../src/cases/header_def_F_case.cpp).
   These additional data objects are described below.
   + Additional global attributes (See subroutine `add_gattrs()`)
     * **global_nprocs** - a 4-byte integer storing the number of MPI processes
@@ -26,14 +26,14 @@
     * There are 2 additional dimensions per decomposition map.
       + **D1.nelems** - number of array elements in decomposition map D1 in a
         subfile. See subroutine `blob_metadata()` in
-        [calc_metadata.c](src/calc_metadata.c). The sum of this dimension
+        [calc_metadata.c](../src/calc_metadata.c). The sum of this dimension
         across all subfiles is equal to the size of original dimension
         decomposed by map D1.
       + **D1.max_nreqs** - max number of flattened noncontiguous requests
         (offset-length pairs) among processes sharing a subfile for
         decomposition map D1. Note the numers of noncontiguous requests
         assigned to processes can be different. See subroutine
-        `blob_metadata()` in [calc_metadata.c](.src/calc_metadata.c).
+        `blob_metadata()` in [calc_metadata.c](../src/calc_metadata.c).
       + If there are more decomposition maps, the additional map dimensions
         will be D2.nelems, D2.max_nreqs, D3.nelems, D3.max_nreqs, and so on.
   + Additional variables and their attributes (See subroutine
@@ -77,12 +77,13 @@
       climate variables in the same define mode and written in the same data
       mode as climate variables.
 * Changes in variable definitions (See C macro `DEF_VAR` in
-  [src/cases/e3sm_io_case.hpp](src/cases/e3sm_io_case.hpp).)
+  [src/cases/e3sm_io_case.hpp](../src/cases/e3sm_io_case.hpp).)
   + The dimensions of a decomposed variable are changed to use decomposition
-    map dimensions. (See src/cases/header_def_F_case.cpp). For example, given 6
-    dimensions defined in a NetCDF file, variable `CLOUD` is originally defined
-    as a 3D array of dimension `time` x `lev` x `ncol`.
-    ```
+    map dimensions. (See
+    [src/cases/header_def_F_case.cpp](../src/cases/header_def_F_case.cpp)). For
+    example, given 6 dimensions defined in a NetCDF file, variable `CLOUD` is
+    originally defined as a 3D array of dimension `time` x `lev` x `ncol`.
+    ```c
     time = UNLIMITED ; // (1 currently)
     nbnd = 2 ;
     chars = 8 ;
@@ -94,7 +95,7 @@
     ```
     Because variable `CLOUD` is decomposed using map D3 and D3 decomposes along
     dimension `lev` and `ncol`, definition of `CLOUD`is now changed to
-    ```
+    ```c
     float CLOUD(time, D3.nelems) ;
           CLOUD:decomposition_ID = 3 ;
           CLOUD:global_dimids = 0, 3, 5 ;
@@ -108,20 +109,20 @@
     decomposed.
 * Changes of arguments `start` and `count` in PnetCDF put API calls
   + See subroutine `e3sm_io_case::var_wr_case()` in
-    [src/cases/var_wr_case.cpp](src/cases/var_wr_case.cpp) and
-    `blob_metadata()` in [src/calc_metadata.c](src/calc_metadata.c).
+    [src/cases/var_wr_case.cpp](../src/cases/var_wr_case.cpp) and
+    `blob_metadata()` in [src/calc_metadata.c](../src/calc_metadata.c).
   + A blob is a contiguous space in file, so argument `start` and `count`
     always describe the starting offsets to a variable and number of array
     elements in the blob. `count` is first calculated based on the number of
     elements written by a process.
-    ```
+    ```c
     for (i=0; i<decom->num_decomp; i++) {
         for (j=0; j<decom->contig_nreqs[i]; j++)
             decom->count[i] += decom->blocklens[i][j];
     ```
     `count` is then used to calculate `start`. Note `start` of a process
     depends on the amounts decomposed to processes of lower ranks.
-    ```
+    ```c
     err = MPI_Exscan(decom->count, decom->start, decom->num_decomp, MPI_OFFSET,
                      MPI_SUM, cfg->sub_comm);
     ```
@@ -134,7 +135,7 @@
     design is referred to as **variable-centric** data layout.
 * Only nonblocking `ncmpi_iput_vara` APIs are used.
   + See subroutine `e3sm_io_case::var_wr_case()` in
-    [src/cases/var_wr_case.cpp](src/cases/var_wr_case.cpp).
+    [src/cases/var_wr_case.cpp](../src/cases/var_wr_case.cpp).
   + One `ncmpi_iput_vara()` is called per variable.
   + All write requests are pending until the call to `ncmpi_wait_all`.
 * **Advantages of variable-centric data layout**
@@ -147,7 +148,7 @@
 * This I/O operation is triggered when the E3SM-IO command-line options "-a
   hdf5 -x blob" are used.
 * Each HDF5 (sub)file contains only two datasets. For example,
-  ```
+  ```console
   % h5ls -r blob_F_out_h0.h5.0000
   /                        Group
   /data_blob               Dataset {9612472}
