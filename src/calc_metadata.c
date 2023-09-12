@@ -46,6 +46,12 @@ int split_communicator(MPI_Comm comm,
 
     /* split communicator to create one sub-communicator per compute node and
      * all processes on the same compute node are on the same sub-communicator.
+     *
+     * Note when MPICH is configured with --with-device=ch3:sock, none of the
+     * MPI processes running on the same compute node can share memory. But
+     * can when configured with --with-device=ch3:nemesis. Thus using
+     * MPI_COMM_TYPE_SHARED in MPI_Comm_split_type() may not get you a
+     * communicator containing all processes running on the same node.
      */
     err = MPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL,
                               sub_comm);
@@ -163,6 +169,8 @@ int set_starts_counts(e3sm_io_decom *dp)
 
     for (i=0; i<dp->num_decomp; i++) {
         int nreqs = dp->contig_nreqs[i];
+
+        if (nreqs == 0) continue;
 
         /* construct starts[] and counts[] for iput_varn */
         dp->w_starts[i] = (MPI_Offset**) malloc(nreqs * 4 *

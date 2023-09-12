@@ -46,6 +46,8 @@ int e3sm_io_driver_h5blob::create(std::string path,
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     CHECK_HID (faplid)
+    herr = H5Pset_libver_bounds(faplid, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+    CHECK_HID (faplid)
     herr = H5Pset_fapl_mpio(faplid, fp->comm, info);
     CHECK_HERR
     /* make all HDF5 metadata operations collective */
@@ -57,6 +59,10 @@ int e3sm_io_driver_h5blob::create(std::string path,
     /* create the new file and truncate it if already exists */
     fp->id = H5Fcreate(path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, faplid);
     CHECK_HID (fp->id)
+
+    /* obtain MPI file info right after file create */
+    herr = H5Pget_fapl_mpio(faplid, NULL, &fp->info_used);
+    CHECK_HERR
 
     *fid = this->files.size ();
 
@@ -277,30 +283,8 @@ err_out:
 }
 
 int e3sm_io_driver_h5blob::inq_file_info (int fid, MPI_Info *info) {
-    int err = 0;
-    herr_t herr;
-    h5blob_file *fp = this->files[fid];
-    hid_t pid;
-
-    if (cfg->env_async == 1) {
-        /* Async VOL is currently having problem on H5Fget_access_plist()
-         * See https://github.com/hpc-io/vol-cache/issues/15
-         */
-        *info = MPI_INFO_NULL;
-        return 0;
-    }
-
-    /* HDF5 currently has no function to obtain MPI info used by the system.
-     * This inquire function just returns the I/O hints set by the user.
-     */
-    pid = H5Fget_access_plist (fp->id);
-    CHECK_HID (pid);
-    herr = H5Pget_fapl_mpio (pid, NULL, info);
-    CHECK_HERR
-
-err_out:
-    if (pid != -1) H5Pclose (pid);
-    return err;
+    MPI_Info_dup(this->files[fid]->info_used, info);
+    return 0;
 }
 
 int e3sm_io_driver_h5blob::inq_file_size (std::string path, MPI_Offset *size) {
@@ -357,7 +341,7 @@ int e3sm_io_driver_h5blob::def_var(int          fid,
                                    std::string  name,
                                    nc_type      xtype,
                                    int          ndims,
-                                   int         *dimids,
+                                   const int   *dimids,
                                    int         *varidp)
 {
     /* add a variable object in the NC header object */

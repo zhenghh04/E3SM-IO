@@ -53,11 +53,15 @@
 ### Decomposition Map's dimension sizes used in production runs (standard resolution)
   | F case 21600p | G case 9600p        | I case 1344p |
   |:--------------|:--------------------|:-------------|
-  | ncol = 48602  | nCells = 3693225    | lat = 360    |
+  | ncol = 777602 | nCells = 3693225    | lat = 360    |
   | lev = 72      | nEdges = 11135652   | lon = 720    |
   |               | nVertLevels = 80    | levgrnd = 15 |
   |               | nVertices = 7441216 | levdcmp = 15 |
   |               | nVertLevelsP1 = 81  | levlak = 10  |
   |               |                     | ltype = 9    |
   |               |                     | natpft = 17  |
+
+* For information about the statistics of decomposition maps and variables that
+  are partitioned using the maps, readers are referred to
+  [../docs/variables.md](../docs/variables.md).
 

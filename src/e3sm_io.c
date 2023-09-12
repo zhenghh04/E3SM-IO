@@ -78,7 +78,6 @@ void check_connector_env(e3sm_io_config *cfg) {
 
 static inline int set_info (e3sm_io_config *cfg, e3sm_io_decom *decom) {
     int err;
-    MPI_Offset estimated_nc_ibuf_size;
 
     /* set MPI-IO hints */
 
@@ -95,23 +94,33 @@ static inline int set_info (e3sm_io_config *cfg, e3sm_io_decom *decom) {
 
         /* set PnetCDF I/O hints */
 
+        /* if all write buffers are in a contiguous space, then disable PnetCDF
+         * internal buffering */
+        if (cfg->xtype == NC_DOUBLE  && /* no type conversion is necessary */
+            cfg->non_contig_buf == 0 && /* all writes are in a single buffer */
+            cfg->isReqSorted) {         /* write request offsets are sorted */
+
+            /* actually setting nc_ibuf_size to 0 is not necessary, as copying
+             * write requests to an internal buffer in PnetCDF is triggered
+             * only when the user buffer is non-contiguous.
+             */
+            err = MPI_Info_set(cfg->info, "nc_ibuf_size", "0");
+            CHECK_MPIERR
+
+            /* Actually setting nc_in_place_swap to enable is not necessary,
+             * because nc_in_place_swap is automatically enabled when the write
+             * request is larger than 4KB, which is the case in this E3SM-IO.
+             */
+            err = MPI_Info_set(cfg->info, "nc_in_place_swap", "enable");
+            CHECK_MPIERR
+        }
+
         /* no gap between variables */
         err = MPI_Info_set (cfg->info, "nc_var_align_size", "1");
         CHECK_MPIERR
         /* in-place byte swap */
         err = MPI_Info_set (cfg->info, "nc_in_place_swap", "enable");
         CHECK_MPIERR
-
-        /* use total write amount to estimate nc_ibuf_size */
-        estimated_nc_ibuf_size = decom->dims[2][0] * decom->dims[2][1]
-                               * sizeof (double) / cfg->num_iotasks;
-        estimated_nc_ibuf_size *= cfg->nvars;
-        if (estimated_nc_ibuf_size > 16777216) {
-            char nc_ibuf_size_str[32];
-            sprintf (nc_ibuf_size_str, "%lld", estimated_nc_ibuf_size);
-            err = MPI_Info_set (cfg->info, "nc_ibuf_size", nc_ibuf_size_str);
-            CHECK_MPIERR
-        }
     }
 
 err_out:
@@ -146,7 +155,11 @@ static void usage (char *argv0) {
        [-h] Print this help message\n\
        [-v] Verbose mode\n\
        [-k] Keep the output files when program exits (default: deleted)\n\
+       [-j] Set the external data type to NC_FLOAT. This option only affects\n\
+            the F and I cases. (default: NC_DOUBLE)\n\
        [-m] Run test using noncontiguous write buffer (default: contiguous)\n\
+       [-q] Do not sort write requests based on their file offsets into an\n\
+            increasing order (default: yes)\n\
        [-u] Fill missing elements in decomposition maps (default: no)\n\
        [-f num] Output history files h0 or h1: 0 for h0 only, 1 for h1 only,\n\
                 -1 for both. Affect only F and I cases. (default: -1)\n\
@@ -171,7 +184,7 @@ static void usage (char *argv0) {
            netcdf4:   NetCDF-4 library\n\
            hdf5:      HDF5 library\n\
            hdf5_md:   HDF5 library using multi-dataset I/O APIs\n\
-           hdf5_log:  HDF5 library with Log-based VOL\n\
+           hdf5_log:  HDF5 library with Log VOL connector\n\
            adios:     ADIOS library using BP3 format\n\
        [-t compute] Emmunated compute time in unit of second \n\
        [-x strategy] I/O strategy\n\
@@ -244,6 +257,10 @@ int main (int argc, char **argv) {
     cfg.sub_comm       = MPI_COMM_NULL;
     cfg.comp_time      = 0;
     cfg.fill_mode      = 0;
+    cfg.env_log_info   = NULL;
+    cfg.xtype          = NC_DOUBLE;
+    cfg.sort_reqs      = 1;
+    cfg.isReqSorted    = 0;
 
     for (i = 0; i < MAX_NUM_DECOMP; i++) {
         cfg.G_case.nvars_D[i]    = 0;
@@ -266,7 +283,7 @@ int main (int argc, char **argv) {
     ffreq = 1;
 
     /* command-line arguments */
-    while ((i = getopt (argc, argv, "vkur:s:o:i:dmf:ha:x:g:y:pt:")) != EOF)
+    while ((i = getopt (argc, argv, "vkur:s:o:i:jmqf:ha:x:g:y:pt:")) != EOF)
         switch (i) {
             case 'v':
                 cfg.verbose = 1;
@@ -339,8 +356,21 @@ int main (int argc, char **argv) {
             case 'm':
                 cfg.non_contig_buf = 1;
                 break;
+            case 'q':
+                cfg.sort_reqs = 0;
+                break;
+            case 'j':
+                cfg.xtype = NC_FLOAT;
+                break;
             case 'f':
                 cfg.hx = atoi (optarg);
+                if (cfg.hx < -1 || cfg.hx > 1) {
+                    if (cfg.rank == 0) {
+                        printf("Error: invalid value for option -f\n");
+                        printf("       valid values are: -1, 0, 1\n");
+                    }
+                    goto err_out;
+                }
                 break;
             case 'g':
                 cfg.num_subfiles = atoi (optarg);
@@ -389,8 +419,11 @@ int main (int argc, char **argv) {
      *    from double to float, while G case does not.
      * See https://github.com/HDFGroup/hdf5/issues/1859
      */
-#warning TODO: HDF5 multi-dataset APIs do not support writing multiple time steps at a time. Setting flush freq to 1.
-    if (cfg.api == hdf5_md) ffreq = 1;
+    if (cfg.api == hdf5_md && ffreq > 1) {
+        if (cfg.rank == 0)
+            printf("Warning: HDF5 multi-dataset APIs do not support writing multiple time steps at a time. Re-set flush freq to 1.\n");
+        ffreq = 1;
+    }
 #endif
 
     cfg.F_case_h0.ffreq = ffreq;
@@ -487,12 +520,16 @@ int main (int argc, char **argv) {
                     }
                     break;
                 case log:
+#ifndef ENABLE_LOGVOL
+                    ERR_OUT("Option -a hdf5 -x log required Log VOL feature enabled at the configure time")
+#endif
                     /* output file layout will be log */
                     if (cfg.rank == 0 && cfg.verbose)
                         printf("VERBOSE: I/O API: HDF5, strategy: log\n");
                     /* if HDF5_VOL_CONNECTOR is not set to use Log VOL, then
                      * H5Pset_vol() will be called. Otherwise, no H5Pset_vol()
-                     * is called.
+                     * is called. This requires Log VOL feature enabled at the
+                     * configure time.
                      */
                     break;
                 default:
@@ -543,8 +580,11 @@ int main (int argc, char **argv) {
     /* determine run case */
     if (decom.num_decomp == 3)
         cfg.run_case = F;
-    else if (decom.num_decomp == 6)
+    else if (decom.num_decomp == 6) {
         cfg.run_case = G;
+        /* In the G case, the external data type is NC_DOUBLE */
+        cfg.xtype = NC_DOUBLE;
+    }
     else if (decom.num_decomp == 5)
         cfg.run_case = I;
     else

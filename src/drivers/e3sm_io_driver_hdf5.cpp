@@ -100,6 +100,20 @@ e3sm_io_driver_hdf5::e3sm_io_driver_hdf5 (e3sm_io_config *cfg) : e3sm_io_driver 
     if (cfg->api == hdf5_md) {
 #ifdef HDF5_HAVE_MULTI_DATASET_API
         this->use_dwrite_multi = true;
+#ifdef HDF5_HAVE_SELECTION_IO
+        /* enable collective I/O in H5Dwrite_multi(). H5Pset_selection_io is
+         * first introduced in HDF5 1.14.1
+         */
+        herr = H5Pset_selection_io(this->dxplid_coll,
+                                   H5D_SELECTION_IO_MODE_ON);
+        CHECK_HERR
+        herr = H5Pset_dxpl_mpio_collective_opt(this->dxplid_coll,
+                                               H5FD_MPIO_COLLECTIVE_IO);
+        CHECK_HERR
+        /* give HDF5 32MB space for type conversion */
+        herr = H5Pset_buffer(this->dxplid_coll, 33554432, NULL, NULL);
+        CHECK_HERR
+#endif
 #else
         throw "The HDF5 used does not support multi-dataset write";
 #endif
@@ -154,6 +168,8 @@ int e3sm_io_driver_hdf5::create (std::string path, MPI_Comm comm, MPI_Info info,
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     CHECK_HID (faplid)
+    herr = H5Pset_libver_bounds(faplid, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+    CHECK_HID (faplid)
     herr = H5Pset_fapl_mpio (faplid, comm, info);
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
@@ -165,7 +181,9 @@ int e3sm_io_driver_hdf5::create (std::string path, MPI_Comm comm, MPI_Info info,
          * not been set to use Log VOL yet.
          */
         if (cfg->env_log_info != NULL) {
-            /* use VOL connector info string from env HDF5_VOL_CONNECTOR */
+            /* use VOL connector info string from env HDF5_VOL_CONNECTOR for
+             * case of stacking Log VOL on top of other VOLs
+             */
             void *log_info;
             herr = H5VLconnector_str_to_info(cfg->env_log_info, this->log_vlid, &log_info);
             CHECK_HERR
@@ -175,7 +193,13 @@ int e3sm_io_driver_hdf5::create (std::string path, MPI_Comm comm, MPI_Info info,
             CHECK_HERR
         }
         else {
-            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            /* HDF5_VOL_CONNECTOR is not set, use native VOL connector
+             * See https://github.com/HDFGroup/hdf5/issues/2417
+             */
+            H5VL_pass_through_info_t passthru_info;
+            passthru_info.under_vol_id   = H5VL_NATIVE;
+            passthru_info.under_vol_info = NULL;
+            herr = H5Pset_vol(faplid, this->log_vlid, &passthru_info);
             CHECK_HERR
         }
     }
@@ -201,6 +225,10 @@ int e3sm_io_driver_hdf5::create (std::string path, MPI_Comm comm, MPI_Info info,
     CHECK_HID (fp->id)
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_OPEN)
+
+    /* obtain MPI file info right after file create */
+    herr = H5Pget_fapl_mpio(faplid, NULL, &fp->info_used);
+    CHECK_HERR
 
     *fid = this->files.size ();
     this->files.push_back (fp);
@@ -242,7 +270,9 @@ int e3sm_io_driver_hdf5::open (std::string path, MPI_Comm comm, MPI_Info info, i
          * not been set to use Log VOL yet.
          */
         if (cfg->env_log_info != NULL) {
-            /* use VOL connector info string from env HDF5_VOL_CONNECTOR */
+            /* use VOL connector info string from env HDF5_VOL_CONNECTOR for
+             * case of stacking Log VOL on top of other VOLs
+             */
             void *log_info;
             herr = H5VLconnector_str_to_info(cfg->env_log_info, this->log_vlid, &log_info);
             CHECK_HERR
@@ -252,7 +282,13 @@ int e3sm_io_driver_hdf5::open (std::string path, MPI_Comm comm, MPI_Info info, i
             CHECK_HERR
         }
         else {
-            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            /* HDF5_VOL_CONNECTOR is not set, use native VOL connector
+             * See https://github.com/HDFGroup/hdf5/issues/2417
+             */
+            H5VL_pass_through_info_t passthru_info;
+            passthru_info.under_vol_id   = H5VL_NATIVE;
+            passthru_info.under_vol_info = NULL;
+            herr = H5Pset_vol(faplid, this->log_vlid, &passthru_info);
             CHECK_HERR
         }
     }
@@ -278,6 +314,10 @@ int e3sm_io_driver_hdf5::open (std::string path, MPI_Comm comm, MPI_Info info, i
     CHECK_HID (fp->id)
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_OPEN)
+
+    /* obtain MPI file info right after file open */
+    herr = H5Pget_fapl_mpio(faplid, NULL, &fp->info_used);
+    CHECK_HERR
 
     *fid = this->files.size ();
     this->files.push_back (fp);
@@ -308,7 +348,8 @@ int e3sm_io_driver_hdf5::close (int fid) {
 
     E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5_CLOSE)
 
-    MPI_Comm_free (&(fp->comm));
+    MPI_Info_free(&fp->info_used);
+    MPI_Comm_free(&(fp->comm));
 
     delete fp;
 
@@ -318,53 +359,8 @@ err_out:;
 }
 
 int e3sm_io_driver_hdf5::inq_file_info (int fid, MPI_Info *info) {
-    int err = 0;
-    herr_t herr;
-    hdf5_file *fp = this->files[fid];
-    hid_t pid = -1, fdid = -1;
-
-    E3SM_IO_TIMER_START (E3SM_IO_TIMER_HDF5)
-
-    if (cfg->env_async == 1) {
-        /* Async VOL is currently having problem on H5Fget_access_plist()
-         * See https://github.com/hpc-io/vol-cache/issues/15
-         */
-        *info = MPI_INFO_NULL;
-        return 0;
-    }
-
-    // disable HDF5 error message
-    H5E_BEGIN_TRY{
-        // get file access property list
-        pid = H5Fget_access_plist (fp->id);
-    }H5E_END_TRY;
-    if (pid < 0) { goto err_out; }
-
-    // disable HDF5 error message
-    H5E_BEGIN_TRY{
-        // get driver
-        fdid = H5Pget_driver (pid);
-    }H5E_END_TRY;
-    if (fdid < 0) { goto err_out; }
-
-    // Only MPI VFD supports H5Pget_fapl_mpio
-    if (fdid ==	H5FD_MPIO){
-        herr = H5Pget_fapl_mpio (pid, NULL, info);
-        CHECK_HERR
-    }
-    else{
-        *info = MPI_INFO_NULL;
-    }
-
-    goto fn_exit;
-
-err_out:;
-    printf ("Warning: An error occured in e3sm_io_driver_hdf5::inq_file_info in %s. Use MPI_INFO_NULL.\n", __FILE__);
-    *info = MPI_INFO_NULL;
-fn_exit:;
-    if (pid != -1) H5Pclose (pid);
-    E3SM_IO_TIMER_STOP (E3SM_IO_TIMER_HDF5)
-    return err;
+    MPI_Info_dup(this->files[fid]->info_used, info);
+    return 0;
 }
 
 int e3sm_io_driver_hdf5::inq_file_size (std::string path, MPI_Offset *size) {
@@ -459,7 +455,7 @@ err_out:;
 }
 
 int e3sm_io_driver_hdf5::def_var (
-    int fid, std::string name, nc_type xtype, int ndim, int *dimids, int *did) {
+    int fid, std::string name, nc_type xtype, int ndim, const int *dimids, int *did) {
     int err = 0;
     herr_t herr;
     hdf5_file *fp = this->files[fid];

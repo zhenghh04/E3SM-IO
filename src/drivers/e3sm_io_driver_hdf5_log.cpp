@@ -139,6 +139,8 @@ int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info i
 
     faplid = H5Pcreate (H5P_FILE_ACCESS);
     CHECK_HID (faplid)
+    herr = H5Pset_libver_bounds(faplid, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+    CHECK_HID (faplid)
     herr = H5Pset_fapl_mpio (faplid, comm, info);
     CHECK_HERR
     herr = H5Pset_coll_metadata_write (faplid, true);
@@ -159,7 +161,13 @@ int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info i
             CHECK_HERR
         }
         else {
-            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            /* HDF5_VOL_CONNECTOR is not set, use native VOL connector
+             * See https://github.com/HDFGroup/hdf5/issues/2417
+             */
+            H5VL_pass_through_info_t passthru_info;
+            passthru_info.under_vol_id   = H5VL_NATIVE;
+            passthru_info.under_vol_info = NULL;
+            herr = H5Pset_vol(faplid, this->log_vlid, &passthru_info);
             CHECK_HERR
         }
     }
@@ -192,6 +200,10 @@ int e3sm_io_driver_hdf5_log::create (std::string path, MPI_Comm comm, MPI_Info i
         CHECK_HERR
     }
 #endif
+
+    /* obtain MPI file info right after file create */
+    herr = H5Pget_fapl_mpio(faplid, NULL, &fp->info_used);
+    CHECK_HERR
 
     *fid = this->files.size ();
     this->files.push_back (fp);
@@ -243,7 +255,13 @@ int e3sm_io_driver_hdf5_log::open (std::string path, MPI_Comm comm, MPI_Info inf
             CHECK_HERR
         }
         else {
-            herr = H5Pset_vol(faplid, this->log_vlid, NULL);
+            /* HDF5_VOL_CONNECTOR is not set, use native VOL connector
+             * See https://github.com/HDFGroup/hdf5/issues/2417
+             */
+            H5VL_pass_through_info_t passthru_info;
+            passthru_info.under_vol_id   = H5VL_NATIVE;
+            passthru_info.under_vol_info = NULL;
+            herr = H5Pset_vol(faplid, this->log_vlid, &passthru_info);
             CHECK_HERR
         }
     }
@@ -261,6 +279,10 @@ int e3sm_io_driver_hdf5_log::open (std::string path, MPI_Comm comm, MPI_Info inf
 
     fp->id = H5Fopen (path.c_str (), H5F_ACC_RDONLY, faplid);
     CHECK_HID (fp->id)
+
+    /* obtain MPI file info right after file open */
+    herr = H5Pget_fapl_mpio(faplid, NULL, &fp->info_used);
+    CHECK_HERR
 
     *fid = this->files.size ();
     this->files.push_back (fp);

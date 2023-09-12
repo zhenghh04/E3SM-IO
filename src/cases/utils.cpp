@@ -116,44 +116,75 @@ int e3sm_io_case::wr_buf_malloc(e3sm_io_config &cfg, int ffreq)
     }
 
     /* allocate and initialize write buffers */
-    wr_buf.fix_txt_buf = (char*)   malloc(wr_buf.fix_txt_buflen * sizeof(char));
-    wr_buf.fix_int_buf = (int*)    malloc(wr_buf.fix_int_buflen * sizeof(int));
-    wr_buf.fix_flt_buf = (float*)  malloc(wr_buf.fix_flt_buflen * sizeof(float));
-    wr_buf.fix_dbl_buf = (double*) malloc(wr_buf.fix_dbl_buflen * sizeof(double));
-    wr_buf.fix_lld_buf = (long long*) malloc(wr_buf.fix_lld_buflen * sizeof(long long));
-    wr_buf.rec_txt_buf = (char*)   malloc(wr_buf.rec_txt_buflen * sizeof(char));
-    wr_buf.rec_int_buf = (int*)    malloc(wr_buf.rec_int_buflen * sizeof(int));
-    wr_buf.rec_flt_buf = (float*)  malloc(wr_buf.rec_flt_buflen * sizeof(float));
-    wr_buf.rec_dbl_buf = (double*) malloc(wr_buf.rec_dbl_buflen * sizeof(double));
-    wr_buf.rec_lld_buf = (long long*) malloc(wr_buf.rec_lld_buflen * sizeof(long long));
+    if (cfg.non_contig_buf) {
+        wr_buf.fix_txt_buf = (char*)   malloc(wr_buf.fix_txt_buflen * sizeof(char));
+        wr_buf.fix_int_buf = (int*)    malloc(wr_buf.fix_int_buflen * sizeof(int));
+        wr_buf.fix_flt_buf = (float*)  malloc(wr_buf.fix_flt_buflen * sizeof(float));
+        wr_buf.fix_dbl_buf = (double*) malloc(wr_buf.fix_dbl_buflen * sizeof(double));
+        wr_buf.fix_lld_buf = (long long*) malloc(wr_buf.fix_lld_buflen * sizeof(long long));
+        wr_buf.rec_txt_buf = (char*)   malloc(wr_buf.rec_txt_buflen * sizeof(char));
+        wr_buf.rec_int_buf = (int*)    malloc(wr_buf.rec_int_buflen * sizeof(int));
+        wr_buf.rec_flt_buf = (float*)  malloc(wr_buf.rec_flt_buflen * sizeof(float));
+        wr_buf.rec_dbl_buf = (double*) malloc(wr_buf.rec_dbl_buflen * sizeof(double));
+        wr_buf.rec_lld_buf = (long long*) malloc(wr_buf.rec_lld_buflen * sizeof(long long));
+    }
+    else {
+        size_t sum = wr_buf.fix_txt_buflen
+                   + wr_buf.fix_int_buflen * sizeof(int)
+                   + wr_buf.fix_dbl_buflen * sizeof(double)
+                   + wr_buf.fix_flt_buflen * sizeof(float)
+                   + wr_buf.fix_lld_buflen * sizeof(long long)
+                   + wr_buf.rec_txt_buflen
+                   + wr_buf.rec_int_buflen * sizeof(int)
+                   + wr_buf.rec_dbl_buflen * sizeof(double)
+                   + wr_buf.rec_flt_buflen * sizeof(float)
+                   + wr_buf.rec_lld_buflen * sizeof(long long);
+
+        wr_buf.fix_txt_buf = (char*) malloc(sum);
+        wr_buf.fix_int_buf = (int*)      (wr_buf.fix_txt_buf + wr_buf.fix_txt_buflen);
+        wr_buf.fix_dbl_buf = (double*)   (wr_buf.fix_int_buf + wr_buf.fix_int_buflen);
+        wr_buf.fix_flt_buf = (float*)    (wr_buf.fix_dbl_buf + wr_buf.fix_dbl_buflen);
+        wr_buf.fix_lld_buf = (long long*)(wr_buf.fix_flt_buf + wr_buf.fix_flt_buflen);
+
+        wr_buf.rec_txt_buf = (char*)     (wr_buf.fix_lld_buf + wr_buf.fix_lld_buflen);
+        wr_buf.rec_int_buf = (int*)      (wr_buf.rec_txt_buf + wr_buf.rec_txt_buflen);
+        wr_buf.rec_dbl_buf = (double*)   (wr_buf.rec_int_buf + wr_buf.rec_int_buflen);
+        wr_buf.rec_flt_buf = (float*)    (wr_buf.rec_dbl_buf + wr_buf.rec_dbl_buflen);
+        wr_buf.rec_lld_buf = (long long*)(wr_buf.rec_flt_buf + wr_buf.rec_flt_buflen);
+    }
 
     for (j=0; j<wr_buf.fix_txt_buflen; j++) wr_buf.fix_txt_buf[j] = 'a' + rank;
     for (j=0; j<wr_buf.fix_int_buflen; j++) wr_buf.fix_int_buf[j] = rank;
-    for (j=0; j<wr_buf.fix_flt_buflen; j++) wr_buf.fix_flt_buf[j] = rank;
     for (j=0; j<wr_buf.fix_dbl_buflen; j++) wr_buf.fix_dbl_buf[j] = rank;
+    for (j=0; j<wr_buf.fix_flt_buflen; j++) wr_buf.fix_flt_buf[j] = rank;
     for (j=0; j<wr_buf.fix_lld_buflen; j++) wr_buf.fix_lld_buf[j] = rank;
     for (j=0; j<wr_buf.rec_txt_buflen; j++) wr_buf.rec_txt_buf[j] = 'a' + rank;
     for (j=0; j<wr_buf.rec_int_buflen; j++) wr_buf.rec_int_buf[j] = rank;
-    for (j=0; j<wr_buf.rec_flt_buflen; j++) wr_buf.rec_flt_buf[j] = rank;
     for (j=0; j<wr_buf.rec_dbl_buflen; j++) wr_buf.rec_dbl_buf[j] = rank;
+    for (j=0; j<wr_buf.rec_flt_buflen; j++) wr_buf.rec_flt_buf[j] = rank;
     for (j=0; j<wr_buf.rec_lld_buflen; j++) wr_buf.rec_lld_buf[j] = rank;
 
     return 0;
 }
 
 /*----< wr_buf_free() >------------------------------------------------------*/
-void e3sm_io_case::wr_buf_free(void)
+void e3sm_io_case::wr_buf_free(e3sm_io_config &cfg)
 {
-    if (wr_buf.fix_txt_buf != NULL) free(wr_buf.fix_txt_buf);
-    if (wr_buf.fix_int_buf != NULL) free(wr_buf.fix_int_buf);
-    if (wr_buf.fix_flt_buf != NULL) free(wr_buf.fix_flt_buf);
-    if (wr_buf.fix_dbl_buf != NULL) free(wr_buf.fix_dbl_buf);
-    if (wr_buf.fix_lld_buf != NULL) free(wr_buf.fix_lld_buf);
-    if (wr_buf.rec_txt_buf != NULL) free(wr_buf.rec_txt_buf);
-    if (wr_buf.rec_int_buf != NULL) free(wr_buf.rec_int_buf);
-    if (wr_buf.rec_flt_buf != NULL) free(wr_buf.rec_flt_buf);
-    if (wr_buf.rec_dbl_buf != NULL) free(wr_buf.rec_dbl_buf);
-    if (wr_buf.rec_lld_buf != NULL) free(wr_buf.rec_lld_buf);
+    if (cfg.non_contig_buf) {
+        if (wr_buf.fix_txt_buf != NULL) free(wr_buf.fix_txt_buf);
+        if (wr_buf.fix_int_buf != NULL) free(wr_buf.fix_int_buf);
+        if (wr_buf.fix_flt_buf != NULL) free(wr_buf.fix_flt_buf);
+        if (wr_buf.fix_dbl_buf != NULL) free(wr_buf.fix_dbl_buf);
+        if (wr_buf.fix_lld_buf != NULL) free(wr_buf.fix_lld_buf);
+        if (wr_buf.rec_txt_buf != NULL) free(wr_buf.rec_txt_buf);
+        if (wr_buf.rec_int_buf != NULL) free(wr_buf.rec_int_buf);
+        if (wr_buf.rec_flt_buf != NULL) free(wr_buf.rec_flt_buf);
+        if (wr_buf.rec_dbl_buf != NULL) free(wr_buf.rec_dbl_buf);
+        if (wr_buf.rec_lld_buf != NULL) free(wr_buf.rec_lld_buf);
+    }
+    else {
+        if (wr_buf.fix_txt_buf != NULL) free(wr_buf.fix_txt_buf);
+    }
 
     wr_buf.fix_txt_buf = NULL;
     wr_buf.fix_int_buf = NULL;

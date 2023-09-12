@@ -179,7 +179,12 @@
        [-h] Print this help message
        [-v] Verbose mode
        [-k] Keep the output files when program exits (default: deleted)
+       [-j] Set the external data type to NC_FLOAT. This option only affects
+            the F and I cases. (default: NC_DOUBLE)
        [-m] Run test using noncontiguous write buffer (default: contiguous)
+       [-q] Do not sort write requests based on their file offsets into an
+            increasing order (default: yes)
+       [-u] Fill missing elements in decomposition maps (default: no)
        [-f num] Output history files h0 or h1: 0 for h0 only, 1 for h1 only,
                 -1 for both. Affect only F and I cases. (default: -1)
        [-r num] Number of time records/steps written in F case h1 file and I
@@ -188,10 +193,14 @@
                 and -1: flush once for all time steps. (No effect on ADIOS
                 and HDF5 blob I/O options, which always flushes at file close).
        [-s num] Stride interval of ranks for selecting MPI processes to perform
-                I/O tasks (default: 1, i.e. all MPI processes).\n\
-       [-g num] Number of subfiles, used by ADIOS I/O only (default: 1).
+                I/O tasks (default: 1, i.e. all MPI processes).
+       [-g num] Number of subfiles, used by Log VOL and ADIOS I/O options only,
+                -1 for one subfile per compute node, 0 to disable subfiling,
+                (default: 0).
        [-t time] Add sleep time to emulate the computation in order to 
                  overlapping I/O when Async VOL is used.
+       [-i path] Input file path (folder name when subfiling is used, file
+                 name otherwise).
        [-o path] Output file path (folder name when subfiling is used, file
                  name otherwise).
        [-a api]  I/O library name
@@ -206,7 +215,7 @@
            log:       Store variables in the log-based storage layout.
            blob:      Pack and store all data written locally in a contiguous
                       block (blob), ignoring variable's canonical order.
-       FILE: Name of input file storing data decomposition maps
+       FILE: Name of input file storing data decomposition maps.
   ```
 * Both F and I cases create two history files, referred to as 'h0' and 'h1'
   files. The supplied file name in option `-o` will be used to construct the
@@ -304,9 +313,11 @@
       then the subfiles will also be in the log layout. Running command
       `h5ldump -k` will show the file kind of `HDF5-LogVOL`.
   + **-a hdf5 -x log**
+    * This option requires the Log VOL feature enabled at the configure time,
+      i.e. "`--with-logvol=${LOGVOL_DIR}`" used at the configure command line.
     * All datasets stored in the files will be in the log layout. Running
       command `h5ldump -k` will show the file kind of `HDF5-LogVOL`.
-    * This option writes/reads data using HDF5 APIs `H5Dwrite`/`H5Dread`.
+    * E3SM-IO will write/read data using HDF5 APIs `H5Dwrite`/`H5Dread`.
     * If the environment variable `HDF5_VOL_CONNECTOR` is unset or set without
       Log VOL, then E3SM-IO will explicitly call `H5Pset_vol()` to enable the
       HDF5 Log VOL connector.
@@ -328,6 +339,7 @@
     * Warning! HDF5 versions 1.13.3 and 1.14.0 will switch collective I/O mode
       to independent internally when one of the datasets requires data type
       conversion. See https://github.com/HDFGroup/hdf5/issues/1859
+    * HDF5 1.14.1 and later is recommended.
     * Example run command:
       ```console
       mpiexec -n 16 src/e3sm_io datasets/map_f_case_16p.h5 -k -o can_F_out.h5 -a hdf5_md -x canonical -r 25

@@ -11,6 +11,9 @@ I/O libraries, such as [PnetCDF](https://github.com/Parallel-NetCDF/PnetCDF),
 [ADIOS](https://github.com/ornladios/ADIOS2).
 The benchmark program in this repository is developed to evaluate the E3SM I/O
 kernel performance using the above mentioned libraries.
+Achieving a good I/O performance for E3SM on HPC systems is challenging
+because its data access pattern consists of a large number of small, unordered,
+non-contiguous write requests on each process.
 
 ### Data Partitioning Pattern in E3SM
 The problem domain in E3SM simulation is represented by a cubed sphere grid
@@ -37,6 +40,19 @@ This benchmark currently studies three cases from E3SM, namely F, G and I
 cases, simulating the atmospheric, oceanic, and land components, respectively.
 Information about the climate variables written in these three case studies and
 their decomposition maps can be found in [variables.md](./docs/variables.md).
+Table below shows the information about decomposition maps, numbers of
+variables, and the maximum and minimum numbers of non-contiguous write requests
+among all processes.
+
+|                                        Case |       F |      G |     I |
+|:--------------------------------------------|--------:|-------:|-------:|
+| Number of MPI processes                     |   21600 |   9600 |   1344 |
+| Number of decomposition (partitioning) maps |       3 |      6 |      5 |
+| Number of partitioned variables             |     387 |     41 |    546 |
+| Number of non-partitioned variables         |      27 |     11 |     14 |
+| Total number of variables                   |     414 |     52 |    560 |
+| MAX no. noncontig writes among processes    | 184,644 | 21,110 | 41,400 |
+| MIN no. noncontig writes among processes    | 174,926 | 18,821 | 33,120 |
 
 ### Compile and Run Instructions for E3SM-IO
 * See [INSTALL.md](./docs/INSTALL.md). It also describes the command-line run

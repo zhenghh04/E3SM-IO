@@ -37,7 +37,8 @@ class e3sm_io_driver_h5blob : public e3sm_io_driver {
             var_buf *vars;
             size_t total_len;
             int num_puts;
-            MPI_Comm comm;
+            MPI_Comm comm = MPI_COMM_NULL;
+            MPI_Info info_used = MPI_INFO_NULL;
     };
 
     std::vector<h5blob_file *> files;
@@ -61,7 +62,7 @@ class e3sm_io_driver_h5blob : public e3sm_io_driver {
     int inq_malloc_max_size (MPI_Offset *size);
     int inq_rec_size (int fid, MPI_Offset *size);
     int expand_rec_size (int fid, MPI_Offset size);
-    int def_var (int fid, std::string name, nc_type xtype, int ndim, int *dimids, int *did);
+    int def_var (int fid, std::string name, nc_type xtype, int ndim, const int *dimids, int *did);
     int def_local_var (
         int fid, std::string name, nc_type xtype, int ndim, MPI_Offset *dsize, int *did);
     int inq_varid(int fid, const char *name, int *did);

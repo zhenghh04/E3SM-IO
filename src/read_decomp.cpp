@@ -98,7 +98,7 @@ static int compare (const void *p1, const void *p2) {
  *   decom->dims:      (OUT) global array dimension lengths of decompositions
  *   decom->contig_nreqs: (OUT) number of noncontiguous requests assigned to
  *                     this process. May be zero.
- *   decom->disps:     (OUT) starting offsets of individual requests (sorted)
+ *   decom->disps:     (OUT) starting offsets of individual requests.
  *                     Memory space will be allocated in this subroutine
  *                     and must be freed by the caller. Any pair of
  *                     disps[][i] and blocklens[][i] is within the size of
@@ -112,8 +112,7 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
     char name[128];
     int err, rank, nprocs, ncid, varid, proc_start, proc_count;
     int i, j, k, nreqs, *all_nreqs, *all_raw_nreqs, dimids[3], id;
-    int has_raw_decom;
-    size_t num, decomp_nprocs;
+    int *fill_nreqs = NULL, has_raw_decom, decomp_nprocs;
     MPI_Offset mpi_num, mpi_decomp_nprocs, start, count;
     MPI_Info info = MPI_INFO_NULL;
     e3sm_io_config decom_cfg;
@@ -125,7 +124,7 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
     MPI_Comm_size (cfg->io_comm, &nprocs);
 
     // Set up config for read driver
-    decom_cfg.io_comm        = MPI_COMM_WORLD;
+    decom_cfg.io_comm        = cfg->io_comm;
     decom_cfg.info           = MPI_INFO_NULL;
     decom_cfg.num_iotasks    = nprocs;
     decom_cfg.num_subfiles   = 0;
@@ -173,8 +172,7 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
     CHECK_ERR
     err = driver->inq_dimlen (ncid, dimids[0], &mpi_num);
     CHECK_ERR
-    num = (size_t)mpi_num;
-    decom->num_decomp = (int)num;
+    decom->num_decomp = (int)mpi_num;
 
     /* number of processes used when the decomposition was produced */
     err = driver->inq_dim (ncid, "decomp_nprocs", &dimids[0]);
@@ -225,7 +223,6 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
         /* obtain the number of dimensions of this decomposition */
         err = driver->inq_att (ncid, NC_GLOBAL, name, &mpi_num);
         CHECK_ERR
-        num = (size_t)mpi_num;
         decom->ndims[id] = (int)mpi_num;
         /* obtain the dimension lengths of this decomposition */
         err = driver->get_att (ncid, NC_GLOBAL, name, dims_int);
@@ -234,7 +231,21 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
             decom->dims[id][i] = (MPI_Offset)dims_int[i];
 
         if (cfg->fill_mode && cfg->strategy == canonical) {
-            /* obtain varid of request variable Dx.nreqs. Note Dx.nreqs
+            /* Read variable Dx.fill_starts, which stores the index of Dx.nreqs
+             * pointing to the first request that needs to be filled with fill
+             * values. In other words, Dx.nreqs[i] is always bigger than
+             * Dx.fill_starts[i] and (Dx.nreqs[i] - Dx.fill_starts[i]) is the
+             * number of requests that need to be filled.
+             */
+            sprintf (name, "D%d.fill_starts", id + 1);
+            err = driver->inq_varid (ncid, name, &varid);
+            CHECK_ERR
+
+            fill_nreqs = (int *)malloc (decomp_nprocs * sizeof (int));
+            err = driver->get_vara (ncid, varid, MPI_INT, NULL, NULL, fill_nreqs, coll);
+            CHECK_ERR
+
+            /* Obtain varid of request variable Dx.nreqs. Note Dx.nreqs
              * includes the missing elements to be filled if there is any
              * missing elements and fill mode is enabled.
              */
@@ -243,7 +254,7 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
             CHECK_ERR
         }
         else {
-            /* obtain varid of request variable Dx.fill_starts, the starting
+            /* Obtain varid of request variable Dx.fill_starts, the starting
              * index in offsets[] and lengths[] for elements to be filled with
              * fill value. Note use Dx.fill_starts as the number of write
              * requests, so writes stop at this index, without filling the
@@ -254,10 +265,23 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
             CHECK_ERR
         }
 
-        /* read all processes's numbers of requests */
+        /* read all process's numbers of requests */
         all_nreqs = (int *)malloc (decomp_nprocs * sizeof (int));
         err = driver->get_vara (ncid, varid, MPI_INT, NULL, NULL, all_nreqs, coll);
         CHECK_ERR
+
+        if (cfg->fill_mode && cfg->strategy == canonical) {
+            for (i=0; i<decomp_nprocs; i++) {
+                if (all_nreqs[i] != fill_nreqs[i])
+                    break;
+            }
+            if (i < decomp_nprocs && decomp_nprocs != nprocs && rank == 0)
+                printf("Warning: fill mode is not supported when nprocs(%d) != decomp_nprocs(%d)\n",
+                       nprocs, decomp_nprocs);
+            else if (i < decomp_nprocs && rank == 0)
+                printf("Warning: fill mode is not yet supported\n");
+            free(fill_nreqs);
+        }
 
         /* calculate start index in Dx.offsets for this process */
         start = 0;
@@ -289,6 +313,7 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
         err = driver->get_vara (ncid, varid, MPI_INT, &start, &count, decom->blocklens[id], coll);
         CHECK_ERR
 
+        cfg->isReqSorted = 1;
         decom->contig_nreqs[id] = nreqs;
 
         if (cfg->api == adios) {
@@ -402,6 +427,51 @@ int read_decomp (e3sm_io_config *cfg, e3sm_io_decom *decom) {
                     for (k = decom->disps[id][i]; k < (decom->disps[id][i] + decom->blocklens[id][i]);
                          k++)
                         decom->raw_offsets[id][j++] = k + 1;
+            }
+        }
+        else if (cfg->sort_reqs) {
+            /* sort all disps[] of all responsible requests into an increasing
+             * order (this is to satisfy the MPI fileview or monotonically
+             * nondecreasing file offset requirement)
+             */
+            struct off_len *myreqs;
+            myreqs = (struct off_len *)malloc(nreqs * sizeof(struct off_len));
+            for (i = 0; i < nreqs; i++) {
+                myreqs[i].off = decom->disps[id][i];
+                myreqs[i].len = decom->blocklens[id][i];
+            }
+            qsort((void *)myreqs, nreqs, sizeof(struct off_len), compare);
+            for (i = 0; i < nreqs; i++) {
+                decom->disps[id][i]     = myreqs[i].off;
+                decom->blocklens[id][i] = myreqs[i].len;
+            }
+            free(myreqs);
+
+            /* coalesce offset-length pairs */
+            j = 0;
+            for (i = 1; i < nreqs; i++) {
+                if (decom->disps[id][i] % decom->dims[id][decom->ndims[id] - 1] == 0 ||
+                    decom->disps[id][i] > decom->disps[id][j] + decom->blocklens[id][j]) {
+                    /* break contiguity at dimension boundaries or noncontiguous */
+                    j++;
+                    if (j < i) {
+                        decom->disps[id][j]     = decom->disps[id][i];
+                        decom->blocklens[id][j] = decom->blocklens[id][i];
+                    }
+                } else
+                    decom->blocklens[id][j] += decom->blocklens[id][i];
+            }
+            /* update number of true noncontiguous requests */
+            if (nreqs > 0) decom->contig_nreqs[id] = j + 1;
+
+            cfg->isReqSorted = 1;
+        }
+        else { /* check if already sorted */
+            for (i=1; i<nreqs; i++) {
+                if (decom->disps[id][i] < decom->disps[id][i-1]) {
+                    cfg->isReqSorted = 0;
+                    break;
+                }
             }
         }
 
