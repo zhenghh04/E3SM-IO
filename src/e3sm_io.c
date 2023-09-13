@@ -296,12 +296,7 @@ int main (int argc, char **argv) {
                 break;
             case 'r':
                 nrecs = atoi (optarg);
-                break;
-#ifdef ENABLE_CACHE_VOL		
-            case 't':
-	      cfg.compute = atof(optarg);
-	      break;
-#endif	      
+                break;  
             case 'y':
                 ffreq = atoi (optarg);
                 break;
