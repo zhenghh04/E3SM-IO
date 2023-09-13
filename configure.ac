@@ -8,7 +8,7 @@ dnl Process this file with GNU autoconf(1) to produce a configure script.
 dnl
 
 dnl autoconf v2.69 was released in 2012-04-24
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 AC_INIT([e3sm_io],[1.3.0],[],[e3sm_io],[])
 
 AM_EXTRA_RECURSIVE_TARGETS([tests])
@@ -217,7 +217,15 @@ dnl AC_PROG_RANLIB
 LT_INIT
 
 AC_HEADER_STAT
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS([fts.h])
 if test "x$ac_cv_header_fts_h" != xyes ; then
    # Force to use MPICXX to check C++ header

@@ -420,7 +420,6 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
                 }
             }
         }
-<<<<<<< HEAD
 #ifdef ENABLE_CACHE_VOL
 	hid_t fd;
 	if (cfg.api == hdf5) {
@@ -428,11 +427,7 @@ int e3sm_io_case::var_wr_case(e3sm_io_config &cfg,
 	  H5Fcache_async_op_pause(fd);
 	}
 #endif
-        /* write all climate variables */
-=======
-
         /* write all climate record variables */
->>>>>>> 037cb7ab18c152f01417ad6711052d742075de72
         for (j=num_decomp_vars; j<nvars; j++) {
 
             if (!vars[j].isRecVar) continue;
