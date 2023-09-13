@@ -125,6 +125,13 @@ err_out:
     return err;
 }
 
+#ifdef ENABLE_CACHE_VOL  
+    int e3sm_io_driver_nc4::inq_file_id (int fid, void *hd) {
+        printf ("This only works for HDF5 driver in %s line %d function %s\n", __FILE__, __LINE__, __func__);
+        return 0; 
+    }
+#endif
+
 int e3sm_io_driver_nc4::inq_file_info (int fid, MPI_Info *info) {
     *info = MPI_INFO_NULL;
     return NC_NOERR;
