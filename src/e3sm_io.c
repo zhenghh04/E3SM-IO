@@ -241,9 +241,6 @@ int main (int argc, char **argv) {
     cfg.wr             = 0;
     cfg.rd             = 0;
     cfg.nvars          = 0;
-#ifdef ENABLE_CACHE_VOL    
-    cfg.compute        = 0;
-#endif
     cfg.strategy       = undef_io;
     cfg.api            = undef_api;
     cfg.chunksize      = 0;

@@ -938,6 +938,7 @@ if test "x$have_cachevol" = xyes ; then
     LIBS="$LIBS -lcache_new_h5api"
     fi
     AC_DEFINE([ENABLE_CACHE_VOL], [1], [Build cachevol benchmark])
+    AC_DEFINE([E3SM_IO_THREADING], [1], [Enable option to initialize MPI with multi-thread support])    
 fi
 
 if test "x$have_adios2" = xyes ; then

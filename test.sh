@@ -9,7 +9,7 @@ set -e
 
 DECOMP_REPLAY="utils/decomp_copy"
 # BPSTAT="utils/bpstat"
-DECOMPS=()
+#DECOMPS=()
 
 VERBOSE=0
 EXEC="src/e3sm_io"
