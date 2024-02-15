@@ -8,7 +8,7 @@ dnl Process this file with GNU autoconf(1) to produce a configure script.
 dnl
 
 dnl autoconf v2.69 was released in 2012-04-24
-AC_PREREQ([2.71])
+AC_PREREQ([2.67])
 AC_INIT([e3sm_io],[1.3.0],[],[e3sm_io],[])
 
 AM_EXTRA_RECURSIVE_TARGETS([tests])
